@@ -86,6 +86,10 @@ class ControllerCommonDashboard extends Controller {
 			$data['security'] = '';
 		}
 
+		$data['smit_import'] = array(
+			'href' => $this->url->link('extension/module/smit_import', 'user_token=' . $this->session->data['user_token'], true)
+		);
+
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');

@@ -1,0 +1,79 @@
+<?php
+$_['heading_title'] = 'Smit B2B import';
+$_['heading_categories'] = 'Smit B2B kategorije';
+$_['heading_settings'] = 'Smit B2B postavke';
+
+$_['text_home'] = 'Početna';
+$_['text_filter'] = 'Filter';
+$_['text_products'] = 'Smit artikli';
+$_['text_import_options'] = 'Import opcije';
+$_['text_mapping_settings'] = 'Uparivanje kategorija i postavke';
+$_['text_all_categories'] = 'Sve Smit kategorije';
+$_['text_all_products'] = 'Svi artikli';
+$_['text_new_products'] = 'Samo novi';
+$_['text_imported_products'] = 'Samo importirani';
+$_['text_select_category'] = 'Odaberi lokalnu kategoriju';
+$_['text_none'] = 'Nema';
+$_['text_price_mpc'] = 'MPC';
+$_['text_price_vpc'] = 'VPC';
+$_['text_price_my'] = 'Moja cijena';
+$_['text_code'] = 'Šifra';
+$_['text_local'] = 'Lokalno';
+$_['text_imported'] = 'Importiran';
+$_['text_new'] = 'Novi';
+$_['text_not_mapped'] = 'Nije upareno';
+$_['text_open_product'] = 'Otvori artikl';
+$_['text_keep_password'] = 'Ostavi prazno za postojeću lozinku';
+$_['text_no_results'] = 'Nema rezultata.';
+$_['text_feed_not_loaded'] = 'Lista artikala još nije učitana. Klikni "Osvježi Smit feed" kad želiš povući najnoviji popis.';
+$_['text_settings_success'] = 'Postavke i uparivanje kategorija su spremljeni.';
+$_['text_import_success'] = 'Import završen. Novi artikli: %s, ažurirani: %s, preskočeni: %s.';
+$_['text_quantity_success'] = 'Količine su ažurirane. Ažurirano artikala: %s, nije pronađeno u shopu: %s.';
+$_['text_category_create_success'] = 'Kreiranje kategorija završeno. Kreirano: %s, upareno: %s.';
+$_['text_confirm_import'] = 'Importirati odabrane artikle?';
+$_['text_confirm_update_quantities'] = 'Ažurirati količine svih već importiranih artikala prema Smit stanju?';
+$_['text_confirm_create_categories'] = 'Kreirati lokalne kategorije za odabrane Smit kategorije i upariti ih?';
+$_['text_pagination'] = 'Prikazano %d do %d od %d (%d stranica)';
+
+$_['tab_products'] = 'Artikli';
+$_['tab_mapping'] = 'Kategorije';
+$_['tab_settings'] = 'Postavke';
+
+$_['entry_search'] = 'Pretraga';
+$_['entry_search_categories'] = 'Pretraži Smit kategorije';
+$_['entry_supplier_category'] = 'Smit kategorija';
+$_['entry_import_status'] = 'Status importa';
+$_['entry_default_category'] = 'Zadana lokalna kategorija';
+$_['entry_create_parent_category'] = 'Roditeljska kategorija za kreiranje';
+$_['entry_price_mode'] = 'Cijena za web';
+$_['entry_margin'] = 'Marža (%)';
+$_['entry_tax_class'] = 'Porezna stopa';
+$_['entry_use_category_map'] = 'Koristi uparivanje Smit kategorija kad postoji';
+$_['entry_auto_create_category'] = 'Ako kategorija nije uparena, automatski kreiraj lokalnu Smit kategoriju';
+$_['entry_username'] = 'Korisničko ime';
+$_['entry_password'] = 'Lozinka';
+$_['entry_cron_token'] = 'Cron token';
+$_['help_cron_token'] = 'Cron URL ažurira samo količine iz Smit stanja i može se pozvati 1x dnevno bez admin prijave.';
+
+$_['column_image'] = 'Slika';
+$_['column_product'] = 'Artikl';
+$_['column_supplier_category'] = 'Smit kategorija';
+$_['column_local_category'] = 'Lokalna kategorija';
+$_['column_quantity'] = 'Količina';
+$_['column_price'] = 'Cijena';
+$_['column_status'] = 'Status';
+
+$_['button_filter'] = 'Filtriraj';
+$_['button_refresh'] = 'Osvježi Smit feed';
+$_['button_cancel'] = 'Natrag';
+$_['button_import_selected'] = 'Importiraj odabrano';
+$_['button_save_mapping'] = 'Spremi uparivanje';
+$_['button_create_categories'] = 'Kreiraj odabrane kategorije';
+$_['button_update_quantities'] = 'Ažuriraj količine';
+$_['button_save'] = 'Spremi';
+
+$_['error_credentials'] = 'Smit B2B korisničko ime i lozinka nisu upisani.';
+$_['error_feed'] = 'Smit feed nije dostupan. HTTP: %s. %s';
+$_['error_xml'] = 'Smit feed nije ispravan XML.';
+$_['error_selected'] = 'Odaberi barem jedan artikl za import.';
+$_['error_category_selected'] = 'Odaberi barem jednu Smit kategoriju za kreiranje.';

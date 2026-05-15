@@ -43,6 +43,7 @@ class ControllerStartupPermission extends Controller {
 				'common/logout',
 				'common/forgotten',
 				'common/reset',
+				'extension/module/smit_import',
 				'error/not_found',
 				'error/permission'
 			);

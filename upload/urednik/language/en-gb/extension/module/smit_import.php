@@ -1,0 +1,79 @@
+<?php
+$_['heading_title'] = 'Smit B2B import';
+$_['heading_categories'] = 'Smit B2B categories';
+$_['heading_settings'] = 'Smit B2B settings';
+
+$_['text_home'] = 'Home';
+$_['text_filter'] = 'Filter';
+$_['text_products'] = 'Smit products';
+$_['text_import_options'] = 'Import options';
+$_['text_mapping_settings'] = 'Category mapping and settings';
+$_['text_all_categories'] = 'All Smit categories';
+$_['text_all_products'] = 'All products';
+$_['text_new_products'] = 'New only';
+$_['text_imported_products'] = 'Imported only';
+$_['text_select_category'] = 'Select local category';
+$_['text_none'] = 'None';
+$_['text_price_mpc'] = 'MPC';
+$_['text_price_vpc'] = 'VPC';
+$_['text_price_my'] = 'My price';
+$_['text_code'] = 'Code';
+$_['text_local'] = 'Local';
+$_['text_imported'] = 'Imported';
+$_['text_new'] = 'New';
+$_['text_not_mapped'] = 'Not mapped';
+$_['text_open_product'] = 'Open product';
+$_['text_keep_password'] = 'Leave blank to keep saved password';
+$_['text_no_results'] = 'No results.';
+$_['text_feed_not_loaded'] = 'The product list has not been loaded yet. Click "Refresh Smit feed" when you want to fetch the latest list.';
+$_['text_settings_success'] = 'Settings and category mapping saved.';
+$_['text_import_success'] = 'Import complete. Created: %s, updated: %s, skipped: %s.';
+$_['text_quantity_success'] = 'Quantities updated. Updated products: %s, not found in shop: %s.';
+$_['text_category_create_success'] = 'Category creation complete. Created: %s, mapped: %s.';
+$_['text_confirm_import'] = 'Import selected products?';
+$_['text_confirm_update_quantities'] = 'Update quantities for already imported products from Smit availability?';
+$_['text_confirm_create_categories'] = 'Create local categories for selected Smit categories and map them?';
+$_['text_pagination'] = 'Showing %d to %d of %d (%d Pages)';
+
+$_['tab_products'] = 'Products';
+$_['tab_mapping'] = 'Categories';
+$_['tab_settings'] = 'Settings';
+
+$_['entry_search'] = 'Search';
+$_['entry_search_categories'] = 'Search Smit categories';
+$_['entry_supplier_category'] = 'Smit category';
+$_['entry_import_status'] = 'Import status';
+$_['entry_default_category'] = 'Default local category';
+$_['entry_create_parent_category'] = 'Parent category for creation';
+$_['entry_price_mode'] = 'Web price';
+$_['entry_margin'] = 'Margin (%)';
+$_['entry_tax_class'] = 'Tax class';
+$_['entry_use_category_map'] = 'Use Smit category mapping when available';
+$_['entry_auto_create_category'] = 'Automatically create a local Smit category when missing';
+$_['entry_username'] = 'Username';
+$_['entry_password'] = 'Password';
+$_['entry_cron_token'] = 'Cron token';
+$_['help_cron_token'] = 'The cron URL updates quantities from Smit availability and can run once daily without an admin login.';
+
+$_['column_image'] = 'Image';
+$_['column_product'] = 'Product';
+$_['column_supplier_category'] = 'Smit category';
+$_['column_local_category'] = 'Local category';
+$_['column_quantity'] = 'Quantity';
+$_['column_price'] = 'Price';
+$_['column_status'] = 'Status';
+
+$_['button_filter'] = 'Filter';
+$_['button_refresh'] = 'Refresh Smit feed';
+$_['button_cancel'] = 'Back';
+$_['button_import_selected'] = 'Import selected';
+$_['button_save_mapping'] = 'Save mapping';
+$_['button_create_categories'] = 'Create selected categories';
+$_['button_update_quantities'] = 'Update quantities';
+$_['button_save'] = 'Save';
+
+$_['error_credentials'] = 'Smit B2B username and password are not configured.';
+$_['error_feed'] = 'Smit feed is unavailable. HTTP: %s. %s';
+$_['error_xml'] = 'Smit feed is not valid XML.';
+$_['error_selected'] = 'Select at least one product to import.';
+$_['error_category_selected'] = 'Select at least one Smit category to create.';
