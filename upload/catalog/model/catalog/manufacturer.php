@@ -1,11 +1,23 @@
 <?php
 class ModelCatalogManufacturer extends Model {
 	public function getManufacturer($manufacturer_id) {
-		if ($this->hasManufacturerDescriptionTable()) {
-			$query = $this->db->query("SELECT m.*, m2s.*, md.description FROM " . DB_PREFIX . "manufacturer m LEFT JOIN " . DB_PREFIX . "manufacturer_to_store m2s ON (m.manufacturer_id = m2s.manufacturer_id) LEFT JOIN " . DB_PREFIX . "manufacturer_description md ON (m.manufacturer_id = md.manufacturer_id AND md.language_id = '" . (int)$this->config->get('config_language_id') . "') WHERE m.manufacturer_id = '" . (int)$manufacturer_id . "' AND m2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
-		} else {
-			$query = $this->db->query("SELECT m.*, m2s.*, '' AS description FROM " . DB_PREFIX . "manufacturer m LEFT JOIN " . DB_PREFIX . "manufacturer_to_store m2s ON (m.manufacturer_id = m2s.manufacturer_id) WHERE m.manufacturer_id = '" . (int)$manufacturer_id . "' AND m2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+		$description_sql = "'' AS description";
+		$description_join = '';
+		$has_description_table = $this->hasManufacturerDescriptionTable();
+		$has_brand_description = $this->hasManufacturerColumn('brand_description');
+
+		if ($has_description_table) {
+			$description_join = " LEFT JOIN " . DB_PREFIX . "manufacturer_description md ON (m.manufacturer_id = md.manufacturer_id AND md.language_id = '" . (int)$this->config->get('config_language_id') . "')";
+			$description_sql = "COALESCE(md.description, '') AS description";
 		}
+
+		if ($has_description_table && $has_brand_description) {
+			$description_sql = "COALESCE(NULLIF(md.description, ''), m.brand_description, '') AS description";
+		} elseif ($has_brand_description) {
+			$description_sql = "COALESCE(m.brand_description, '') AS description";
+		}
+
+		$query = $this->db->query("SELECT m.*, m2s.*, " . $description_sql . " FROM " . DB_PREFIX . "manufacturer m LEFT JOIN " . DB_PREFIX . "manufacturer_to_store m2s ON (m.manufacturer_id = m2s.manufacturer_id)" . $description_join . " WHERE m.manufacturer_id = '" . (int)$manufacturer_id . "' AND m2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
 
 		return $query->row;
 	}
@@ -70,5 +82,16 @@ class ModelCatalogManufacturer extends Model {
 		}
 
 		return $exists;
+	}
+
+	private function hasManufacturerColumn($column) {
+		static $columns = array();
+
+		if (!isset($columns[$column])) {
+			$query = $this->db->query("SHOW COLUMNS FROM `" . DB_PREFIX . "manufacturer` LIKE '" . $this->db->escape($column) . "'");
+			$columns[$column] = (bool)$query->num_rows;
+		}
+
+		return $columns[$column];
 	}
 }

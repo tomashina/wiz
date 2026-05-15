@@ -22,6 +22,10 @@
     <div id="content" class="<?php echo $class; ?>">
     <?php echo $content_top; ?>
       <h1 id="page-title"><?php echo $heading_title; ?></h1>
+
+      <?php if (!empty($description)) { ?>
+      <div class="category-description"><?php echo $description; ?></div>
+      <?php } ?>
       
       <?php echo $position_category_top; ?>
       
