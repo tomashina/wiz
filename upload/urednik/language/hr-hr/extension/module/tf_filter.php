@@ -1,0 +1,75 @@
+<?php
+$_['heading_title']              = 'Flexi filter';
+
+$_['text_extension']             = 'Proširenja';
+$_['text_success']               = 'Uspješno: izmijenili ste Flexi filter modul.';
+$_['text_edit']                  = 'Uredi Flexi filter modul';
+$_['text_general']               = 'Općenito';
+$_['text_radio']                 = 'Radio';
+$_['text_checkbox']              = 'Checkbox';
+$_['text_select']                = 'Select';
+$_['text_range']                 = 'Raspon';
+$_['text_link']                  = 'Link';
+$_['text_text']                  = 'Tekst';
+$_['text_image']                 = 'Slika';
+$_['text_both']                  = 'Slika i tekst';
+$_['text_filter']                = 'Filter';
+$_['text_always']                = 'Uvijek';
+$_['text_on_demand']             = 'Po potrebi';
+$_['text_setting']               = 'Postavke';
+$_['text_filter_column']         = 'Stupci grupa filtera';
+$_['text_scroll']                = 'Scroll';
+$_['text_more']                  = 'Prikaži više';
+$_['text_filter_value']          = 'Vrijednost filtera';
+$_['text_hide']                  = 'Sakrij';
+
+$_['entry_module_name']          = 'Naziv modula';
+$_['entry_status']               = 'Status';
+$_['entry_title']                = 'Naslov';
+$_['entry_name']                 = 'Naziv';
+$_['entry_price']                = 'Cijena';
+$_['entry_sub_category']         = 'Podkategorija';
+$_['entry_manufacturer']         = 'Proizvođač';
+$_['entry_availability']         = 'Dostupnost';
+$_['entry_stock_status']         = 'Status zalihe';
+$_['entry_discount']             = 'Popust';
+$_['entry_rating']               = 'Ocjena';
+$_['entry_custom']               = 'Atributi i opcije';
+$_['entry_sort_order']           = 'Redoslijed';
+$_['entry_collapse']             = 'Zatvoreno po defaultu';
+$_['entry_input_type']           = 'Tip unosa';
+$_['entry_list_type']            = 'Tip liste';
+$_['entry_image_width']          = 'Širina slike';
+$_['entry_image_height']         = 'Visina slike';
+$_['entry_filter']               = 'Filter';
+$_['entry_search']               = 'Pretraga';
+$_['entry_count_product']        = 'Broj proizvoda';
+$_['entry_placeholder']          = 'Placeholder';
+$_['entry_require_category']     = 'Traži kategoriju';
+$_['entry_show_search']          = 'Prikaži pretragu';
+$_['entry_cache']                = 'Cache';
+$_['entry_ajax']                 = 'Ajax';
+$_['entry_delay']                = 'Odgoda';
+$_['entry_reset_all']            = 'Očisti sve';
+$_['entry_reset_group']          = 'Očisti grupu';
+$_['entry_description']          = 'Pretraži u opisu';
+$_['entry_column_xs']            = 'Mobiteli';
+$_['entry_column_sm']            = 'Tableti';
+$_['entry_column_md']            = 'Laptopi';
+$_['entry_column_lg']            = 'Desktop';
+$_['entry_overflow']             = 'Overflow';
+$_['entry_hide_zero_filter']     = 'Vrijednosti bez proizvoda';
+
+$_['tab_layout']                 = 'Layout';
+
+$_['help_discount']              = 'Popust prema akcijskoj cijeni.';
+$_['help_custom']                = 'Custom filter prema atributima, opcijama i filterima. <a href=\'%s\'>Kreiraj sada</a>.';
+$_['help_filter']                = 'Prikaži OpenCart default filter. <a href=\'%s\'>Kreiraj sada</a>.';
+$_['help_require_category']      = 'Prikaži filtere samo kada je odabrana kategorija.';
+$_['help_delay']                 = 'Odgoda filtriranja nakon odabira.';
+$_['help_stock_status']          = 'Lista statusa za proizvode koji nisu na zalihi.';
+$_['help_hide_zero_filter']      = 'Kako prikazati vrijednosti filtera koje nemaju proizvode.';
+
+$_['error_warning']              = 'Upozorenje: provjerite formu.';
+$_['error_permission']           = 'Upozorenje: nemate ovlasti za izmjenu Flexi filter modula.';
+$_['error_module_name']          = 'Naziv modula mora imati između 3 i 64 znaka.';

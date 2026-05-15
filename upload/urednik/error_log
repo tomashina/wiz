@@ -1,0 +1,11 @@
+[09-Jul-2024 06:27:34 UTC] PHP Notice:  Error: Could not load config urednik! in /home/amds/storagewiz/modification/system/library/config.php on line 63
+[09-Jul-2024 06:27:35 UTC] PHP Notice:  Error: Could not load config urednik! in /home/amds/storagewiz/modification/system/library/config.php on line 63
+[09-Jul-2024 06:27:36 UTC] PHP Notice:  Error: Could not load config urednik! in /home/amds/storagewiz/modification/system/library/config.php on line 63
+[09-Apr-2026 07:08:47 Europe/Zagreb] PHP Fatal error:  Uncaught Exception: Error: Duplicate entry '11863-13-2' for key 'oc_product_attribute.PRIMARY'<br />Error No: 1062<br />INSERT INTO oc_product_attribute SET product_id = '11863', attribute_id = '13', language_id = '2', text = 'stolni' in /home/amds/storagewiz/modification/system/library/db/mysqli.php:44
+Stack trace:
+#0 /home/amds/storagewiz/modification/system/library/db.php(51): DB\MySQLi->query('INSERT INTO oc_...')
+#1 /home/amds/wiz.agmedia.rocks/urednik/model/extension/module/product_quick_edit.php(1319): DB->query('INSERT INTO oc_...')
+#2 /home/amds/storagewiz/modification/system/engine/loader.php(248): ModelExtensionModuleProductQuickEdit->quickEditProduct('11863', 'attributes', 'stolni', Array)
+#3 /home/amds/wiz.agmedia.rocks/system/engine/proxy.php(47): Loader->{closure}(Array, Array)
+#4 /home/amds/wiz.agmedia.rocks/urednik/controller/extension/module/catalog/product.php(1590): Proxy->__call('quickEditProduc...', Array)
+#5 /home/amds/storagewiz/modification/system/engine/action.php(79): ControllerExte in /home/amds/storagewiz/modification/system/library/db/mysqli.php on line 44

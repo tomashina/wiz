@@ -1,0 +1,8 @@
+<div class="full-search-wrapper">
+<div class="search-field search-main">
+<input type="text" name="search" value="<?php echo $search; ?>" placeholder="<?php echo $basel_text_search; ?>" class="form-control main-search-input" />
+</div>
+<button type="button" class="search-button do-search main" aria-label="<?php echo $basel_text_search; ?>">
+<i class="fa fa-search"></i>
+</button>
+</div>

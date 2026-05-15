@@ -1,0 +1,38 @@
+<div class="main-menu-wrapper hidden-md hidden-lg">
+<button type="button" class="mobile-menu-close menu-closer" aria-label="Close">
+    <i class="fa fa-times"></i>
+</button>
+<ul class="mobile-top">
+    <li class="mobile-lang-curr"></li>
+</ul>
+{% if primary_menu %}
+<ul class="categories">
+{% if primary_menu == 'oc' %}
+<!-- Default menu -->
+{{ default_menu }}
+{% elseif primary_menu is defined %}
+<!-- Mega menu -->
+{% for key, row in primary_menu_mobile %}
+{% include 'basel/template/common/menus/mega_menu.twig' %}
+{% endfor %}
+{% endif %}
+</ul>
+{% endif %}
+{% if secondary_menu %}
+<ul class="categories">
+    {% if secondary_menu == 'oc' %}
+        <!-- Default menu -->
+        {{ default_menu }}
+    {% elseif secondary_menu is defined %}
+        <!-- Mega menu -->
+        {% for key, row in secondary_menu_mobile %}
+        	{% include 'basel/template/common/menus/mega_menu.twig' %}
+        {% endfor %}
+    {% endif %}
+</ul>
+{% endif %}
+<ul class="categories">
+    {% include 'basel/template/common/static_links.twig' %}
+</ul>
+</div>
+<span class="body-cover menu-closer"></span>

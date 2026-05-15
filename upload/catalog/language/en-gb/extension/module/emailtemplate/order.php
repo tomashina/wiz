@@ -1,0 +1,49 @@
+<?php
+
+$_['text_admin_order_link'] = 'Kako bi vidjeli vašu narudžbu molimo kliknite na link dolje:';
+$_['text_affiliate'] = 'Affiliate:';
+$_['text_comment'] = 'Komentar narudžbe';
+$_['text_customer_group'] = 'Grupa kupaca:';
+$_['text_date_added'] = 'Datum dodavanja:';
+$_['text_email'] = 'E-mail:';
+$_['text_footer'] = 'Molimo odgovorite na ovaj mail ako imate nekakvih pitanja.';
+$_['text_greeting'] = 'Zahvaljujemo na vašem interesu na {{ store_name }} proizvodima. Vaša narudžba je zaprimljena i biti će uskoro obrađena.';
+$_['text_heading'] = 'Potvrda narudžbe';
+$_['text_instruction'] = 'Upute';
+$_['text_invoice_no'] = 'Račun br.:';
+$_['text_ip'] = 'IP adresa:';
+$_['text_model'] = 'Model';
+$_['text_order_detail'] = 'Detalji narudžbe';
+$_['text_order_id'] = 'Narudžba br.:';
+$_['text_order_link'] = 'Kako bi vidjeli narudžbu kliknite na link dolje:';
+$_['text_order_status'] = 'Status narudžbe';
+$_['text_order_total'] = 'Ukupno';
+$_['text_payment_address'] = 'Adresa plaćanja';
+$_['text_payment_method'] = 'Način plaćanja:';
+$_['text_preheader'] = 'Zahvaljujemo na narudžbi na {{ store_name }}.';
+$_['text_price'] = 'Cijena';
+$_['text_product'] = 'Proizvod';
+$_['text_product_id'] = 'Proizvod br.:';
+$_['text_products'] = 'Proizvodi';
+$_['text_quantity'] = 'Količina';
+$_['text_shipping_address'] = 'Adresa za dostavu';
+$_['text_shipping_method'] = 'Način dostave:';
+$_['text_sku'] = 'SKU: ';
+$_['text_stock_quantity'] = 'Na skladištu:';
+$_['text_subject_admin'] = '{{ store_name }} - Narudžba {{ order_id }}: {{ order_subject_products }}';
+$_['text_subject_customer'] = '{{ store_name }} - Narudžba od {{ order_subject_products }}';
+$_['text_telephone'] = 'Telefon:';
+$_['text_total'] = 'Ukupno';
+$_['text_update_comment'] = 'Komentari narudžbe:';
+$_['text_update_date_added'] = 'Datum narudžbe:';
+$_['text_update_footer'] = 'Molimo odgovorite na ovaj mail ako imate nekakvih pitanja.';
+$_['text_update_link'] = 'Kako bi vidjeli vašu narudžbu molimo kliknite na link dolje:';
+$_['text_update_order'] = 'Narudžba br:';
+$_['text_update_order_invoice_no'] = 'Račun br:';
+$_['text_update_order_status'] = 'Vaša narudžba je ažurirana na slijedeći status:';
+$_['text_update_preheader'] = 'Vaša narudžba je ažurirana na {{ order_status }}';
+$_['text_update_subject'] = 'Ažuriranje narudžbe';
+
+// Uncomment to replace link with text. Note: this can effect spam rating if visible link is different to real link.
+//$_['button_order_link']         = 'Click here to view order details';
+//$_['button_admin_order_link']   = 'Click here to view order details';

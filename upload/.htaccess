@@ -1,0 +1,413 @@
+# 1.To use URL Alias you need to be running apache with mod_rewrite enabled.
+
+# 2. In your opencart directory rename htaccess.txt to .htaccess.
+
+# For any support issues please visit: http://www.opencart.com
+
+Options +FollowSymlinks
+
+# Prevent Directory listing
+Options -Indexes
+
+# Prevent Direct Access to files
+<FilesMatch "(?i)((\.tpl|\.twig|\.ini|\.log|(?<!robots)\.txt))">
+ Require all denied
+## For apache 2.2 and older, replace "Require all denied" with these two lines :
+# Order deny,allow
+# Deny from all
+</FilesMatch>
+
+# SEO URL Settings
+RewriteEngine On
+# If your opencart installation does not run on the main web folder make sure you folder it does run in ie. / becomes /shop/
+
+RewriteBase /
+
+RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTP_HOST} !^wiz\.test$ [NC]
+RewriteRule ^(.*) https://wiz.test%{REQUEST_URI} [R=301,L,NE]
+
+RewriteRule ^sitemap.xml$ index.php?route=extension/feed/google_sitemap [L]
+RewriteRule ^googlebase.xml$ index.php?route=extension/feed/google_base [L]
+RewriteRule ^system/storage/(.*) index.php?route=error/not_found [L]
+
+RewriteRule ^manufacturer index.php?route=product/manufacturer [L]
+RewriteRule ^akcije index.php?route=product/special [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !.*\.(ico|gif|jpg|jpeg|png|js|css)
+RewriteRule ^([^?]*) index.php?_route_=$1 [L,QSA]
+
+### Additional Settings that may need to be enabled for some servers
+### Uncomment the commands by removing the # sign in front of it.
+### If you get an "Internal Server Error 500" after enabling any of the following settings, restore the # as this means your host doesn't allow that.
+
+# 1. If your cart only allows you to add one item at a time, it is possible register_globals is on. This may work to disable it:
+# php_flag register_globals off
+
+# 2. If your cart has magic quotes enabled, This may work to disable it:
+# php_flag magic_quotes_gpc Off
+
+# 3. Set max upload file size. Most hosts will limit this and not allow it to be overridden but you can try
+# php_value upload_max_filesize 999M
+
+# 4. set max post size. uncomment this line if you have a lot of product options or are getting errors where forms are not saving all fields
+# php_value post_max_size 999M
+
+# 5. set max time script can take. uncomment this line if you have a lot of product options or are getting errors where forms are not saving all fields
+# php_value max_execution_time 200
+
+# 6. set max time for input to be recieved. Uncomment this line if you have a lot of product options or are getting errors where forms are not saving all fields
+# php_value max_input_time 200
+
+# 7. disable open_basedir limitations
+# php_admin_value open_basedir none
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+<IfModule php7_module>
+   php_value default_charset "UTF-8"
+   php_value memory_limit 256M
+   php_value max_execution_time 36000
+   php_value upload_max_filesize 999M
+   php_value mysql.connect_timeout 20
+   php_flag session.auto_start Off
+   php_flag session.use_only_cookies On
+   php_flag session.use_cookies On
+   php_flag session.use_trans_sid Off
+   php_value session.cookie_httponly "1"
+   php_value session.gc_maxlifetime 3600
+   php_flag display_errors Off
+   php_value max_input_time 600
+   php_value max_input_vars 1000
+   php_value post_max_size 8M
+   php_flag zlib.output_compression Off
+</IfModule>
+<IfModule lsapi_module>
+   php_value default_charset "UTF-8"
+   php_value memory_limit 256M
+   php_value max_execution_time 36000
+   php_value upload_max_filesize 999M
+   php_value mysql.connect_timeout 20
+   php_flag session.auto_start Off
+   php_flag session.use_only_cookies On
+   php_flag session.use_cookies On
+   php_flag session.use_trans_sid Off
+   php_value session.cookie_httponly "1"
+   php_value session.gc_maxlifetime 3600
+   php_flag display_errors Off
+   php_value max_input_time 600
+   php_value max_input_vars 1000
+   php_value post_max_size 8M
+   php_flag zlib.output_compression Off
+</IfModule>
+# END cPanel-generated php ini directives, do not edit
+
+<Files 403.shtml>
+order allow,deny
+allow from all
+</Files>
+
+deny from 193.3.19.162
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php74” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php74___lsphp .php .php7 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
+
+RewriteCond %{HTTP_REFERER} !^http://agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://amds.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://amds.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://amds.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://amds.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://amds.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://amds.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://atelierbebes.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://atelierbebes.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://atelierbebes.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://atelierbebes.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://aukcije4a.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://aukcije4a.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://aukcije4a.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://aukcije4a.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://balidoo.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://balidoo.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://balidooweb.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://balidooweb.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://bebes.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://bebes.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://chipoteka.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://chipoteka.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://cropins.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://cropins.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://deluxart.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://deluxart.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://koridor-gallery.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://koridor-gallery.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://koridor-gallery.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://koridor-gallery.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://koridor.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://koridor.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://kutina.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://kutina.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://kutina.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://kutina.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://ndesign.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://ndesign.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://penezic.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://penezic.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://pharmad.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://pharmad.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://pneu-max.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://pneu-max.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://pneu-max.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://pneu-max.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://presta.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://presta.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://reprograv.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://reprograv.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://socializertravel.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://socializertravel.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://socializertravel.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://socializertravel.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://wiz.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://wiz.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://wizz.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://wizz.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://wordpress.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://wordpress.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.amds.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.amds.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.amds.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.amds.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.amds.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.amds.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.atelierbebes.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.atelierbebes.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.atelierbebes.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.atelierbebes.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.aukcije4a.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.aukcije4a.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.aukcije4a.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.aukcije4a.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.balidoo.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.balidoo.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.balidooweb.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.balidooweb.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.bebes.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.bebes.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.chipoteka.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.chipoteka.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.cropins.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.cropins.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.deluxart.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.deluxart.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.koridor-gallery.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.koridor-gallery.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.koridor-gallery.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.koridor-gallery.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.koridor.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.koridor.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.kutina.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.kutina.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.kutina.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.kutina.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.ndesign.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.ndesign.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.penezic.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.penezic.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.pharmad.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.pharmad.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.pneu-max.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.pneu-max.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.pneu-max.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.pneu-max.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.presta.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.presta.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.reprograv.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.reprograv.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.socializertravel.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.socializertravel.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.socializertravel.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.socializertravel.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.wiz.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.wiz.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.wizz.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.wizz.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.wordpress.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.wordpress.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zagreb-airport.aero/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zagreb-airport.aero$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zagreb-airport.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zagreb-airport.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zlz-zagreb-airport.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zlz-zagreb-airport.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zlz-zagreb-airport.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zlz-zagreb-airport.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zlz.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://www.zlz.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zagreb-airport.aero/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zagreb-airport.aero$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zagreb-airport.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zagreb-airport.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zlz-zagreb-airport.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zlz-zagreb-airport.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zlz-zagreb-airport.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zlz-zagreb-airport.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zlz.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^http://zlz.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://amds.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://amds.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://amds.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://amds.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://amds.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://amds.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://atelierbebes.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://atelierbebes.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://atelierbebes.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://atelierbebes.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://aukcije4a.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://aukcije4a.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://aukcije4a.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://aukcije4a.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://balidoo.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://balidoo.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://balidooweb.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://balidooweb.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://bebes.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://bebes.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://chipoteka.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://chipoteka.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://cropins.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://cropins.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://deluxart.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://deluxart.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://koridor-gallery.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://koridor-gallery.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://koridor-gallery.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://koridor-gallery.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://koridor.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://koridor.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://kutina.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://kutina.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://kutina.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://kutina.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://ndesign.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://ndesign.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://penezic.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://penezic.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://pharmad.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://pharmad.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://pneu-max.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://pneu-max.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://pneu-max.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://pneu-max.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://presta.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://presta.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://reprograv.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://reprograv.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://socializertravel.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://socializertravel.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://socializertravel.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://socializertravel.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://wiz.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://wiz.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://wizz.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://wizz.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://wordpress.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://wordpress.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.amds.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.amds.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.amds.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.amds.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.amds.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.amds.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.atelierbebes.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.atelierbebes.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.atelierbebes.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.atelierbebes.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.aukcije4a.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.aukcije4a.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.aukcije4a.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.aukcije4a.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.balidoo.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.balidoo.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.balidooweb.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.balidooweb.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.bebes.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.bebes.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.chipoteka.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.chipoteka.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.cropins.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.cropins.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.deluxart.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.deluxart.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.koridor-gallery.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.koridor-gallery.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.koridor-gallery.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.koridor-gallery.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.koridor.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.koridor.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.kutina.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.kutina.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.kutina.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.kutina.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.ndesign.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.ndesign.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.penezic.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.penezic.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.pharmad.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.pharmad.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.pneu-max.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.pneu-max.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.pneu-max.hr.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.pneu-max.hr.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.presta.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.presta.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.reprograv.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.reprograv.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.socializertravel.com/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.socializertravel.com$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.socializertravel.com.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.socializertravel.com.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.wiz.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.wiz.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://wiz.test/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://wiz.test$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.wizz.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.wizz.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.wordpress.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.wordpress.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zagreb-airport.aero/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zagreb-airport.aero$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zagreb-airport.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zagreb-airport.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zlz-zagreb-airport.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zlz-zagreb-airport.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zlz-zagreb-airport.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zlz-zagreb-airport.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zlz.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://www.zlz.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zagreb-airport.aero/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zagreb-airport.aero$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zagreb-airport.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zagreb-airport.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zlz-zagreb-airport.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zlz-zagreb-airport.agmedia.rocks$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zlz-zagreb-airport.hr/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zlz-zagreb-airport.hr$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zlz.agmedia.rocks/.*$      [NC]
+RewriteCond %{HTTP_REFERER} !^https://zlz.agmedia.rocks$      [NC]
+RewriteRule .*\.(gif|bmp)$ - [F,NC]
