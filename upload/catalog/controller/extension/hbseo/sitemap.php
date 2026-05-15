@@ -257,7 +257,7 @@ class ControllerExtensionHbseoSitemap extends Controller {
 	}
 	
 	protected function getProducts($start=0, $limit=100){
-		$records = $this->db->query("SELECT p.product_id, pd.name, p.image, pd.tag, p.date_modified FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "' GROUP BY p.product_id ORDER BY p.date_modified LIMIT ".(int)$start.",".(int)$limit);
+		$records = $this->db->query("SELECT p.product_id, pd.name, p.image, pd.tag, p.date_modified FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "' GROUP BY p.product_id ORDER BY p.date_modified LIMIT ".(int)$start.",".(int)$limit);
 		if ($records->rows) {
 			return $records->rows;
 		}else{
@@ -649,7 +649,7 @@ class ControllerExtensionHbseoSitemap extends Controller {
 	
 	//FOR INDEX
 	private function getTotalProducts(){		
-		$records = $this->db->query("SELECT count(*) as total FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+		$records = $this->db->query("SELECT count(*) as total FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
 		//$records = $this->db->query("SELECT p.product_id FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
 		//$records = $this->db->query("SELECT count(*) as total FROM " . DB_PREFIX . "product WHERE status = '1' AND p.date_available <= NOW()");
 		return $records->row['total'];
@@ -666,10 +666,10 @@ class ControllerExtensionHbseoSitemap extends Controller {
 
 	private function lastupdatedProduct($start=0, $limit=1){
 		if ($start == 'x') {
-			$records = $this->db->query("SELECT `date_modified` FROM " . DB_PREFIX . "product WHERE status = 1 ORDER BY date_modified DESC LIMIT 1");
+			$records = $this->db->query("SELECT `date_modified` FROM " . DB_PREFIX . "product WHERE status = 1 AND quantity > 0 ORDER BY date_modified DESC LIMIT 1");
 			return $records->row['date_modified'];
 		}else{
-			$records = $this->db->query("SELECT `date_modified` FROM " . DB_PREFIX . "product WHERE status = 1 ORDER BY date_modified LIMIT ".(int)$start.",".(int)$limit);
+			$records = $this->db->query("SELECT `date_modified` FROM " . DB_PREFIX . "product WHERE status = 1 AND quantity > 0 ORDER BY date_modified LIMIT ".(int)$start.",".(int)$limit);
 			if ($records->rows) {
 				$array = $records->rows;
 				$last_item = $array[count($array)-1];

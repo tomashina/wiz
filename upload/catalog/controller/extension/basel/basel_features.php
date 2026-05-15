@@ -477,24 +477,81 @@ public function subscribe() {
 	
 		$json = array();
 		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
-			if(!filter_var($this->request->post['email'], FILTER_VALIDATE_EMAIL)){
+			if(!isset($this->request->post['email']) || !filter_var($this->request->post['email'], FILTER_VALIDATE_EMAIL)){
 				$json['error'] = $this->language->get('basel_subscribe_invalid_email');
 			}
 			if (!isset($json['error'])) {
 				$this->load->model('extension/basel/newsletter'); 
+				$customer_info = array();
+				$send_notification = false;
+
 			if($this->model_extension_basel_newsletter->checkRegistered($this->request->post)){
+				$customer_info = $this->model_extension_basel_newsletter->getRegisteredCustomer($this->request->post);
+				$send_notification = empty($customer_info['newsletter']);
 			   	$this->model_extension_basel_newsletter->UpdateRegistered($this->request->post,1);
 				$json['success'] = $this->language->get('basel_subscribe_success');
 			} else if ($this->model_extension_basel_newsletter->checkExist($this->request->post)){
 				$json['error'] = $this->language->get('basel_subscribe_email_exist');
 			} else {
 				$this->model_extension_basel_newsletter->subscribe($this->request->post);
+				$send_notification = true;
 				$json['success'] = $this->language->get('basel_subscribe_success');
-		   	} 
+		   	}
+
+			if (!empty($json['success']) && $send_notification) {
+				$this->sendNewsletterSubscribeNotification($this->request->post['email'], $customer_info);
+			}
 		  }
 		}
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
+}
+
+private function sendNewsletterSubscribeNotification($email, $customer_info = array()) {
+	try {
+		$store_name = html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8');
+		$ip = !empty($this->request->server['REMOTE_ADDR']) ? $this->request->server['REMOTE_ADDR'] : '';
+		$name = '';
+
+		if (!empty($customer_info['firstname']) || !empty($customer_info['lastname'])) {
+			$name = trim($customer_info['firstname'] . ' ' . $customer_info['lastname']);
+		}
+
+		$message = "Nova prijava na newsletter\n\n";
+		$message .= "Email: " . $email . "\n";
+
+		if ($name) {
+			$message .= "Kupac: " . $name . "\n";
+		}
+
+		if (!empty($customer_info['customer_id'])) {
+			$message .= "Customer ID: " . (int)$customer_info['customer_id'] . "\n";
+		}
+
+		if ($ip) {
+			$message .= "IP adresa: " . $ip . "\n";
+		}
+
+		$message .= "Trgovina: " . $store_name . "\n";
+
+		$mail = new Mail($this->config->get('config_mail_engine'));
+		$mail->parameter = $this->config->get('config_mail_parameter');
+		$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
+		$mail->smtp_username = $this->config->get('config_mail_smtp_username');
+		$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
+		$mail->smtp_port = $this->config->get('config_mail_smtp_port');
+		$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+
+		$mail->setTo('info@wiz.hr');
+		$mail->setFrom($this->config->get('config_email'));
+		$mail->setReplyTo($email);
+		$mail->setSender($store_name);
+		$mail->setSubject('Nova prijava na newsletter - ' . $store_name);
+		$mail->setText($message);
+		$mail->send();
+	} catch (Exception $e) {
+		$this->log->write('Newsletter notification mail error: ' . $e->getMessage());
+	}
 }
 	
 // Newsletter Unsubscribe

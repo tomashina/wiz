@@ -19,6 +19,7 @@ $_['entry_name']        = 'Manufacturer Name';
 $_['entry_store']       = 'Stores';
 $_['entry_keyword']     = 'Keyword';
 $_['entry_image']       = 'Image';
+$_['entry_description'] = 'Description';
 $_['entry_sort_order']  = 'Sort Order';
 
 // Error

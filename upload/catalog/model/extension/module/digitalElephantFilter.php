@@ -96,7 +96,7 @@ class ModelExtensionModuleDigitalElephantFilter extends Model
             $sql .= ' AND ((' . implode(') OR (', $conditions) . '))';
         }
 
-        $sql .= ") AS t GROUP BY t.tax_class_id) AS tr2 ON (tr2.tax_class_id = p.tax_class_id) WHERE p2s.store_id = '" . $this->config->get('config_store_id') . "' AND p.status = '1' AND p.date_available <= NOW() GROUP BY p.product_id) as min_max";
+        $sql .= ") AS t GROUP BY t.tax_class_id) AS tr2 ON (tr2.tax_class_id = p.tax_class_id) WHERE p2s.store_id = '" . $this->config->get('config_store_id') . "' AND p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() GROUP BY p.product_id) as min_max";
 
         $query = $this->db->query($sql);
 
@@ -121,7 +121,7 @@ class ModelExtensionModuleDigitalElephantFilter extends Model
         }
 
         $sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON(p.product_id=p2s.product_id) ";
-        $sql .= " WHERE  p.status = '1' AND p.date_available <= NOW() AND p2s.store_id =" . (int)$this->config->get('config_store_id');
+        $sql .= " WHERE  p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id =" . (int)$this->config->get('config_store_id');
 
         if (isset($data['category_id']) && $data['category_id']) {
             $sql .= " AND p2c.category_id IN
@@ -203,7 +203,7 @@ class ModelExtensionModuleDigitalElephantFilter extends Model
             $sql .= " LEFT JOIN " . DB_PREFIX . "product_special ps ON ( ps.product_id = p.product_id )";
         }
         $sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON(p.product_id=p2s.product_id) " .
-            " WHERE p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = " . (int)$this->config->get('config_store_id');
+            " WHERE p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id = " . (int)$this->config->get('config_store_id');
         if (isset($data['category_id']) && $data['category_id']) {
             $sql .= " AND p2c.category_id IN
                     (SELECT category_id FROM " . DB_PREFIX . "category_path WHERE path_id = " . $data['category_id'] . ")";
@@ -240,7 +240,7 @@ class ModelExtensionModuleDigitalElephantFilter extends Model
             " LEFT JOIN " . DB_PREFIX . "product_to_category p2c ON(c.category_id=p2c.category_id) " .
             " LEFT JOIN " . DB_PREFIX . "product p ON(p.product_id=p2c.`product_id`) " .
             " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON(p.product_id=p2s.product_id) " .
-            " WHERE c.status=1 AND c.parent_id = '" . (int)$category_id . "' AND cd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id =" . (int)$this->config->get('config_store_id');
+            " WHERE c.status=1 AND c.parent_id = '" . (int)$category_id . "' AND cd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id =" . (int)$this->config->get('config_store_id');
 
 
         $sql .= " GROUP BY cd.category_id ORDER BY ";
@@ -277,7 +277,7 @@ class ModelExtensionModuleDigitalElephantFilter extends Model
             $sql .= " LEFT JOIN " . DB_PREFIX . "product_special ps ON ( ps.product_id = p.product_id )";
         }
         $sql .= "LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON(p.product_id=p2s.product_id)
-	WHERE ovd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND od.language_id = '" . (int)$this->config->get('config_language_id') . "'  AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id =" . (int)$this->config->get('config_store_id');
+	WHERE ovd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND od.language_id = '" . (int)$this->config->get('config_language_id') . "'  AND p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id =" . (int)$this->config->get('config_store_id');
 
         if (isset($data['category_id']) && $data['category_id']) {
             $sql .= " AND p2c.category_id IN
@@ -573,7 +573,7 @@ class ModelExtensionModuleDigitalElephantFilter extends Model
             $store_id = $this->config->get('config_store_id');
         }
 
-        $sql .= " LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$store_id . "'";
+        $sql .= " LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$store_id . "'";
 
         //OPTIONS WHERE BEGIN
         if ($data['options']) {

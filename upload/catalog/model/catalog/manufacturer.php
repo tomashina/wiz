@@ -1,7 +1,11 @@
 <?php
 class ModelCatalogManufacturer extends Model {
 	public function getManufacturer($manufacturer_id) {
-		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "manufacturer m LEFT JOIN " . DB_PREFIX . "manufacturer_to_store m2s ON (m.manufacturer_id = m2s.manufacturer_id) WHERE m.manufacturer_id = '" . (int)$manufacturer_id . "' AND m2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+		if ($this->hasManufacturerDescriptionTable()) {
+			$query = $this->db->query("SELECT m.*, m2s.*, md.description FROM " . DB_PREFIX . "manufacturer m LEFT JOIN " . DB_PREFIX . "manufacturer_to_store m2s ON (m.manufacturer_id = m2s.manufacturer_id) LEFT JOIN " . DB_PREFIX . "manufacturer_description md ON (m.manufacturer_id = md.manufacturer_id AND md.language_id = '" . (int)$this->config->get('config_language_id') . "') WHERE m.manufacturer_id = '" . (int)$manufacturer_id . "' AND m2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+		} else {
+			$query = $this->db->query("SELECT m.*, m2s.*, '' AS description FROM " . DB_PREFIX . "manufacturer m LEFT JOIN " . DB_PREFIX . "manufacturer_to_store m2s ON (m.manufacturer_id = m2s.manufacturer_id) WHERE m.manufacturer_id = '" . (int)$manufacturer_id . "' AND m2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+		}
 
 		return $query->row;
 	}
@@ -55,5 +59,16 @@ class ModelCatalogManufacturer extends Model {
 
 			return $manufacturer_data;
 		}
+	}
+
+	private function hasManufacturerDescriptionTable() {
+		static $exists = null;
+
+		if ($exists === null) {
+			$query = $this->db->query("SHOW TABLES LIKE '" . $this->db->escape(DB_PREFIX . "manufacturer_description") . "'");
+			$exists = (bool)$query->num_rows;
+		}
+
+		return $exists;
 	}
 }

@@ -132,6 +132,7 @@ class ControllerProductManufacturer extends Controller {
 			);
 
 			$data['heading_title'] = $manufacturer_info['name'];
+			$data['description'] = !empty($manufacturer_info['description']) ? html_entity_decode($manufacturer_info['description'], ENT_QUOTES, 'UTF-8') : '';
 
 			$data['text_compare'] = sprintf($this->language->get('text_compare'), (isset($this->session->data['compare']) ? count($this->session->data['compare']) : 0));
 
