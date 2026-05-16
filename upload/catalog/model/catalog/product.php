@@ -421,6 +421,43 @@ class ModelCatalogProduct extends Model {
 		return $product_data;
 	}
 
+	public function getProductCategoryRelated($product_id, $category_id = 0, $limit = 12) {
+		$product_data = array();
+		$product_id = (int)$product_id;
+		$category_id = (int)$category_id;
+		$limit = (int)$limit;
+
+		if ($limit < 1) {
+			$limit = 12;
+		}
+
+		if (!$category_id) {
+			$category_id = $this->getPrimaryProductCategoryId($product_id);
+		}
+
+		if (!$category_id) {
+			return $product_data;
+		}
+
+		$query = $this->db->query("SELECT DISTINCT p.product_id FROM " . DB_PREFIX . "product_to_category p2c LEFT JOIN " . DB_PREFIX . "product p ON (p2c.product_id = p.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p2c.category_id = '" . (int)$category_id . "' AND p2c.product_id != '" . (int)$product_id . "' AND p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "' ORDER BY p.date_added DESC, p.product_id DESC LIMIT " . (int)$limit);
+
+		foreach ($query->rows as $result) {
+			$product = $this->getProduct($result['product_id']);
+
+			if ($product) {
+				$product_data[$result['product_id']] = $product;
+			}
+		}
+
+		return $product_data;
+	}
+
+	private function getPrimaryProductCategoryId($product_id) {
+		$query = $this->db->query("SELECT p2c.category_id, COUNT(cp.path_id) AS depth FROM " . DB_PREFIX . "product_to_category p2c LEFT JOIN " . DB_PREFIX . "category_path cp ON (p2c.category_id = cp.category_id) WHERE p2c.product_id = '" . (int)$product_id . "' GROUP BY p2c.category_id ORDER BY depth DESC, p2c.category_id DESC LIMIT 1");
+
+		return $query->num_rows ? (int)$query->row['category_id'] : 0;
+	}
+
 	public function getProductLayoutId($product_id) {
 		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_layout WHERE product_id = '" . (int)$product_id . "' AND store_id = '" . (int)$this->config->get('config_store_id') . "'");
 

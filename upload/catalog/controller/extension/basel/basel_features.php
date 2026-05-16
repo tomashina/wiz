@@ -496,15 +496,60 @@ public function subscribe() {
 				$this->model_extension_basel_newsletter->subscribe($this->request->post);
 				$send_notification = true;
 				$json['success'] = $this->language->get('basel_subscribe_success');
-		   	}
+			}
 
 			if (!empty($json['success']) && $send_notification) {
+				$this->sendNewsletterCouponEmail($this->request->post['email']);
 				$this->sendNewsletterSubscribeNotification($this->request->post['email'], $customer_info);
 			}
 		  }
 		}
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
+}
+
+private function sendNewsletterCouponEmail($email) {
+	try {
+		$store_name = html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8');
+		$coupon_code = $this->getNewsletterCouponCode();
+		$site_url = $this->config->get('config_ssl') ?: $this->config->get('config_url');
+
+		$message = "Hvala na prijavi na Wiz.hr newsletter.\n\n";
+		$message .= "Za prvu kupnju koristite kupon za 10% popusta:\n\n";
+		$message .= $coupon_code . "\n\n";
+		$message .= "Kupon unesite u košarici ili na blagajni.\n";
+
+		if ($site_url) {
+			$message .= "Web shop: " . $site_url . "\n";
+		}
+
+		$message .= "\nVaš " . $store_name;
+
+		$mail = new Mail($this->config->get('config_mail_engine'));
+		$mail->parameter = $this->config->get('config_mail_parameter');
+		$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
+		$mail->smtp_username = $this->config->get('config_mail_smtp_username');
+		$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
+		$mail->smtp_port = $this->config->get('config_mail_smtp_port');
+		$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+
+		$mail->setTo($email);
+		$mail->setFrom($this->config->get('config_email'));
+		$mail->setReplyTo($this->config->get('config_email'));
+		$mail->setSender($store_name);
+		$mail->setSubject('Vaš 10% popust za prvu kupnju - ' . $store_name);
+		$mail->setText($message);
+		$mail->send();
+	} catch (Exception $e) {
+		$this->log->write('Newsletter coupon mail error: ' . $e->getMessage());
+	}
+}
+
+private function getNewsletterCouponCode() {
+	$date = date('Y-m-d');
+	$query = $this->db->query("SELECT code FROM " . DB_PREFIX . "coupon WHERE code = '10wiz' AND status = '1' AND (date_start = '0000-00-00' OR date_start <= '" . $this->db->escape($date) . "') AND (date_end = '0000-00-00' OR date_end >= '" . $this->db->escape($date) . "') LIMIT 1");
+
+	return $query->num_rows ? $query->row['code'] : '10wiz';
 }
 
 private function sendNewsletterSubscribeNotification($email, $customer_info = array()) {
@@ -561,7 +606,7 @@ public function unsubscribe() {
 	
 		$json = array();
 		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
-			if(!filter_var($this->request->post['email'], FILTER_VALIDATE_EMAIL)){
+			if(!isset($this->request->post['email']) || !filter_var($this->request->post['email'], FILTER_VALIDATE_EMAIL)){
 				$json['error'] = $this->language->get('basel_subscribe_invalid_email');
 			}
 			if (!isset($json['error'])) {

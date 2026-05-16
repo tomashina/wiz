@@ -14,6 +14,8 @@ class ControllerProductProduct extends Controller {
 
 		$this->load->model('catalog/category');
 
+		$category_id = 0;
+
 		if (isset($this->request->get['path'])) {
 			$path = '';
 
@@ -424,6 +426,10 @@ class ControllerProductProduct extends Controller {
 			$data['products'] = array();
 
 			$results = $this->model_catalog_product->getProductRelated($this->request->get['product_id']);
+
+			if (!$results) {
+				$results = $this->model_catalog_product->getProductCategoryRelated($this->request->get['product_id'], $category_id, 12);
+			}
 
 			foreach ($results as $result) {
 				if ($result['image']) {

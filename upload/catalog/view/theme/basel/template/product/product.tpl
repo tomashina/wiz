@@ -72,10 +72,10 @@
      <div class="table-cell left">
      
      <?php if ($thumb || $images) { ?>
-     <div class="image-area <?php if (!$hover_zoom) { echo "hover-zoom-disabled"; } ?>" id="gallery">
+     <div class="image-area product-gallery-slider<?php if (!$hover_zoom) { echo " hover-zoom-disabled"; } ?>" id="gallery">
             
         <?php if ($thumb) { ?>
-        <div class="main-image">
+        <div class="main-image product-thumb">
         
         <?php if (($price) && ($special) && ($sale_badge)) { ?>
         <span class="badge sale_badge"><i><?php echo $sale_badge; ?></i></span>
@@ -89,24 +89,28 @@
         <span class="badge out_of_stock_badge"><i><?php echo $basel_text_out_of_stock; ?></i></span>
         <?php } ?>
 
-        <a class="<?php if (!$images) { echo "link cloud-zoom"; } else if (($product_layout == 'full-width')) { echo "link"; } else { echo "cloud-zoom"; } ?>" id="main-image" href="<?php echo $popup; ?>" rel="position:'inside', showTitle: false"><img src="<?php echo $thumb; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></a>
+        <div class="slider slider-for product-gallery-main">
+            <div class="item">
+                <a class="link" id="main-image" href="<?php echo $popup; ?>"><img src="<?php echo $thumb; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></a>
+            </div>
+            <?php foreach ($images as $image) { ?>
+            <div class="item">
+                <a class="link" href="<?php echo $image['popup']; ?>"><img src="<?php echo $image['popup']; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></a>
+            </div>
+            <?php } ?>
         </div>
-        <?php } ?>
-       
+
         <?php if ($images) { ?>
-        <ul class="image-additional">
-        <?php foreach ($images as $image) { ?>
-        <li>
-        <a class="link <?php if ($product_layout != 'full-width') { echo "cloud-zoom-gallery locked"; } ?>" href="<?php echo $image['popup']; ?>" rel="useZoom: 'main-image', smallImage: '<?php echo $image['thumb_lg']; ?>'"><img src="<?php echo $image['thumb']; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></a>
-        </li>
-        <?php } ?>
-            <?php if ($thumb && ($product_layout != "full-width")) { ?>
-            <li><a class="link cloud-zoom-gallery locked active" href="<?php echo $popup; ?>" rel="useZoom: 'main-image', smallImage: '<?php echo $thumb; ?>'"><img src="<?php echo $thumb_sm; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></a></li>
+        <ul class="slider slider-nav product-gallery-nav">
+            <li><img src="<?php echo $thumb_sm; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></li>
+            <?php foreach ($images as $image) { ?>
+            <li><img src="<?php echo $image['thumb']; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></li>
             <?php } ?>
         </ul>
-
         <?php } ?>
-            
+        </div>
+        <?php } ?>
+
      </div> <!-- .table-cell.left ends -->
      <?php } ?>
       
@@ -337,9 +341,10 @@
             </div>
             <?php } ?>
             
-            <div class="form-group buy catalog_hide">
-
-            <input type="number" step="1" min="<?php echo $minimum; ?>" name="quantity" value="<?php echo $minimum; ?>" id="input-quantity" class="form-control input-quantity" />
+            <div class="form-group quantity buttons_added buy catalog_hide">
+              <button type="button" class="minus" aria-label="Decrease quantity"><i class="fa fa-minus-circle" aria-hidden="true"></i></button>
+              <input type="text" step="1" min="<?php echo $minimum; ?>" name="quantity" value="<?php echo $minimum; ?>" id="input-quantity" class="input-text qty text input-quantity" size="4" inputmode="numeric" />
+              <button type="button" class="plus" aria-label="Increase quantity"><i class="fa fa-plus-circle" aria-hidden="true"></i></button>
               <input type="hidden" name="product_id" value="<?php echo $product_id; ?>" />
               <button type="button" id="button-cart" data-loading-text="<?php echo $text_loading; ?>" class="btn btn-primary"><?php if (($qty < 1) && ($stock_badge_status)) { ?><?php echo $basel_text_out_of_stock; ?><?php } else { ?><?php echo $button_cart; ?><?php } ?></button>
             </div>
@@ -449,11 +454,79 @@
     <li><a href="#tab-questions" data-toggle="tab"><?php echo $basel_tab_questions; ?> (<?php echo $questions_total; ?>)</a></li>
     <?php } ?>
   </ul>
-  
+
+  <style>
+  #tab-description .product-tab-body table,
+  #tab-specification table.product-spec-table {
+    width:100% !important;
+    margin:0 auto 24px !important;
+    background:#fff !important;
+    border:1px solid #dee2e6 !important;
+    border-collapse:separate !important;
+    border-spacing:0 !important;
+    border-radius:6px !important;
+    box-shadow:0 8px 24px rgba(17,17,17,.04) !important;
+    color:#495057 !important;
+    font-size:15px !important;
+    line-height:1.55 !important;
+    overflow:hidden !important;
+  }
+  #tab-description .product-tab-body table td,
+  #tab-specification table.product-spec-table td {
+    padding:12px 16px !important;
+    border:0 !important;
+    border-top:1px solid #e9ecef !important;
+    border-right:1px solid #e9ecef !important;
+    vertical-align:middle !important;
+    text-align:left !important;
+    white-space:normal !important;
+  }
+  #tab-description .product-tab-body table tr:first-child td,
+  #tab-specification table.product-spec-table tbody tr:first-child td {
+    border-top:0 !important;
+  }
+  #tab-description .product-tab-body table td:first-child,
+  #tab-specification table.product-spec-table td:first-child {
+    width:38% !important;
+    background:#fbfcfd !important;
+    color:#25282b !important;
+    font-weight:600 !important;
+  }
+  #tab-description .product-tab-body table td:last-child,
+  #tab-specification table.product-spec-table td:last-child {
+    border-right:0 !important;
+  }
+  #tab-description .product-tab-body table tr:nth-child(even) td,
+  #tab-specification table.product-spec-table tbody tr:nth-child(even) td {
+    background:#f8f9fa !important;
+  }
+  #tab-description .product-tab-body table tr:hover td,
+  #tab-specification table.product-spec-table tbody tr:hover td {
+    background:#eef6f6 !important;
+  }
+  @media (max-width:767px) {
+    #tab-description .product-tab-body table,
+    #tab-specification table.product-spec-table {
+      max-width:none !important;
+      table-layout:fixed !important;
+      font-size:13px !important;
+    }
+    #tab-description .product-tab-body table td,
+    #tab-specification table.product-spec-table td {
+      padding:10px 12px !important;
+      word-break:break-word !important;
+    }
+    #tab-description .product-tab-body table td:first-child,
+    #tab-specification table.product-spec-table td:first-child {
+      width:46% !important;
+    }
+  }
+  </style>
+
   <div class="tab-content">
     
-    <div class="tab-pane active" id="tab-description">
-    <?php echo $description; ?>
+    <div class="tab-pane active product-description-tab" id="tab-description">
+    <div class="product-tab-body"><?php echo $description; ?></div>
     </div>
     
     <?php if ($product_tabs) { ?>
@@ -465,8 +538,8 @@
     <?php } ?>
     
     <?php if ($attribute_groups) { ?>
-    <div class="tab-pane" id="tab-specification">
-      <table class="table specification">
+    <div class="tab-pane product-specification-tab" id="tab-specification">
+      <table class="table table-bordered table-striped table-hover table-sm specification product-spec-table">
         <?php foreach ($attribute_groups as $attribute_group) { ?>
         <thead>
           <tr>
@@ -477,7 +550,7 @@
           <?php foreach ($attribute_group['attribute'] as $attribute) { ?>
           <tr>
             <td class="text-left"><b><?php echo $attribute['name']; ?></b></td>
-            <td class="text-right"><?php echo $attribute['text']; ?></td>
+            <td class="text-left"><?php echo $attribute['text']; ?></td>
           </tr>
           <?php } ?>
         </tbody>
@@ -687,6 +760,35 @@ $('[data-toggle=\'tooltip\']').tooltip({container: 'body'});
 <?php } ?>
 
 <script><!--
+$(document).on('click', '.product-page .quantity.buttons_added .plus, .product-page .quantity.buttons_added .minus', function() {
+	var $input = $(this).closest('.quantity').find('input[name="quantity"]');
+	var min = parseFloat($input.attr('min')) || 1;
+	var max = parseFloat($input.attr('max'));
+	var step = parseFloat($input.attr('step')) || 1;
+	var value = parseFloat($input.val());
+	var decimals = (step.toString().split('.')[1] || '').length;
+
+	if (isNaN(value)) {
+		value = min;
+	}
+
+	if ($(this).hasClass('plus')) {
+		value += step;
+	} else {
+		value -= step;
+	}
+
+	if (value < min) {
+		value = min;
+	}
+
+	if (!isNaN(max) && value > max) {
+		value = max;
+	}
+
+	$input.val(decimals ? value.toFixed(decimals) : Math.round(value)).trigger('change');
+});
+
 $('select[name=\'recurring_id\'], input[name="quantity"]').change(function(){
 	$.ajax({
 		url: 'index.php?route=product/product/getRecurringDescription',
@@ -966,6 +1068,41 @@ verticalSwiping:false
 }]
 });	
 
+});
+//--></script>
+<?php } ?>
+<?php if ($images) { ?>
+<script>
+$(document).ready(function() {
+	if ($('.product-gallery-main').length && !$('.product-gallery-main').hasClass('slick-initialized')) {
+		$('.product-gallery-main').slick({
+			slidesToShow:1,
+			slidesToScroll:1,
+			arrows:false,
+			fade:true,
+			adaptiveHeight:true,
+			asNavFor:'.product-gallery-nav'
+		});
+
+		$('.product-gallery-nav').slick({
+			prevArrow:"<a class=\"product-gallery-arrow product-gallery-arrow-prev icon-arrow-left\"></a>",
+			nextArrow:"<a class=\"product-gallery-arrow product-gallery-arrow-next icon-arrow-right\"></a>",
+			slidesToShow:4,
+			slidesToScroll:1,
+			asNavFor:'.product-gallery-main',
+			dots:false,
+			centerMode:false,
+			focusOnSelect:true,
+			infinite:false,
+			<?php if ($direction == 'rtl') { ?>
+			rtl:true,
+			<?php } ?>
+			responsive:[
+				{breakpoint:600,settings:{slidesToShow:3}},
+				{breakpoint:420,settings:{slidesToShow:2}}
+			]
+		});
+	}
 });
 //--></script>
 <?php } ?>

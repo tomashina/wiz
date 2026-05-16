@@ -119,7 +119,7 @@ class ModelExtensionModuleSmitImport extends Model {
 			'category_description' => $category_description,
 			'category_store'       => array(0),
 			'category_filter'      => array(),
-			'category_seo_url'     => array(),
+			'category_seo_url'     => $this->buildEntitySeoUrls($name),
 			'category_layout'      => array()
 		);
 
@@ -178,7 +178,7 @@ class ModelExtensionModuleSmitImport extends Model {
 			'product_related'     => array(),
 			'product_download'    => array(),
 			'product_layout'      => array(),
-			'product_seo_url'     => array()
+			'product_seo_url'     => $this->buildProductSeoUrls($product)
 		);
 
 		$this->model_catalog_product->addProduct($data);
@@ -210,6 +210,8 @@ class ModelExtensionModuleSmitImport extends Model {
 			}
 		}
 
+		$this->ensureProductSeoUrl($existing['product_id'], $product);
+
 		$this->cache->delete('product');
 	}
 
@@ -233,7 +235,7 @@ class ModelExtensionModuleSmitImport extends Model {
 			'image'                => '',
 			'sort_order'           => 0,
 			'manufacturer_store'   => array(0),
-			'manufacturer_seo_url' => array()
+			'manufacturer_seo_url' => $this->buildEntitySeoUrls($name)
 		));
 	}
 
@@ -281,7 +283,7 @@ class ModelExtensionModuleSmitImport extends Model {
 			return '';
 		}
 
-		$html = '<table class="table table-bordered"><tbody>';
+		$html = '<table class="table table-bordered table-striped table-hover table-sm smit-spec-table"><tbody>';
 
 		foreach ($attributes as $attribute) {
 			$html .= '<tr><td>' . htmlspecialchars($attribute['title'], ENT_QUOTES, 'UTF-8') . '</td><td>' . htmlspecialchars($attribute['value'], ENT_QUOTES, 'UTF-8') . '</td></tr>';
@@ -383,6 +385,122 @@ class ModelExtensionModuleSmitImport extends Model {
 		$value = trim($value, '-');
 
 		return $value ?: 'smit-product';
+	}
+
+	private function buildProductSeoUrls($product) {
+		$language_id = (int)$this->config->get('config_language_id');
+		$language_code = $this->getLanguageCodeById($language_id);
+		$name = $this->getProductNameForLanguage($product, $language_code);
+		$keyword = $this->makeUniqueSeoKeyword($this->buildSeoKeyword($name, $product['code']));
+
+		return array(
+			0 => array(
+				$language_id => $keyword
+			)
+		);
+	}
+
+	private function buildEntitySeoUrls($name, $suffix = '') {
+		$language_id = (int)$this->config->get('config_language_id');
+		$keyword = $this->makeUniqueSeoKeyword($this->buildSeoKeyword($name, $suffix));
+
+		return array(
+			0 => array(
+				$language_id => $keyword
+			)
+		);
+	}
+
+	private function ensureProductSeoUrl($product_id, $product) {
+		$query_key = 'product_id=' . (int)$product_id;
+		$query = $this->db->query("SELECT seo_url_id FROM " . DB_PREFIX . "seo_url WHERE query = '" . $this->db->escape($query_key) . "' LIMIT 1");
+
+		if ($query->num_rows) {
+			return;
+		}
+
+		$seo_urls = $this->buildProductSeoUrls($product);
+
+		foreach ($seo_urls as $store_id => $language) {
+			foreach ($language as $language_id => $keyword) {
+				if ($keyword !== '') {
+					$this->db->query("INSERT INTO " . DB_PREFIX . "seo_url SET store_id = '" . (int)$store_id . "', language_id = '" . (int)$language_id . "', query = '" . $this->db->escape($query_key) . "', keyword = '" . $this->db->escape($keyword) . "'");
+				}
+			}
+		}
+	}
+
+	private function buildSeoKeyword($name, $suffix = '') {
+		$keyword = $this->slugify($name);
+		$suffix = $this->slugify($suffix);
+
+		if ($suffix !== '' && substr($keyword, -strlen($suffix)) !== $suffix) {
+			$keyword = $this->limitSeoKeyword($keyword, strlen($suffix) + 1) . '-' . $suffix;
+		}
+
+		return $this->limitSeoKeyword($keyword ?: 'smit-artikl');
+	}
+
+	private function makeUniqueSeoKeyword($base_keyword) {
+		$base_keyword = $this->limitSeoKeyword($base_keyword ?: 'smit-artikl');
+		$keyword = $base_keyword;
+		$index = 2;
+
+		while ($this->seoKeywordExists($keyword)) {
+			$suffix = '-' . $index++;
+			$keyword = $this->limitSeoKeyword($base_keyword, strlen($suffix)) . $suffix;
+		}
+
+		return $keyword;
+	}
+
+	private function seoKeywordExists($keyword) {
+		$query = $this->db->query("SELECT seo_url_id FROM " . DB_PREFIX . "seo_url WHERE keyword = '" . $this->db->escape($keyword) . "' LIMIT 1");
+
+		return $query->num_rows > 0;
+	}
+
+	private function limitSeoKeyword($keyword, $reserved_length = 0) {
+		$max_length = max(1, 240 - (int)$reserved_length);
+		$keyword = trim($keyword, '-');
+
+		if (strlen($keyword) > $max_length) {
+			$keyword = trim(substr($keyword, 0, $max_length), '-');
+		}
+
+		return $keyword ?: 'smit-artikl';
+	}
+
+	private function slugify($value) {
+		$value = html_entity_decode((string)$value, ENT_QUOTES, 'UTF-8');
+		$value = strtr($value, array(
+			'Š' => 'S', 'Đ' => 'D', 'Č' => 'C', 'Ć' => 'C', 'Ž' => 'Z',
+			'š' => 's', 'đ' => 'd', 'č' => 'c', 'ć' => 'c', 'ž' => 'z'
+		));
+
+		if (function_exists('iconv')) {
+			$converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+
+			if ($converted !== false) {
+				$value = $converted;
+			}
+		}
+
+		$value = strtolower($value);
+		$value = preg_replace('/[^a-z0-9]+/', '-', $value);
+		$value = trim($value, '-');
+
+		return $value;
+	}
+
+	private function getLanguageCodeById($language_id) {
+		foreach ($this->getLanguages() as $language) {
+			if ((int)$language['language_id'] === (int)$language_id) {
+				return $language['code'];
+			}
+		}
+
+		return 'hr-hr';
 	}
 
 	private function calculatePrice($prices, $settings) {
