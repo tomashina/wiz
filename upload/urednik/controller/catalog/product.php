@@ -494,11 +494,23 @@ class ControllerCatalogProduct extends Controller {
 
 	protected function getForm() {
 		$data['text_form'] = !isset($this->request->get['product_id']) ? $this->language->get('text_add') : $this->language->get('text_edit');
+		$data['button_smit_update_images'] = $this->language->get('button_smit_update_images');
+		$data['text_confirm_smit_update_images'] = $this->language->get('text_confirm_smit_update_images');
 
 		if (isset($this->error['warning'])) {
 			$data['error_warning'] = $this->error['warning'];
+		} elseif (isset($this->session->data['warning'])) {
+			$data['error_warning'] = $this->session->data['warning'];
+			unset($this->session->data['warning']);
 		} else {
 			$data['error_warning'] = '';
+		}
+
+		if (isset($this->session->data['success'])) {
+			$data['success'] = $this->session->data['success'];
+			unset($this->session->data['success']);
+		} else {
+			$data['success'] = '';
 		}
 
 		if (isset($this->error['name'])) {
@@ -584,6 +596,11 @@ class ControllerCatalogProduct extends Controller {
 		}
 
 		$data['user_token'] = $this->session->data['user_token'];
+		$data['smit_update_images'] = '';
+
+		if (!empty($product_info) && ((!empty($product_info['location']) && $product_info['location'] == 'Smit Electronic') || (!empty($product_info['image']) && strpos($product_info['image'], 'catalog/smit/') === 0))) {
+			$data['smit_update_images'] = $this->url->link('extension/module/smit_import/updateProductImages', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . (int)$this->request->get['product_id'], true);
+		}
 
 		$this->load->model('localisation/language');
 

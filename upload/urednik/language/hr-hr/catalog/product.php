@@ -15,6 +15,7 @@ $_['text_option']            = 'Opcija';
 $_['text_option_value']      = 'Vrijednosti opcije';
 $_['text_percent']           = 'Postotak';
 $_['text_amount']            = 'Fiksni iznos';
+$_['text_confirm_smit_update_images'] = 'Ažurirati slike ovog artikla iz Smit feeda? Postojeće slike artikla bit će zamijenjene.';
 
 // Column
 $_['column_name']            = 'Naziv artikla';
@@ -24,6 +25,9 @@ $_['column_price']           = 'Cijena';
 $_['column_quantity']        = 'Količina';
 $_['column_status']          = 'Status';
 $_['column_action']          = 'Akcija';
+
+// Button
+$_['button_smit_update_images'] = 'Ažuriraj slike iz Smita';
 
 // Entry
 $_['entry_name']             = 'Naziv artikla';

@@ -79,6 +79,25 @@ class ModelExtensionModuleSmitImport extends Model {
 		);
 	}
 
+	public function updateProductImagesFromSupplier($product_id, $product) {
+		$images = $this->downloadImages($product['images'], $product['code'], true);
+
+		if (!$images) {
+			return 0;
+		}
+
+		$this->db->query("UPDATE " . DB_PREFIX . "product SET image = '" . $this->db->escape($images[0]) . "', date_modified = NOW() WHERE product_id = '" . (int)$product_id . "'");
+		$this->db->query("DELETE FROM " . DB_PREFIX . "product_image WHERE product_id = '" . (int)$product_id . "'");
+
+		foreach ($this->buildAdditionalImages($images) as $image) {
+			$this->db->query("INSERT INTO " . DB_PREFIX . "product_image SET product_id = '" . (int)$product_id . "', image = '" . $this->db->escape($image['image']) . "', sort_order = '" . (int)$image['sort_order'] . "'");
+		}
+
+		$this->cache->delete('product');
+
+		return count($images);
+	}
+
 	public function createCategoryFromSupplier($supplier_category, $parent_id = 0) {
 		$name = !empty($supplier_category['name_hr']) ? $supplier_category['name_hr'] : (!empty($supplier_category['name']) ? $supplier_category['name'] : $supplier_category['id']);
 		$existing_category_id = $this->getCategoryIdByName($name, $parent_id);
@@ -210,9 +229,30 @@ class ModelExtensionModuleSmitImport extends Model {
 			}
 		}
 
+		if (!empty($settings['update_existing_descriptions'])) {
+			$this->updateProductDescriptions($existing['product_id'], $product);
+		}
+
 		$this->ensureProductSeoUrl($existing['product_id'], $product);
 
 		$this->cache->delete('product');
+	}
+
+	private function updateProductDescriptions($product_id, $product) {
+		foreach ($this->getLanguages() as $language) {
+			$language_id = (int)$language['language_id'];
+			$name = $this->getProductNameForLanguage($product, $language['code']);
+			$description = $this->buildDescription($product, $language['code']);
+			$query = $this->db->query("SELECT product_id FROM " . DB_PREFIX . "product_description WHERE product_id = '" . (int)$product_id . "' AND language_id = '" . $language_id . "' LIMIT 1");
+
+			if ($query->num_rows) {
+				if ($description !== '') {
+					$this->db->query("UPDATE " . DB_PREFIX . "product_description SET description = '" . $this->db->escape($description) . "' WHERE product_id = '" . (int)$product_id . "' AND language_id = '" . $language_id . "'");
+				}
+			} else {
+				$this->db->query("INSERT INTO " . DB_PREFIX . "product_description SET product_id = '" . (int)$product_id . "', language_id = '" . $language_id . "', name = '" . $this->db->escape($name) . "', description = '" . $this->db->escape($description) . "', tag = '', meta_title = '" . $this->db->escape($name) . "', meta_description = '', meta_keyword = ''");
+			}
+		}
 	}
 
 	private function ensureManufacturer($name) {
@@ -312,7 +352,7 @@ class ModelExtensionModuleSmitImport extends Model {
 		return $product_images;
 	}
 
-	private function downloadImages($images, $code) {
+	private function downloadImages($images, $code, $force = false) {
 		$local_images = array();
 
 		if (!$images) {
@@ -340,7 +380,7 @@ class ModelExtensionModuleSmitImport extends Model {
 			$relative_path = 'catalog/smit/' . $filename;
 			$absolute_path = DIR_IMAGE . $relative_path;
 
-			if (!is_file($absolute_path)) {
+			if ($force || !is_file($absolute_path)) {
 				$content = $this->downloadRemoteFile($image['url']);
 
 				if (!$content) {

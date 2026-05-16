@@ -365,6 +365,7 @@ class ControllerExtensionModuleSmitImport extends Controller {
 		$create_parent_category_id = isset($this->request->post['create_parent_category_id']) ? (int)$this->request->post['create_parent_category_id'] : 0;
 		$use_category_map = !empty($this->request->post['use_category_map']);
 		$auto_create_category = !empty($this->request->post['auto_create_category']);
+		$settings['update_existing_descriptions'] = !empty($this->request->post['update_existing_descriptions']);
 
 		try {
 			$products = $this->normaliseProducts($this->fetchXml($this->products_endpoint, 'products', $settings, false));
@@ -473,6 +474,47 @@ class ControllerExtensionModuleSmitImport extends Controller {
 				$this->response->redirect($this->url->link($this->route . '/settings', 'user_token=' . $this->session->data['user_token'], true));
 			}
 		}
+
+	public function updateProductImages() {
+		$this->load->language($this->route);
+		$this->load->model('catalog/product');
+		$this->load->model('extension/module/smit_import');
+		$this->load->model('setting/setting');
+
+		$product_id = isset($this->request->get['product_id']) ? (int)$this->request->get['product_id'] : 0;
+		$redirect = $product_id ? $this->url->link('catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id, true) : $this->url->link('catalog/product', 'user_token=' . $this->session->data['user_token'], true);
+		$product_info = $product_id ? $this->model_catalog_product->getProduct($product_id) : array();
+
+		if (!$product_info) {
+			$this->session->data['warning'] = $this->language->get('error_product_not_found');
+			$this->response->redirect($redirect);
+			return;
+		}
+
+		try {
+			$settings = $this->getSettings();
+			$products = $this->normaliseProducts($this->fetchXml($this->products_endpoint, 'products', $settings, false));
+			$supplier_product = $this->findSupplierProductForLocalProduct($products, $product_info);
+
+			if (!$supplier_product) {
+				$this->session->data['warning'] = $this->language->get('error_smit_product_not_found');
+				$this->response->redirect($redirect);
+				return;
+			}
+
+			$count = $this->model_extension_module_smit_import->updateProductImagesFromSupplier($product_id, $supplier_product);
+
+			if ($count) {
+				$this->session->data['success'] = sprintf($this->language->get('text_image_update_success'), $count);
+			} else {
+				$this->session->data['warning'] = $this->language->get('error_smit_images_not_found');
+			}
+		} catch (Exception $e) {
+			$this->session->data['warning'] = $e->getMessage();
+		}
+
+		$this->response->redirect($redirect);
+	}
 
 	public function cron() {
 		$this->load->language($this->route);
@@ -811,6 +853,26 @@ class ControllerExtensionModuleSmitImport extends Controller {
 		}
 
 		return $codes;
+	}
+
+	private function findSupplierProductForLocalProduct($products, $product_info) {
+		foreach ($products as $product) {
+			if (!empty($product['code']) && !empty($product_info['model']) && $product['code'] === $product_info['model']) {
+				return $product;
+			}
+		}
+
+		foreach ($products as $product) {
+			if (!empty($product['id']) && !empty($product_info['sku']) && $product['id'] === $product_info['sku']) {
+				return $product;
+			}
+
+			if (!empty($product['barcode']) && !empty($product_info['ean']) && $product['barcode'] === $product_info['ean']) {
+				return $product;
+			}
+		}
+
+		return array();
 	}
 
 	private function getSettings() {

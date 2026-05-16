@@ -16,6 +16,7 @@ $_['text_option_value']      = 'Option Value';
 $_['text_percent']           = 'Percentage';
 $_['text_amount']            = 'Fixed Amount';
 $_['text_keyword']           = 'Do not use spaces, instead replace spaces with - and make sure the SEO URL is globally unique.';
+$_['text_confirm_smit_update_images'] = 'Update images for this product from the Smit feed? Existing product images will be replaced.';
 
 // Column
 $_['column_name']            = 'Product Name';
@@ -25,6 +26,9 @@ $_['column_price']           = 'Price';
 $_['column_quantity']        = 'Quantity';
 $_['column_status']          = 'Status';
 $_['column_action']          = 'Action';
+
+// Button
+$_['button_smit_update_images'] = 'Update images from Smit';
 
 // Entry
 $_['entry_name']             = 'Product Name';
