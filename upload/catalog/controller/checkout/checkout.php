@@ -85,6 +85,9 @@ class ControllerCheckoutCheckout extends Controller {
 
 		$data['shipping_required'] = $this->cart->hasShipping();
 
+		$this->load->model('extension/analytics/ga4');
+		$data['ga4_begin_checkout'] = $this->model_extension_analytics_ga4->encode($this->model_extension_analytics_ga4->getCartEvent($products));
+
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['column_right'] = $this->load->controller('common/column_right');
 		$data['content_top'] = $this->load->controller('common/content_top');

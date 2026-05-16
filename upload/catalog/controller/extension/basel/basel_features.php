@@ -179,6 +179,9 @@ public function add_to_cart() {
 			$json['total_items'] = $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0);
 			$json['total_amount'] = $this->currency->format($total, $this->session->data['currency']);
 
+			$this->load->model('extension/analytics/ga4');
+			$json['ga4_event'] = $this->model_extension_analytics_ga4->getProductEvent($product_info, $quantity);
+
 			} else {
 				$json['redirect'] = str_replace('&amp;', '&', $this->url->link('product/product', 'product_id=' . $this->request->post['product_id']));
 			}
@@ -208,6 +211,15 @@ public function remove_from_cart() {
 
 		// Remove
 		if (isset($this->request->post['key'])) {
+			$removed_product = array();
+
+			foreach ($this->cart->getProducts() as $product) {
+				if ($product['cart_id'] == $this->request->post['key']) {
+					$removed_product = $product;
+					break;
+				}
+			}
+
 			$this->cart->remove($this->request->post['key']);
 
 			unset($this->session->data['vouchers'][$this->request->post['key']]);
@@ -266,6 +278,11 @@ public function remove_from_cart() {
 
 			$json['total_items'] = $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0);
 			$json['total_amount'] = $this->currency->format($total, $this->session->data['currency']);
+
+			if ($removed_product) {
+				$this->load->model('extension/analytics/ga4');
+				$json['ga4_event'] = $this->model_extension_analytics_ga4->getCartEvent(array($removed_product));
+			}
 		}
 
 		$this->response->addHeader('Content-Type: application/json');

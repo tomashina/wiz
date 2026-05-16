@@ -1,4 +1,9 @@
 {{ header }}
+{% if ga4_view_cart %}
+<script>
+window.wizTrackEcommerce && window.wizTrackEcommerce('view_cart', {{ ga4_view_cart }});
+</script>
+{% endif %}
 <div class="container">
   <ul class="breadcrumb">
     {% for breadcrumb in breadcrumbs %}

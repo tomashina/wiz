@@ -60,7 +60,7 @@
     <div class="item single-testimonial">
         <div class="testimonial-wrap">
         {% if testimonial.image %}
-        <p><img src="{{ testimonial.image }}" alt=""/></p>
+        <p><img src="{{ testimonial.image }}" alt="" loading="lazy" decoding="async" /></p>
         {% endif %}
         <p>{{ testimonial.description }}</p>
         <p><b>{{ testimonial.name }}</b>{% if testimonial.org %} - {{ testimonial.org }}{% endif %}</p> 

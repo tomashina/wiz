@@ -178,6 +178,9 @@ class ControllerExtensionQuickCheckoutCheckout extends Equotix {
 		$data['save_data'] = $this->config->get('quickcheckout_save_data');
 		$data['custom_css'] = html_entity_decode($this->config->get('quickcheckout_custom_css'), ENT_QUOTES, 'UTF-8');
 		$data['confirmation_page'] = $this->config->get('quickcheckout_confirmation_page');
+
+		$this->load->model('extension/analytics/ga4');
+		$data['ga4_begin_checkout'] = $this->model_extension_analytics_ga4->encode($this->model_extension_analytics_ga4->getCartEvent($products));
 		
 		if (!$this->customer->isLogged()) {
 			$data['guest'] = $this->load->controller('extension/quickcheckout/guest');

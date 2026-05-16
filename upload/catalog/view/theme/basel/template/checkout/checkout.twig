@@ -1,4 +1,9 @@
 {{ header }}
+{% if ga4_begin_checkout %}
+<script>
+window.wizTrackEcommerce && window.wizTrackEcommerce('begin_checkout', {{ ga4_begin_checkout }});
+</script>
+{% endif %}
 <div id="checkout-checkout" class="container">
   <ul class="breadcrumb">
     {% for breadcrumb in breadcrumbs %}

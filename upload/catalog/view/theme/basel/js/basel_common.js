@@ -314,6 +314,10 @@ var cart = {
 				if (json['redirect']) {
 					location = json['redirect'];
 				}
+
+				if (json['ga4_event']) {
+					window.wizTrackEcommerce && window.wizTrackEcommerce('add_to_cart', json['ga4_event']);
+				}
 				
 				if (json['success_redirect']) {
 					
@@ -375,6 +379,10 @@ var cart = {
 				$('#cart > button').button('reset');
 			},
 			success: function(json) {
+				if (json['ga4_event']) {
+					window.wizTrackEcommerce && window.wizTrackEcommerce('remove_from_cart', json['ga4_event']);
+				}
+
 				// Need to set timeout otherwise it wont update the total
 				setTimeout(function () {
 				$('.cart-total-items').html( json['total_items'] );

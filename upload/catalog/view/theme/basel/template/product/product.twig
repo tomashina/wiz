@@ -1,4 +1,9 @@
 {{ header }}
+{% if ga4_view_item %}
+<script>
+window.wizTrackEcommerce && window.wizTrackEcommerce('view_item', {{ ga4_view_item }});
+</script>
+{% endif %}
 
 {% if product_layout != "full-width" %}
 <style>
@@ -91,11 +96,12 @@
 
         <div class="slider slider-for product-gallery-main">
             <div class="item">
-                <a class="link" id="main-image" href="{{ popup }}"><img src="{{ thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" /></a>
+                <a class="link" id="main-image" href="{{ popup }}"><img src="{{ thumb }}" width="{{ img_w }}" height="{{ img_h }}" title="{{ heading_title }}" alt="{{ heading_title }}" loading="eager" fetchpriority="high" decoding="sync" /></a>
             </div>
             {% for image in images %}
+            {% set image_main = image.thumb_lg is defined and image.thumb_lg ? image.thumb_lg : image.popup %}
             <div class="item">
-                <a class="link" href="{{ image.popup }}"><img src="{{ image.popup }}" title="{{ heading_title }}" alt="{{ heading_title }}" /></a>
+                <a class="link" href="{{ image.popup }}"><img src="{{ image_main }}" width="{{ img_w }}" height="{{ img_h }}" title="{{ heading_title }}" alt="{{ heading_title }}" loading="lazy" decoding="async" /></a>
             </div>
             {% endfor %}
         </div>
@@ -103,10 +109,10 @@
         {% if images %}
         <ul class="slider slider-nav product-gallery-nav">
             {% if thumb %}
-            <li><img src="{{ thumb_sm }}" title="{{ heading_title }}" alt="{{ heading_title }}" /></li>
+            <li><img src="{{ thumb_sm }}" width="{{ img_a_w }}" height="{{ img_a_h }}" title="{{ heading_title }}" alt="{{ heading_title }}" loading="lazy" decoding="async" /></li>
             {% endif %}
             {% for image in images %}
-            <li><img src="{{ image.thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" /></li>
+            <li><img src="{{ image.thumb }}" width="{{ img_a_w }}" height="{{ img_a_h }}" title="{{ heading_title }}" alt="{{ heading_title }}" loading="lazy" decoding="async" /></li>
             {% endfor %}
         </ul>
         {% endif %}
@@ -715,9 +721,9 @@
 </div> <!-- .container ends -->
 {% endif %}
 
+<link href="catalog/view/theme/basel/js/lightgallery/css/lightgallery.css" rel="stylesheet" />
 <script src="catalog/view/theme/basel/js/lightgallery/js/lightgallery.min.js"></script>
 <script src="catalog/view/theme/basel/js/lightgallery/js/lg-zoom.min.js"></script>
-<script src="catalog/view/theme/basel/js/cloudzoom/cloud-zoom.1.0.2.min.js"></script>
 {% if basel_price_update %}
 <script src="index.php?route=extension/basel/live_options/js&product_id={{ product_id }}"></script>
 {% endif %}
@@ -853,6 +859,10 @@ $('#button-cart').on('click', function() {
 				$('.text-danger').parent().addClass('has-error');
 			}
 
+				if (json.ga4_event) {
+					window.wizTrackEcommerce && window.wizTrackEcommerce('add_to_cart', json.ga4_event);
+				}
+
 				if (json.success_redirect) {
 					
 					location = json.success_redirect;
@@ -888,6 +898,7 @@ $('#button-cart').on('click', function() {
 	});
 });
 //--></script>
+{% if has_datetime_option %}
 <script><!--
 $('.date').datetimepicker({
 	pickTime: false
@@ -901,7 +912,10 @@ $('.datetime').datetimepicker({
 $('.time').datetimepicker({
 	pickDate: false
 });
-
+//--></script>
+{% endif %}
+{% if has_file_option %}
+<script><!--
 $('button[id^=\'button-upload\']').on('click', function() {
 	var node = this;
 
@@ -954,6 +968,7 @@ $('button[id^=\'button-upload\']').on('click', function() {
 	}, 500);
 });
 //--></script>
+{% endif %}
 <script><!--
 $('#review').delegate('.pagination a', 'click', function(e) {
   e.preventDefault();
@@ -1036,18 +1051,6 @@ $('.image-additional a.link').click(function (e) {
 	$('.image-additional a.link.active').removeClass('active');
 	$(this).addClass('active')
 });
-
-{% if images %}
-$('.cloud-zoom-wrap').click(function (e) {
-	e.preventDefault();
-	$('.image-additional a.link.active').removeClass('locked').trigger('click').addClass('locked');
-});
-{% else %}
-$('.cloud-zoom-wrap').click(function (e) {
-	e.preventDefault();
-	$('#main-image').trigger('click');
-});
-{% endif %}
 
 $('.image-additional').slick({
 prevArrow: "<a class=\"icon-arrow-left\"></a>",

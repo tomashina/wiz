@@ -242,6 +242,9 @@ class ControllerCheckoutCart extends Controller {
 				}
 			}
 
+			$this->load->model('extension/analytics/ga4');
+			$data['ga4_view_cart'] = $this->model_extension_analytics_ga4->encode($this->model_extension_analytics_ga4->getCartEvent($products));
+
 			$data['column_left'] = $this->load->controller('common/column_left');
 			$data['column_right'] = $this->load->controller('common/column_right');
 			$data['content_top'] = $this->load->controller('common/content_top');
@@ -379,6 +382,9 @@ class ControllerCheckoutCart extends Controller {
 				}
 
 				$json['total'] = sprintf($this->language->get('text_items'), $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0), $this->currency->format($total, $this->session->data['currency']));
+
+				$this->load->model('extension/analytics/ga4');
+				$json['ga4_event'] = $this->model_extension_analytics_ga4->getProductEvent($product_info, $quantity);
 			} else {
 				$json['redirect'] = str_replace('&amp;', '&', $this->url->link('product/product', 'product_id=' . $this->request->post['product_id']));
 			}
@@ -421,6 +427,15 @@ class ControllerCheckoutCart extends Controller {
 
 		// Remove
 		if (isset($this->request->post['key'])) {
+			$removed_product = array();
+
+			foreach ($this->cart->getProducts() as $product) {
+				if ($product['cart_id'] == $this->request->post['key']) {
+					$removed_product = $product;
+					break;
+				}
+			}
+
 			$this->cart->remove($this->request->post['key']);
 
 			unset($this->session->data['vouchers'][$this->request->post['key']]);
@@ -478,6 +493,11 @@ class ControllerCheckoutCart extends Controller {
 			}
 
 			$json['total'] = sprintf($this->language->get('text_items'), $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0), $this->currency->format($total, $this->session->data['currency']));
+
+			if ($removed_product) {
+				$this->load->model('extension/analytics/ga4');
+				$json['ga4_event'] = $this->model_extension_analytics_ga4->getCartEvent(array($removed_product));
+			}
 		}
 
 		$this->response->addHeader('Content-Type: application/json');

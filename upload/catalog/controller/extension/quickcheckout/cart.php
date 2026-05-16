@@ -185,6 +185,7 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 	
 	public function update() {
 		$json = array();
+		$removed_product = array();
 		
 		if (!empty($this->request->post['quantity'])) {
 			foreach ($this->request->post['quantity'] as $key => $value) {
@@ -194,6 +195,13 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 		
 		
 		if (isset($this->request->get['remove'])) {
+			foreach ($this->cart->getProducts() as $product) {
+				if ($product['cart_id'] == $this->request->get['remove']) {
+					$removed_product = $product;
+					break;
+				}
+			}
+
 			$this->cart->remove($this->request->get['remove']);
 			
 			unset($this->session->data['vouchers'][$this->request->get['remove']]);
@@ -266,6 +274,11 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 
 			$json['total_items'] = $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0);
 			$json['total_amount'] = $this->currency->format($total, $this->session->data['currency']);
+
+			if ($removed_product) {
+				$this->load->model('extension/analytics/ga4');
+				$json['ga4_event'] = $this->model_extension_analytics_ga4->getCartEvent(array($removed_product));
+			}
 		//
 		
 		$this->response->addHeader('Content-Type: application/json');

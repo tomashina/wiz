@@ -1,4 +1,9 @@
 {{ header }}
+{% if ga4_begin_checkout %}
+<script>
+window.wizTrackEcommerce && window.wizTrackEcommerce('begin_checkout', {{ ga4_begin_checkout }});
+</script>
+{% endif %}
 <div class="container">
   <ul class="breadcrumb">
     {% for breadcrumb in breadcrumbs %} 
@@ -1201,6 +1206,10 @@ $(document).on('click', '.button-update', function() {
 			$('#cart1 .button-update').prop('disabled', true);
 		},
 		success: function(json) {
+			if (json['ga4_event']) {
+				window.wizTrackEcommerce && window.wizTrackEcommerce('remove_from_cart', json['ga4_event']);
+			}
+
 			if (json['redirect']) {
 				location = json['redirect'];
 			} else {
@@ -1264,6 +1273,10 @@ $(document).on('click', '.button-remove', function() {
 			$('#cart1 .button-remove').prop('disabled', true);
 		},
 		success: function(json) {
+			if (json['ga4_event']) {
+				window.wizTrackEcommerce && window.wizTrackEcommerce('remove_from_cart', json['ga4_event']);
+			}
+
 			if (json['redirect']) {
 				location = json['redirect'];
 			} else {

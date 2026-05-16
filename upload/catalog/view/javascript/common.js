@@ -157,6 +157,10 @@ var cart = {
 				}
 
 				if (json['success']) {
+					if (json['ga4_event']) {
+						window.wizTrackEcommerce && window.wizTrackEcommerce('add_to_cart', json['ga4_event']);
+					}
+
 					$('#content').parent().before('<div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> ' + json['success'] + ' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
 
 					// Need to set timeout otherwise it wont update the total
@@ -187,6 +191,10 @@ var cart = {
 				$('#cart > button').button('reset');
 			},
 			success: function(json) {
+				if (json['ga4_event']) {
+					window.wizTrackEcommerce && window.wizTrackEcommerce('remove_from_cart', json['ga4_event']);
+				}
+
 				// Need to set timeout otherwise it wont update the total
 				setTimeout(function () {
 					$('#cart > button').html('<span id="cart-total"><i class="fa fa-shopping-cart"></i> ' + json['total'] + '</span>');
