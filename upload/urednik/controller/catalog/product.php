@@ -598,7 +598,7 @@ class ControllerCatalogProduct extends Controller {
 		$data['user_token'] = $this->session->data['user_token'];
 		$data['smit_update_images'] = '';
 
-		if (!empty($product_info) && ((!empty($product_info['location']) && $product_info['location'] == 'Smit Electronic') || (!empty($product_info['image']) && strpos($product_info['image'], 'catalog/smit/') === 0))) {
+		if (isset($this->request->get['product_id'])) {
 			$data['smit_update_images'] = $this->url->link('extension/module/smit_import/updateProductImages', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . (int)$this->request->get['product_id'], true);
 		}
 
