@@ -25,11 +25,16 @@ class File {
 		$files = glob(DIR_CACHE . 'cache.' . preg_replace('/[^A-Z0-9\._-]/i', '', $key) . '.*');
 
 		if ($files) {
-			$handle = fopen($files[0], 'r');
+			$handle = @fopen($files[0], 'r');
+
+			if (!$handle) {
+				return false;
+			}
 
 			flock($handle, LOCK_SH);
 
-			$data = fread($handle, filesize($files[0]));
+			$size = (int)@filesize($files[0]);
+			$data = $size ? fread($handle, $size) : '';
 
 			flock($handle, LOCK_UN);
 
@@ -46,7 +51,11 @@ class File {
 
 		$file = DIR_CACHE . 'cache.' . preg_replace('/[^A-Z0-9\._-]/i', '', $key) . '.' . (time() + $this->expire);
 
-		$handle = fopen($file, 'w');
+		$handle = @fopen($file, 'w');
+
+		if (!$handle) {
+			return;
+		}
 
 		flock($handle, LOCK_EX);
 

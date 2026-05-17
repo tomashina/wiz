@@ -7,9 +7,10 @@
 	<code>huntbee_seo_snippet_ocmod</code>
 	
 	<file path="system/library/document.php">
-        <operation>
-            <search><![CDATA[public function addLink($href, $rel) {]]></search>
-            <add position="before"><![CDATA[public function setOpengraph($meta, $content) {
+	        <operation>
+	            <ignoreif><![CDATA[public function setOpengraph(]]></ignoreif>
+	            <search><![CDATA[public function addLink($href, $rel) {]]></search>
+	            <add position="before"><![CDATA[public function setOpengraph($meta, $content) {
                     $this->opengraph[] = array(
                         'meta'   => $meta,
                         'content' => $content
@@ -41,10 +42,11 @@
                     return $this->structureddata;
                 }]]>
             </add>
-        </operation>
-        <operation>
-            <search><![CDATA[private $keywords;]]></search>
-            <add position="after"><![CDATA[private $opengraph = array();
+	        </operation>
+	        <operation>
+	            <ignoreif><![CDATA[private $opengraph]]></ignoreif>
+	            <search><![CDATA[private $keywords;]]></search>
+	            <add position="after"><![CDATA[private $opengraph = array();
 				private $twittercard = array();
 				private $structureddata = array();]]></add>
         </operation>
