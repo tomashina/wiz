@@ -29,6 +29,16 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L,NE]
 RewriteRule ^sitemap.xml$ index.php?route=extension/feed/google_sitemap [L]
 RewriteRule ^googlebase.xml$ index.php?route=extension/feed/google_base [L]
 RewriteRule ^system/storage/(.*) index.php?route=error/not_found [L]
+RewriteRule ^sitemap_index.xml$ index.php?route=extension/hbseo/sitemap [L,QSA]
+RewriteRule ^sitemaps/([^?]*)/product_sitemap_([0-9]+).xml$ index.php?route=extension/hbseo/sitemap/product&hbxmllang=$1&page=$2 [L,QSA]
+RewriteRule ^sitemaps/([^?]*)/product_tags_sitemap_([0-9]+).xml$ index.php?route=extension/hbseo/sitemap/product_tags&hbxmllang=$1&page=$2 [L,QSA]
+RewriteRule ^sitemaps/([^?]*)/category_sitemap.xml$ index.php?route=extension/hbseo/sitemap/category&hbxmllang=$1 [L,QSA]
+RewriteRule ^sitemaps/([^?]*)/brand_sitemap.xml$ index.php?route=extension/hbseo/sitemap/brand&hbxmllang=$1 [L,QSA]
+RewriteRule ^sitemaps/([^?]*)/information_sitemap.xml$ index.php?route=extension/hbseo/sitemap/information&hbxmllang=$1 [L,QSA]
+RewriteRule ^sitemaps/([^?]*)/category_to_product_sitemap.xml$ index.php?route=extension/hbseo/sitemap/category_to_product&hbxmllang=$1 [L,QSA]
+RewriteRule ^sitemaps/([^?]*)/brand_to_product_sitemap.xml$ index.php?route=extension/hbseo/sitemap/brand_to_product&hbxmllang=$1 [L,QSA]
+RewriteRule ^sitemaps/misc_sitemap.xml$ index.php?route=extension/hbseo/sitemap/misc [L,QSA]
+RewriteRule ^sitemaps/([^?]*)/journal3blog_sitemap.xml$ index.php?route=extension/hbseo/sitemap/journal3blog&hbxmllang=$1 [L,QSA]
 
 RewriteRule ^manufacturer index.php?route=product/manufacturer [L]
 RewriteRule ^akcije index.php?route=product/special [L]
@@ -62,6 +72,11 @@ RewriteRule ^([^?]*) index.php?_route_=$1 [L,QSA]
 
 # 7. disable open_basedir limitations
 # php_admin_value open_basedir none
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
 
 
 <IfModule mod_expires.c>
@@ -98,10 +113,7 @@ RewriteRule ^([^?]*) index.php?_route_=$1 [L,QSA]
   </FilesMatch>
 </IfModule>
 
-# BEGIN cPanel-generated php ini directives, do not edit
-# Manual editing of this file may result in unexpected behavior.
-# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
-# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+
 <IfModule php7_module>
    php_value default_charset "UTF-8"
    php_value memory_limit 256M
@@ -146,13 +158,6 @@ allow from all
 </Files>
 
 deny from 193.3.19.162
-
-# php -- BEGIN cPanel-generated handler, do not edit
-# Set the “ea-php74” package as the default “PHP” programming language.
-<IfModule mime_module>
-  AddHandler application/x-httpd-ea-php74___lsphp .php .php7 .phtml
-</IfModule>
-# php -- END cPanel-generated handler, do not edit
 
 RewriteCond %{HTTP_REFERER} !^http://agmedia.rocks/.*$      [NC]
 RewriteCond %{HTTP_REFERER} !^http://agmedia.rocks$      [NC]
@@ -445,3 +450,10 @@ RewriteCond %{HTTP_REFERER} !^https://zlz-zagreb-airport.hr$      [NC]
 RewriteCond %{HTTP_REFERER} !^https://zlz.agmedia.rocks/.*$      [NC]
 RewriteCond %{HTTP_REFERER} !^https://zlz.agmedia.rocks$      [NC]
 RewriteRule .*\.(gif|bmp)$ - [F,NC]
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php82” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php82___lsphp .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
