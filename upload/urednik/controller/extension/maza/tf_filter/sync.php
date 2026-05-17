@@ -17,33 +17,42 @@ class ControllerExtensionMazaTfFilterSync extends Controller {
                 $this->load->model('extension/maza/tf_filter');
                 $this->load->model('extension/maza/tf_filter/sync');
                 
-                if($this->validate()){
-                    set_time_limit(0);
-                    session_write_close();
-                    ignore_user_abort(1);
-                
-                    if(isset($this->request->post['filter_id'])){ // Sync single filter
-                        $this->syncFilter($this->request->post['filter_id']);
-                        
-                    } elseif(isset($this->request->post['selected'])){ // Sync selected filter
-                        foreach($this->request->post['selected'] as $filter_id){
-                            $this->syncFilter($filter_id);
+                try {
+                    if($this->validate()){
+                        if (!$this->registry->has('tf_db')) {
+                            $this->load->controller('extension/maza/startup/tf_filter');
                         }
-                        
-                    } else { // Sync all filters
-                        $start = 0;
-                        $limit = 5;
-                        
-                        do{
-                            $filters = $this->model_extension_maza_tf_filter->getFilters(['status' => 1, 'start' => $start, 'limit' => $limit, 'sort' => 'date_sync', 'order' => 'ASC']);
-                            
-                            foreach($filters as $filter){
-                                $this->syncFilter($filter['filter_id']);
+
+                        set_time_limit(0);
+                        session_write_close();
+                        ignore_user_abort(1);
+
+                        if(isset($this->request->post['filter_id'])){ // Sync single filter
+                            $this->syncFilter($this->request->post['filter_id']);
+
+                        } elseif(isset($this->request->post['selected'])){ // Sync selected filter
+                            foreach($this->request->post['selected'] as $filter_id){
+                                $this->syncFilter($filter_id);
                             }
-                            
-                            $start = $start + $limit;
-                        } while ($filters);
+
+                        } else { // Sync all filters
+                            $start = 0;
+                            $limit = 5;
+
+                            do{
+                                $filters = $this->model_extension_maza_tf_filter->getFilters(['status' => 1, 'start' => $start, 'limit' => $limit, 'sort' => 'date_sync', 'order' => 'ASC']);
+
+                                foreach($filters as $filter){
+                                    $this->syncFilter($filter['filter_id']);
+                                }
+
+                                $start = $start + $limit;
+                            } while ($filters);
+                        }
                     }
+                } catch (Throwable $e) {
+                    $this->log->write('TF Filter sync error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
+                    $this->error['warning'] = 'Sync error: ' . $e->getMessage();
                 }
                 
                 if(isset($this->error['warning'])){
@@ -61,25 +70,35 @@ class ControllerExtensionMazaTfFilterSync extends Controller {
                 // Lock file status
                 $process_lock_file = fopen(DIR_STORAGE . 'cache/temp_filter.lock.' . $filter_id,"w+");
                 
+                if (!$process_lock_file) {
+                    $this->error['warning'] = 'Warning: Unable to create filter sync lock file!';
+                    return;
+                }
+
                 if (!flock($process_lock_file,LOCK_EX|LOCK_NB)){
                     // Unable to obtain lock, the previous process is still going on.
                     $this->error['warning'] = $this->language->get('error_process_lock');
+                    fclose($process_lock_file);
+                    return;
                 }
-                
-                $filter_info = $this->model_extension_maza_tf_filter->getFilter($filter_id);
-                
-                if($filter_info){
-                    // Sync filter to values
-                    $this->syncFilterToValues($filter_info);
-                    
-                    // Sync filter to products
-                    $this->syncFilterToProducts($filter_info);
-                    
-                    // Set date sync
-                    $this->db->query("UPDATE " . DB_PREFIX . "tf_filter SET date_sync = NOW() WHERE filter_id = '" . (int)$filter_id . "'");
+
+                try {
+                    $filter_info = $this->model_extension_maza_tf_filter->getFilter($filter_id);
+
+                    if($filter_info){
+                        // Sync filter to values
+                        $this->syncFilterToValues($filter_info);
+
+                        // Sync filter to products
+                        $this->syncFilterToProducts($filter_info);
+
+                        // Set date sync
+                        $this->db->query("UPDATE " . DB_PREFIX . "tf_filter SET date_sync = NOW() WHERE filter_id = '" . (int)$filter_id . "'");
+                    }
+                } finally {
+                    flock($process_lock_file,LOCK_UN); // Unlock process file
+                    fclose($process_lock_file);
                 }
-                
-                flock($process_lock_file,LOCK_UN); // Unlock process file
         }
         
         private function syncFilterToValues($filter_info){
