@@ -61,7 +61,14 @@ class ControllerExtensionModuleTfFilter extends Controller
         $this->document->addStyle('catalog/view/javascript/maza/jquery-ui-1.12.1/jquery-ui.min.css');
         $this->document->addScript('catalog/view/javascript/maza/jquery-ui-1.12.1/jquery-ui.min.js');
         $this->document->addScript('catalog/view/javascript/maza/jquery-ui-1.12.1/jquery.ui.touch-punch.min.js');
-        $this->document->addScript('catalog/view/javascript/maza/tf_filter.js');
+        $tf_filter_script = 'catalog/view/javascript/maza/tf_filter.js';
+        $tf_filter_script_file = DIR_APPLICATION . 'view/javascript/maza/tf_filter.js';
+
+        if (is_file($tf_filter_script_file)) {
+            $tf_filter_script .= '?v=' . filemtime($tf_filter_script_file);
+        }
+
+        $this->document->addScript($tf_filter_script);
 
         $this->loadData(); // Generate Data
 
@@ -74,7 +81,7 @@ class ControllerExtensionModuleTfFilter extends Controller
         $data['sort_by'] = $this->info['filter_sort_by'];
         $data['overflow'] = $this->info['overflow'];
         $data['collapsed'] = $this->info['collapsed'];
-        $data['hide_zero_filter'] = $this->info['hide_zero_filter'];
+        $data['hide_zero_filter'] = true;
         $data['column_lg'] = $this->info['column_lg'];
         $data['column_md'] = $this->info['column_md'];
         $data['column_sm'] = $this->info['column_sm'];
@@ -1592,7 +1599,7 @@ class ControllerExtensionModuleTfFilter extends Controller
         }
 
         // For special product page
-        if ($this->route == 'product/special' && $filter_data['sort'] == 'ps.price') {
+        if ($this->route == 'product/special' && isset($filter_data['sort']) && $filter_data['sort'] == 'ps.price') {
             $filter_data['sort'] = 'p.price';
         }
 

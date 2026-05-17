@@ -8,6 +8,7 @@
 	
 	<file path="system/library/document.php">
         <operation>
+            <ignoreif><![CDATA[public function setOpengraph(]]></ignoreif>
             <search><![CDATA[public function addLink($href, $rel) {]]></search>
             <add position="before"><![CDATA[public function setOpengraph($meta, $content) {
                     $this->opengraph[] = array(
@@ -43,6 +44,7 @@
             </add>
         </operation>
         <operation>
+            <ignoreif><![CDATA[private $opengraph]]></ignoreif>
             <search><![CDATA[private $keywords;]]></search>
             <add position="after"><![CDATA[private $opengraph = array();
 				private $twittercard = array();
@@ -52,6 +54,7 @@
     
 	<file path="catalog/controller/common/header.php">
         <operation>
+            <ignoreif><![CDATA[$data['opengraphs'] = $this->document->getOpengraph();]]></ignoreif>
             <search><![CDATA[$data['title'] = $this->document->getTitle();]]></search>
             <add position="after"><![CDATA[
 				if (is_array($this->document->getOpengraph())) { 
@@ -77,6 +80,7 @@
     
     <file path="catalog/view/theme/*/template/common/header.twig">
         <operation>
+            <ignoreif><![CDATA[opengraphs is iterable]]></ignoreif>
             <search><![CDATA[</head>]]></search>
             <add position="before"><![CDATA[
                 {% if opengraphs is iterable %}
@@ -116,6 +120,7 @@
 	
     <file path="catalog/controller/product/product.php">
         <operation>
+            <ignoreif><![CDATA[product_sd($product_info, $data)]]></ignoreif>
             <search><![CDATA[$data['recurrings']]]></search>
             <add position="after"><![CDATA[
 			$this->load->model('extension/module/hb_seo_snippets');

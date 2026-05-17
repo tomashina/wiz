@@ -102,7 +102,7 @@ class ControllerExtensionMazaTfFilterSync extends Controller {
         }
         
         private function syncFilterToValues($filter_info){
-                if($filter_info['setting']['value_sync_status']){
+                if(!empty($filter_info['setting']['value_sync_status'])){
                     
                     // Options
                     if(!empty($filter_info['setting']['key_option'])){
@@ -139,9 +139,9 @@ class ControllerExtensionMazaTfFilterSync extends Controller {
                     $setting['options'] = $filter_info['setting']['key_option'];
                 }
                 
-                $setting['product_name']        = $filter_info['setting']['key_product_name'];
-                $setting['product_description'] = $filter_info['setting']['key_product_description'];
-                $setting['product_tags']        = $filter_info['setting']['key_product_tags'];
+                $setting['product_name']        = !empty($filter_info['setting']['key_product_name']);
+                $setting['product_description'] = !empty($filter_info['setting']['key_product_description']);
+                $setting['product_tags']        = !empty($filter_info['setting']['key_product_tags']);
                 
                 $this->model_extension_maza_tf_filter_sync->addProductsToValue($filter_info['filter_id'], $filter_info['filter_language_id'], $setting);
         }

@@ -24,6 +24,12 @@ class ControllerExtensionModuleTfFilterEvent extends Controller {
                 }
         }
 
+        private function applyFilterParams($filter_data = array()) {
+                $filter_data = $this->load->controller('extension/module/tf_filter/filter_data', (array)$filter_data);
+
+                return is_array($filter_data) ? $filter_data : array();
+        }
+
         public function getProducts($route, $param) {
                 if (!$this->shouldHandle()) {
                         return null;
@@ -34,9 +40,9 @@ class ControllerExtensionModuleTfFilterEvent extends Controller {
                 $this->load->model('extension/maza/tf_product');
                 
                 if(empty($param[0])){
-                    return $this->model_extension_maza_tf_product->getProducts();
+                    return $this->model_extension_maza_tf_product->getProducts($this->applyFilterParams());
                 } else {
-                    return $this->model_extension_maza_tf_product->getProducts($param[0]);
+                    return $this->model_extension_maza_tf_product->getProducts($this->applyFilterParams($param[0]));
                 }
                 
         }
@@ -51,9 +57,9 @@ class ControllerExtensionModuleTfFilterEvent extends Controller {
                 $this->load->model('extension/maza/tf_product');
                 
                 if(empty($param[0])){
-                    return $this->model_extension_maza_tf_product->getTotalProducts();
+                    return $this->model_extension_maza_tf_product->getTotalProducts($this->applyFilterParams());
                 } else {
-                    return $this->model_extension_maza_tf_product->getTotalProducts($param[0]);
+                    return $this->model_extension_maza_tf_product->getTotalProducts($this->applyFilterParams($param[0]));
                 }
                 
         }

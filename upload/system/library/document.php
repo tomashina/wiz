@@ -14,6 +14,9 @@ class Document {
 	private $title;
 	private $description;
 	private $keywords;
+	private $opengraph = array();
+	private $twittercard = array();
+	private $structureddata = array();
 
 	private $links = array();
 	private $styles = array();
@@ -73,6 +76,38 @@ class Document {
      */
 	public function getKeywords() {
 		return $this->keywords;
+	}
+
+	public function setOpengraph($meta, $content) {
+		$this->opengraph[] = array(
+			'meta'    => $meta,
+			'content' => $content
+		);
+	}
+
+	public function getOpengraph() {
+		return $this->opengraph;
+	}
+
+	public function setTwittercard($name, $content) {
+		$this->twittercard[] = array(
+			'name'    => $name,
+			'content' => $content
+		);
+	}
+
+	public function getTwittercard() {
+		return $this->twittercard;
+	}
+
+	public function setStructureddata($content) {
+		$this->structureddata[] = array(
+			'content' => $content
+		);
+	}
+
+	public function getStructureddata() {
+		return $this->structureddata;
 	}
 	
 	/**

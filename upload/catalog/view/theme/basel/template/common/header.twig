@@ -82,6 +82,21 @@ window.wizTrackEcommerce = function(eventName, payload) {
 {{ basel_custom_js }}
 </script>
 {% endif %}
+{% if opengraphs is iterable %}
+{% for opengraph in opengraphs %}
+<meta property="{{ opengraph.meta }}" content="{{ opengraph.content }}" />
+{% endfor %}
+{% endif %}
+{% if twittercards is iterable %}
+{% for twittercard in twittercards %}
+<meta name="{{ twittercard.name }}" content="{{ twittercard.content }}" />
+{% endfor %}
+{% endif %}
+{% if jsonld_data is iterable %}
+{% for jsonld in jsonld_data %}
+{{ jsonld.content }}
+{% endfor %}
+{% endif %}
 </head>
 <body class="{{ class }}{{ basel_body_class }}">
 {% include 'basel/template/common/mobile-nav.twig' %}

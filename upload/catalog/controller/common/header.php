@@ -25,6 +25,9 @@ class ControllerCommonHeader extends Controller {
 		}
 
 		$data['title'] = $this->document->getTitle();
+		$data['opengraphs'] = $this->document->getOpengraph();
+		$data['twittercards'] = $this->document->getTwittercard();
+		$data['jsonld_data'] = $this->document->getStructureddata();
 
 		$data['base'] = $server;
 		$data['description'] = $this->document->getDescription();

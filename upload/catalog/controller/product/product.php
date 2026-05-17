@@ -531,6 +531,13 @@ class ControllerProductProduct extends Controller {
 
 			$data['recurrings'] = $this->model_catalog_product->getProfiles($this->request->get['product_id']);
 
+			$this->load->model('extension/module/hb_seo_snippets');
+			$this->model_extension_module_hb_seo_snippets->product_sd($product_info, $data);
+			$bcsd_options['type'] = 'product';
+			$bcsd_options['id'] = $product_id;
+			$bcsd_options['title'] = $product_info['name'];
+			$this->model_extension_module_hb_seo_snippets->breadcrumbs_sd($data['breadcrumbs'], $bcsd_options);
+
 			$this->model_catalog_product->updateViewed($this->request->get['product_id']);
 
 			$this->load->model('extension/analytics/ga4');

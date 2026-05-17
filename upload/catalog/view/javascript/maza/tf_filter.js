@@ -78,6 +78,24 @@ $.fn.tf_filter = function(setting){
     
     // Filter inputs
     this.inputs = $(this).find('input:not([type="search"])');
+
+    this.hideInactiveValues = function(){
+        if (!setting.hideZeroFilter) {
+            return;
+        }
+
+        tf_filter.find(':checkbox:disabled:not(:checked),:radio:disabled:not(:checked)').parents('.tf-filter-value').addClass('hide');
+
+        tf_filter.find('.tf-filter-group').each(function(){
+            var values = $(this).find('.tf-filter-value');
+
+            if (values.length && !values.filter(':not(.hide)').length) {
+                $(this).addClass('hide');
+            }
+        });
+    };
+
+    this.hideInactiveValues();
     
     // Start filter
     this.start = function(param){
@@ -103,9 +121,19 @@ $.fn.tf_filter = function(setting){
                 
                 setting.onResult(json); // Trigger event
                 
-                tf_filter.updateFilter(json['filter']); // Update filter
+                if (json && json['filter']) {
+                    tf_filter.updateFilter(json['filter']); // Update filter
+                }
+            },
+            error: function(){
+                tf_filter.inputs.prop('disabled', 0);
+
+                if (setting.ajax) {
+                    window.location.href = modifyURLQuery(window.location.href, $.extend({}, param, {page: null}));
+                }
             },
             complete: function(){
+                tf_filter.inputs.prop('disabled', 0);
                 $('body').removeClass('tf-filter-loading');
                 $(setting.loaderEl).hide();
                 
@@ -117,28 +145,37 @@ $.fn.tf_filter = function(setting){
     // Update filters values
     this.updateFilter = function(data){
             var inputs = tf_filter.find(':checkbox,:radio');
+            var hideUnavailableValues = function(input) {
+                if (setting.hideZeroFilter) {
+                    input.filter(':not(:checked)').parents('.tf-filter-value').addClass('hide');
+                }
+            };
+            var toggleFilterGroup = function(group) {
+                group.each(function(){
+                    if ($(this).find('.tf-filter-value:not(.hide)').length > 0) {
+                        $(this).removeClass('hide');
+                    } else {
+                        $(this).addClass('hide');
+                    }
+                });
+            };
             
             inputs.filter(':not(:checked)').prop("disabled", 1); // Disable all unchecked input
+            tf_filter.hideInactiveValues();
             tf_filter.find('.tf-product-total').text('0').addClass('label-danger'); // Reset product count to zero
             
             // Manufacturer
             if(data['manufacturer']){
                 var input_manufacturer = inputs.filter('[name="tf_fm"]');
 
-                if (setting.hideZeroFilter) {
-                    input_manufacturer.parents('.tf-filter-value').addClass('hide');
-                }
+                hideUnavailableValues(input_manufacturer);
                 
                 for(var i in data['manufacturer']){
                     input_manufacturer.filter('[value="' + data['manufacturer'][i]['manufacturer_id'] + '"]')
                             .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['manufacturer'][i]['total']).removeClass('label-danger');
                 }
 
-                if (data['manufacturer']) {
-                    input_manufacturer.parents('.tf-filter-group').removeClass('hide');
-                } else {
-                    input_manufacturer.parents('.tf-filter-group').addClass('hide');
-                }
+                toggleFilterGroup(input_manufacturer.parents('.tf-filter-group'));
                 
                 this.sort(input_manufacturer);
             }
@@ -147,20 +184,14 @@ $.fn.tf_filter = function(setting){
             if(data['sub_category']){
                 var input_sub_category = inputs.filter('[name="tf_fsc"]');
 
-                if (setting.hideZeroFilter) {
-                    input_sub_category.parents('.tf-filter-value').addClass('hide');
-                }
+                hideUnavailableValues(input_sub_category);
                 
                 for(var i in data['sub_category']){
                     input_sub_category.filter('[value="' + data['sub_category'][i]['category_id'] + '"]')
                             .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['sub_category'][i]['total']).removeClass('label-danger');
                 }
 
-                if (data['sub_category']) {
-                    input_sub_category.parents('.tf-filter-group').removeClass('hide');
-                } else {
-                    input_sub_category.parents('.tf-filter-group').addClass('hide');
-                }
+                toggleFilterGroup(input_sub_category.parents('.tf-filter-group'));
                 
                 this.sort(input_sub_category);
             }
@@ -168,16 +199,20 @@ $.fn.tf_filter = function(setting){
             // Availability
             if(data['availability']){
                 var input_availability = inputs.filter('[name="tf_fs"]');
+
+                hideUnavailableValues(input_availability);
                 
                 if(data['availability']['in_stock'] > 0){
                     input_availability.filter('[value="1"]')
-                            .prop('disabled', 0).parents('.tf-filter-value').find('.tf-product-total').text(data['availability']['in_stock']).removeClass('label-danger');
+                            .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['availability']['in_stock']).removeClass('label-danger');
                 }
                 
                 if(data['availability']['out_of_stock'] > 0){
                     input_availability.filter('[value="0"]')
-                            .prop('disabled', 0).parents('.tf-filter-value').find('.tf-product-total').text(data['availability']['out_of_stock']).removeClass('label-danger');
+                            .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['availability']['out_of_stock']).removeClass('label-danger');
                 }
+
+                toggleFilterGroup(input_availability.parents('.tf-filter-group'));
                     
             }
 
@@ -185,20 +220,14 @@ $.fn.tf_filter = function(setting){
             if(data['stock_status']){
                 var input_stock_status = inputs.filter('[name="tf_fss"]');
 
-                if (setting.hideZeroFilter) {
-                    input_stock_status.parents('.tf-filter-value').addClass('hide');
-                }
+                hideUnavailableValues(input_stock_status);
                 
                 for(var i in data['stock_status']){
                     input_stock_status.filter('[value="' + data['stock_status'][i]['stock_status_id'] + '"]')
                             .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['stock_status'][i]['total']).removeClass('label-danger');
                 }
 
-                if (data['stock_status']) {
-                    input_stock_status.parents('.tf-filter-group').removeClass('hide');
-                } else {
-                    input_stock_status.parents('.tf-filter-group').addClass('hide');
-                }
+                toggleFilterGroup(input_stock_status.parents('.tf-filter-group'));
                 
                 this.sort(input_stock_status);
             }
@@ -206,65 +235,57 @@ $.fn.tf_filter = function(setting){
             // Rating
             if(data['rating']){
                 var input_rating = inputs.filter('[name="tf_fr"]');
+
+                hideUnavailableValues(input_rating);
                 
                 for(var i in data['rating']){
                     input_rating.filter('[value="' + data['rating'][i]['rating'] + '"]')
-                            .prop('disabled', 0).parents('.tf-filter-value').find('.tf-product-total').text(data['rating'][i]['total']).removeClass('label-danger');
+                            .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['rating'][i]['total']).removeClass('label-danger');
                 }
+
+                toggleFilterGroup(input_rating.parents('.tf-filter-group'));
             }
             
             // discount
             if(data['discount']){
                 var input_discount = inputs.filter('[name="tf_fd"]');
+
+                hideUnavailableValues(input_discount);
                 
                 for(var i in data['discount']){
                     input_discount.filter('[value="' + data['discount'][i]['value'] + '"]')
-                            .prop('disabled', 0).parents('.tf-filter-value').find('.tf-product-total').text(data['discount'][i]['total']).removeClass('label-danger');
+                            .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['discount'][i]['total']).removeClass('label-danger');
                 }
+
+                toggleFilterGroup(input_discount.parents('.tf-filter-group'));
             }
             
             // Filter
             if(data['filter']){
                 var input_filter = inputs.filter('[name="tf_ff"]');
 
-                if (setting.hideZeroFilter) {
-                    input_filter.parents('.tf-filter-value').addClass('hide');
-                }
+                hideUnavailableValues(input_filter);
                 
                 for(var i in data['filter']){
                     input_filter.filter('[value="' + data['filter'][i]['filter_id'] + '"]')
                             .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['filter'][i]['total']).removeClass('label-danger');
                 }
 
-                $('.tf-filter-group.filter').each(function(){
-                    if ($(this).find('.tf-filter-value:not(.hide)').length > 0) {
-                        $(this).removeClass('hide');
-                    } else {
-                        $(this).addClass('hide');
-                    }
-                });
+                toggleFilterGroup($('.tf-filter-group.filter'));
             }
             
             // Custom
             if(data['custom']){
                 var input_custom = inputs.filter('[name^="tf_fc"]');
 
-                if (setting.hideZeroFilter) {
-                    input_custom.parents('.tf-filter-value').addClass('hide');
-                }
+                hideUnavailableValues(input_custom);
                 
                 for(var i in data['custom']){
                     input_custom.filter('[value="' + data['custom'][i]['value_id'] + '"]')
                             .prop('disabled', 0).parents('.tf-filter-value').removeClass('hide').find('.tf-product-total').text(data['custom'][i]['total']).removeClass('label-danger');
                 }
                 
-                $('.tf-filter-group.custom').each(function(){
-                    if ($(this).find('.tf-filter-value:not(.hide)').length > 0) {
-                        $(this).removeClass('hide');
-                    } else {
-                        $(this).addClass('hide');
-                    }
-                });
+                toggleFilterGroup($('.tf-filter-group.custom'));
                 
                 $('[data-custom-filter]').each(function(){
                     tf_filter.sort(inputs.filter('[name="tf_fc' + $(this).data('custom-filter') + '"]'));
