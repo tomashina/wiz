@@ -7,7 +7,7 @@ class ControllerExtensionModuleHbWebp extends Controller {
         $this->load->model('extension/module/hb_webp');
         $this->model_extension_module_hb_webp->addlog('**CRON MODE STARTED**');
 
-        $authkey = $this->request->get['authkey'] ?? '';
+        $authkey = $this->request->get['authkey'] ?? ($this->request->get['amp;authkey'] ?? '');
 
         if (!$this->authenticate($authkey)) {
             die('AUTHORIZATION FAILED');
@@ -50,8 +50,25 @@ class ControllerExtensionModuleHbWebp extends Controller {
     }
 
     private function authenticate($authkey) {
+        if (empty($authkey)) {
+            return false;
+        }
+
         $actual_authkey = $this->config->get('hb_webp_cron_key');
-        return !empty($authkey) && $authkey === $actual_authkey;
+
+        if (!empty($actual_authkey) && $authkey === $actual_authkey) {
+            return true;
+        }
+
+        $query = $this->db->query("SELECT `value` FROM `" . DB_PREFIX . "setting` WHERE `code` = 'hb_webp' AND `key` = 'hb_webp_cron_key'");
+
+        foreach ($query->rows as $row) {
+            if (!empty($row['value']) && $authkey === $row['value']) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function getWebpDestinationPath($sourcePath) {

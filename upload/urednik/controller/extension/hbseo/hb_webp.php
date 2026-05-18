@@ -111,7 +111,7 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 		$data['hb_webp_cron_limit'] 	= isset($store_info['hb_webp_cron_limit']) ? $store_info['hb_webp_cron_limit'] : 10;
 		$data['hb_webp_cron_key'] 		= isset($store_info['hb_webp_cron_key']) ? $store_info['hb_webp_cron_key'] : md5(rand());
 		
-		$data['hb_webp_cron'] = 'wget --quiet --delete-after "'.HTTPS_CATALOG.'index.php?route=extension/module/hb_webp/cron&authkey='.$data['hb_webp_cron_key'].'"';
+		$data['hb_webp_cron'] = 'wget --quiet --delete-after "'.HTTPS_CATALOG.'index.php?route=extension/module/hb_webp/cron&store_id='.$data['store_id'].'&authkey='.$data['hb_webp_cron_key'].'"';
 
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
