@@ -23,8 +23,17 @@ RewriteEngine On
 
 RewriteBase /
 
+# Canonical URL for SEO: force HTTPS + www in one 301 redirect.
+RewriteCond %{HTTP_HOST} ^(www\.)?wiz\.hr$ [NC]
+RewriteCond %{REQUEST_URI} ^//+(.*)$
+RewriteRule ^ https://www.wiz.hr/%1 [R=301,L,NE]
+
+RewriteCond %{HTTP_HOST} ^wiz\.hr$ [NC]
+RewriteRule ^ https://www.wiz.hr%{REQUEST_URI} [R=301,L,NE]
+
 RewriteCond %{HTTPS} off
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L,NE]
+RewriteCond %{HTTP_HOST} ^www\.wiz\.hr$ [NC]
+RewriteRule ^ https://www.wiz.hr%{REQUEST_URI} [R=301,L,NE]
 
 RewriteRule ^sitemap.xml$ index.php?route=extension/feed/google_sitemap [L]
 RewriteRule ^googlebase.xml$ index.php?route=extension/feed/google_base [L]
