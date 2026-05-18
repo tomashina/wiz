@@ -44,6 +44,7 @@ class ControllerStartupPermission extends Controller {
 				'common/forgotten',
 				'common/reset',
 				'extension/module/smit_import',
+				'extension/module/colby_import',
 				'error/not_found',
 				'error/permission'
 			);

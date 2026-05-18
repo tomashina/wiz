@@ -20,11 +20,13 @@
     {% endif %}
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title"><i class="fa fa-download"></i> {{ text_smit_import }}</h3>
+        <h3 class="panel-title"><i class="fa fa-download"></i> {{ text_supplier_import }}</h3>
       </div>
       <div class="panel-body">
         <a href="{{ smit_import.href }}" class="btn btn-primary"><i class="fa fa-list"></i> {{ button_smit_import }}</a>
+        <a href="{{ colby_import.href }}" class="btn btn-info"><i class="fa fa-list"></i> {{ button_colby_import }}</a>
         <span class="help-block">{{ text_smit_import_help }}</span>
+        <span class="help-block">{{ text_colby_import_help }}</span>
       </div>
     </div>
     {% for row in rows %}
