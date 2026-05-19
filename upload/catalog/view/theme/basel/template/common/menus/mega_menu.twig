@@ -99,7 +99,7 @@ background-position:{{ row.position }};
 <div class="grid">
 <div class="single-product menu-product">
 <div class="image">
-<a href="{{ submenu.product.link }}">
+<a href="{{ submenu.product.link }}" aria-label="{{ submenu.product.name|striptags|e }}">
 <img src="{{ submenu.product.image }}" alt="{{ submenu.product.name }}" title="{{ submenu.product.name }}" />
 {% if submenu.product.image2 %}
 <img class="thumb2" src="{{ submenu.product.image2 }}" alt="{{ submenu.product.name }}" title="{{ submenu.product.name }}" />
@@ -112,13 +112,13 @@ background-position:{{ row.position }};
 {% if submenu.product.new_label %}
 <span class="badge new_badge"><i>{{ basel_text_new }}</i></span>
 {% endif %}
-<a class="img-overlay" href="{{ submenu.product.link }}"></a>
-<div class="btn-center"><a class="btn btn-light-outline btn-thin btn-tiny" onclick="cart.add('{{ submenu.product.id }}', '{{ submenu.product.minimum }}');">{{ button_cart }}</a></div>
+<a class="img-overlay" href="{{ submenu.product.link }}" aria-label="{{ submenu.product.name|striptags|e }}"></a>
+<div class="btn-center"><a class="btn btn-light-outline btn-thin btn-tiny" href="#" aria-label="{{ button_cart|striptags|e }} {{ submenu.product.name|striptags|e }}" onclick="cart.add('{{ submenu.product.id }}', '{{ submenu.product.minimum }}'); return false;">{{ button_cart }}</a></div>
 <div class="icons-wrapper">
-<a class="icon is-cart" data-toggle="tooltip" data-placement="left" data-title="{{ button_cart }}" onclick="cart.add('{{ submenu.product.id }}', '{{ submenu.product.minimum }}');"><span class="global-cart"></span></a>
-<a class="icon is_wishlist" data-toggle="tooltip" data-placement="left" data-title="{{ button_wishlist }}" onclick="wishlist.add('{{ submenu.product.id }}');"><span class="icon-heart"></span></a>
-<a class="icon is_compare" onclick="compare.add('{{ submenu.product.id }}');" data-toggle="tooltip" data-placement="left" data-title="{{ button_compare }}"><span class="icon-refresh"></span></a>
-<a class="icon is_quickview hidden-xs" onclick="quickview('{{ submenu.product.id }}');" data-toggle="tooltip" data-placement="left" data-title="{{ basel_button_quickview }}"><span class="icon-magnifier-add"></span></a>
+<a class="icon is-cart" href="#" aria-label="{{ button_cart|striptags|e }} {{ submenu.product.name|striptags|e }}" data-toggle="tooltip" data-placement="left" data-title="{{ button_cart }}" onclick="cart.add('{{ submenu.product.id }}', '{{ submenu.product.minimum }}'); return false;"><span class="global-cart" aria-hidden="true"></span></a>
+<a class="icon is_wishlist" href="#" aria-label="{{ button_wishlist|striptags|e }} {{ submenu.product.name|striptags|e }}" data-toggle="tooltip" data-placement="left" data-title="{{ button_wishlist }}" onclick="wishlist.add('{{ submenu.product.id }}'); return false;"><span class="icon-heart" aria-hidden="true"></span></a>
+<a class="icon is_compare" href="#" aria-label="{{ button_compare|striptags|e }} {{ submenu.product.name|striptags|e }}" onclick="compare.add('{{ submenu.product.id }}'); return false;" data-toggle="tooltip" data-placement="left" data-title="{{ button_compare }}"><span class="icon-refresh" aria-hidden="true"></span></a>
+<a class="icon is_quickview hidden-xs" href="#" aria-label="{{ basel_button_quickview|striptags|e }} {{ submenu.product.name|striptags|e }}" onclick="quickview('{{ submenu.product.id }}'); return false;" data-toggle="tooltip" data-placement="left" data-title="{{ basel_button_quickview }}"><span class="icon-magnifier-add" aria-hidden="true"></span></a>
 </div>
 </div>
 <div class="caption">
@@ -142,7 +142,7 @@ background-position:{{ row.position }};
 {% endif %}
 </div>
 {% endif %}
-<a class="btn btn-outline btn-tiny catalog_hide" onclick="cart.add('{{ submenu.product.id }}', '{{ submenu.product.minimum }}');"><span class="global-cart"></span>{{ button_cart }}</a>
+<a class="btn btn-outline btn-tiny catalog_hide" href="#" aria-label="{{ button_cart|striptags|e }} {{ submenu.product.name|striptags|e }}" onclick="cart.add('{{ submenu.product.id }}', '{{ submenu.product.minimum }}'); return false;"><span class="global-cart" aria-hidden="true"></span>{{ button_cart }}</a>
 </div>
 </div>
 {% if submenu.product.sale_end_date and countdown_status %}

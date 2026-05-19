@@ -4,7 +4,8 @@
 <div class="container">
 {{ position_bottom }}
 </div>
-<div id="footer">
+</main>
+<footer id="footer" role="contentinfo">
 <div class="container">
 {% if footer_block_1 and footer_block_1 != '<p><br></p>' %}
 <div class="footer-top-block">
@@ -18,7 +19,7 @@
     {% for column in basel_footer_columns %}
     <div class="footer-column col-xs-12 col-sm-6 {{ basel_columns_count }} eq_height">
       {% if column.title %}
-        <h5>{{ column.title }}</h5>
+        <h2 class="footer-title">{{ column.title }}</h2>
       {% endif %}
       {% if column.links is defined %}
       <ul class="list-unstyled">
@@ -32,7 +33,7 @@
   {% else %}
       {% if informations %}
          <div class="footer-column col-xs-6 col-sm-3 eq_height">
-        <h5>{{ text_information }}</h5>
+        <h2 class="footer-title">{{ text_information }}</h2>
         <ul class="list-unstyled">
           {% for information in informations %}
           <li><a href="{{ information.href }}">{{ information.title }}</a></li>
@@ -42,7 +43,7 @@
       </div>
       {% endif %}
        <div class="footer-column col-xs-6 col-sm-3 eq_height">
-        <h5>{{ text_extra }}</h5>
+        <h2 class="footer-title">{{ text_extra }}</h2>
         <ul class="list-unstyled">
           <li><a href="{{ manufacturer }}">{{ text_manufacturer }}</a></li>
         
@@ -52,7 +53,7 @@
         </ul>
       </div>
        <div class="footer-column col-xs-6 col-sm-3 eq_height">
-        <h5>{{ text_account }}</h5>
+        <h2 class="footer-title">{{ text_account }}</h2>
         <ul class="list-unstyled">
           <li><a href="{{ account }}">{{ text_account }}</a></li>
           <li><a href="{{ order }}">{{ text_order }}</a></li>
@@ -66,7 +67,7 @@
    <div class="footer-column col-xs-6 col-sm-3">
 <div class="footer-custom-wrapper">
 {% if footer_block_title is defined %}
-<h5>{{ footer_block_title }}</h5>
+<h2 class="footer-title">{{ footer_block_title }}</h2>
 {% endif %}
 {% if footer_block_2 and footer_block_2 != '<p><br></p>' %}
 <div class="custom_block">{{ footer_block_2 }}</div>
@@ -109,7 +110,7 @@
 {% if basel_copyright %}
 <div class="footer-copyright">{{ basel_copyright }}</div>
 {% endif %}
-</div>
+</footer>
 
 <link href="catalog/view/javascript/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
 <script src="catalog/view/theme/basel/js/jquery.matchHeight.min.js"></script>
@@ -155,6 +156,6 @@ Please donate via PayPal to donate@opencart.com
 BASEL VERSION {{ basel_version }} - OPENCART VERSION 3 ({{ VERSION }}) 
 //-->
 </div><!-- .outer-container ends -->
-<a class="scroll-to-top primary-bg-color hidden-sm hidden-xs" onclick="$('html, body').animate({scrollTop:0});"><i class="icon-arrow-right"></i></a>
+<a class="scroll-to-top primary-bg-color hidden-sm hidden-xs" href="#" aria-label="Na vrh stranice" onclick="$('html, body').animate({scrollTop:0}); return false;"><i class="icon-arrow-right" aria-hidden="true"></i></a>
 <div id="featherlight-holder"></div>
 </body></html>

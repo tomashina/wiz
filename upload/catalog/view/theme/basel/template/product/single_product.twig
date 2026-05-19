@@ -1,6 +1,6 @@
 <div class="item single-product">
 <div class="image" {% if columns == 'list' %}style="width:{{ img_width }}px"{% endif %}>
-    <a href="{{ product.href }}">
+    <a href="{{ product.href }}" aria-label="{{ product.name|striptags|e }}">
     <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" loading="lazy" decoding="async" />
     {% if product.thumb2 %}
     <img class="thumb2" src="{{ product.thumb2 }}" alt="{{ product.name }}" title="{{ product.name }}" loading="lazy" decoding="async" />
@@ -19,13 +19,13 @@
 {% else %}
 	{% set button_cart = default_button_cart %}
 {% endif %}
-<a class="img-overlay" href="{{ product.href }}"></a>
-<div class="btn-center catalog_hide"><a class="btn btn-light-outline btn-thin" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');">{{ button_cart }}</a></div>
+<a class="img-overlay" href="{{ product.href }}" aria-label="{{ product.name|striptags|e }}"></a>
+<div class="btn-center catalog_hide"><a class="btn btn-light-outline btn-thin" href="#" aria-label="{{ button_cart|striptags|e }} {{ product.name|striptags|e }}" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}'); return false;">{{ button_cart }}</a></div>
 <div class="icons-wrapper">
-<a class="icon is-cart catalog_hide" data-toggle="tooltip" data-placement="{{ tooltip_align }}" data-title="{{ button_cart }}" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');"><span class="global-cart"></span></a>
-<a class="icon is_wishlist" data-toggle="tooltip" data-placement="{{ tooltip_align }}"  data-title="{{ button_wishlist }}" onclick="wishlist.add('{{ product.product_id }}');"><span class="icon-heart"></span></a>
-<a class="icon is_compare" onclick="compare.add('{{ product.product_id }}');" data-toggle="tooltip" data-placement="{{ tooltip_align }}" data-title="{{ button_compare }}"><span class="icon-refresh"></span></a>
-<a class="icon is_quickview hidden-xs" onclick="quickview('{{ product.product_id }}');" data-toggle="tooltip" data-placement="{{ tooltip_align }}" data-title="{{ basel_button_quickview }}"><span class="icon-magnifier-add"></span></a>
+<a class="icon is-cart catalog_hide" href="#" aria-label="{{ button_cart|striptags|e }} {{ product.name|striptags|e }}" data-toggle="tooltip" data-placement="{{ tooltip_align }}" data-title="{{ button_cart }}" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}'); return false;"><span class="global-cart" aria-hidden="true"></span></a>
+<a class="icon is_wishlist" href="#" aria-label="{{ button_wishlist|striptags|e }} {{ product.name|striptags|e }}" data-toggle="tooltip" data-placement="{{ tooltip_align }}"  data-title="{{ button_wishlist }}" onclick="wishlist.add('{{ product.product_id }}'); return false;"><span class="icon-heart" aria-hidden="true"></span></a>
+<a class="icon is_compare" href="#" aria-label="{{ button_compare|striptags|e }} {{ product.name|striptags|e }}" onclick="compare.add('{{ product.product_id }}'); return false;" data-toggle="tooltip" data-placement="{{ tooltip_align }}" data-title="{{ button_compare }}"><span class="icon-refresh" aria-hidden="true"></span></a>
+<a class="icon is_quickview hidden-xs" href="#" aria-label="{{ basel_button_quickview|striptags|e }} {{ product.name|striptags|e }}" onclick="quickview('{{ product.product_id }}'); return false;" data-toggle="tooltip" data-placement="{{ tooltip_align }}" data-title="{{ basel_button_quickview }}"><span class="icon-magnifier-add" aria-hidden="true"></span></a>
 </div> <!-- .icons-wrapper -->
 </div><!-- .image ends -->
 <div class="caption">
@@ -84,12 +84,12 @@
 </div><!-- .price -->
 {% endif %}
 <p class="description">{% if product.description %}{{ product.description }}{% endif %}</p>
-<a class="btn catalog_hide {% if basel_list_style == '6' %}btn-contrast{% else %}btn-outline{% endif %}" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');"><span class="global-cart"></span>{{ button_cart }}</a>
+<a class="btn catalog_hide {% if basel_list_style == '6' %}btn-contrast{% else %}btn-outline{% endif %}" href="#" aria-label="{{ button_cart|striptags|e }} {{ product.name|striptags|e }}" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}'); return false;"><span class="global-cart" aria-hidden="true"></span>{{ button_cart }}</a>
 </div><!-- .price-wrapper -->
 <div class="plain-links">
-<a class="icon is_wishlist link-hover-color" onclick="wishlist.add('{{ product.product_id }}');"><span class="icon-heart"></span> {{ button_wishlist }}</a>
-<a class="icon is_compare link-hover-color" onclick="compare.add('{{ product.product_id }}');"><span class="icon-refresh"></span> {{ button_compare }}</a>
-<a class="icon is_quickview link-hover-color" onclick="quickview('{{ product.product_id }}');"><span class="icon-magnifier-add"></span> {{ basel_button_quickview }}</a>
+<a class="icon is_wishlist link-hover-color" href="#" onclick="wishlist.add('{{ product.product_id }}'); return false;"><span class="icon-heart" aria-hidden="true"></span> {{ button_wishlist }}</a>
+<a class="icon is_compare link-hover-color" href="#" onclick="compare.add('{{ product.product_id }}'); return false;"><span class="icon-refresh" aria-hidden="true"></span> {{ button_compare }}</a>
+<a class="icon is_quickview link-hover-color" href="#" onclick="quickview('{{ product.product_id }}'); return false;"><span class="icon-magnifier-add" aria-hidden="true"></span> {{ basel_button_quickview }}</a>
 </div><!-- .plain-links-->
 </div><!-- .caption-->
 {% if product.sale_end_date and countdown_status %}

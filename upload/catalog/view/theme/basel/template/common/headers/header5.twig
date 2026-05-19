@@ -60,22 +60,22 @@
     <div class="table-cell shortcuts text-right hidden-md hidden-lg">
     <div class="font-zero">
     <div class="icon-element is_wishlist">
-    <a class="shortcut-wrapper wishlist" href="{{ wishlist }}">
+	    <a class="shortcut-wrapper wishlist" href="{{ wishlist }}" aria-label="{{ text_wishlist|e }}">
     <div class="wishlist-hover"><i class="icon-heart icon"></i><span class="counter wishlist-counter">{{ wishlist_counter }}</span></div>
     </a>
     </div>
     
     <div class="icon-element catalog_hide">
-    <a href="{{ shopping_cart }}" class="shortcut-wrapper cart">
-    <i id="cart-icon" class="global-cart icon"></i> <span id="cart-total" class="nowrap">
+	    <a href="{{ shopping_cart }}" class="shortcut-wrapper cart" aria-label="{{ text_shopping_cart|default('Košarica')|e }}">
+	    <i id="cart-icon" class="global-cart icon" aria-hidden="true"></i> <span id="cart-total" class="nowrap">
     <span class="counter cart-total-items">{{ cart_items }}</span>&nbsp;
     </span>
     </a>
     </div>
     
     <div class="icon-element">
-    <a class="shortcut-wrapper menu-trigger hidden-md hidden-lg">
-    <i class="icon-line-menu icon"></i>
+	    <a class="shortcut-wrapper menu-trigger hidden-md hidden-lg" href="#" aria-label="Otvori izbornik">
+	    <i class="icon-line-menu icon" aria-hidden="true"></i>
     </a>
     </div>
     </div>
@@ -108,8 +108,8 @@
           {% endif %}
         
         <li class="dropdown-wrapper-click from-left pull-right has-icon hidden-sx hidden-sm hidden-xs">
-        <a class="search-trigger clicker">
-        <i class="icon-magnifier icon"></i>
+	        <a class="search-trigger clicker" href="#" aria-label="{{ basel_text_search }}">
+	        <i class="icon-magnifier icon" aria-hidden="true"></i>
         </a>
         <div class="dropdown-content dropdown-right">
         <div class="search-dropdown-holder">

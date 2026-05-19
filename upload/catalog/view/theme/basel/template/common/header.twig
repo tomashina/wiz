@@ -34,9 +34,9 @@ window.wizTrackEcommerce = function(eventName, payload) {
 <link href="catalog/view/javascript/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
 <script src="catalog/view/javascript/bootstrap/js/bootstrap.min.js"></script>
 <script src="catalog/view/theme/basel/js/slick.min.js"></script>
-<script src="catalog/view/theme/basel/js/basel_common.js?v=wiz5"></script>
+<script src="catalog/view/theme/basel/js/basel_common.js?v=wiz6"></script>
 <!-- Main stylesheet -->
-<link href="catalog/view/theme/basel/stylesheet/stylesheet.css?v=wiz12" rel="stylesheet">
+<link href="catalog/view/theme/basel/stylesheet/stylesheet.css?v=wiz13" rel="stylesheet">
 <!-- Mandatory Theme Settings CSS -->
 <style id="basel-mandatory-css">{{ basel_mandatory_css }}</style>
 <!-- Plugin Stylesheet(s) -->
@@ -121,10 +121,11 @@ window.wizTrackEcommerce = function(eventName, payload) {
 <div class="container">
 <span id="title-holder">&nbsp;</span>
 <div class="links-holder">
-<a class="basel-back-btn" onClick="history.go(-1); return false;"><i></i></a><span>&nbsp;</span>
+<a class="basel-back-btn" href="#" aria-label="Nazad" onClick="history.go(-1); return false;"><i aria-hidden="true"></i></a><span>&nbsp;</span>
 </div>
 </div>
 </div>
 <div class="container">
 {{ position_top }}
 </div>
+<main id="main-content" role="main">

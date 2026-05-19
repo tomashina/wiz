@@ -212,22 +212,26 @@ h6 {
 	font-size: 10.2px;
 	margin-bottom:6px;
 }
-h3.lined-title {
+h3.lined-title,
+h2.lined-title {
 	display:block;
 	font-size: 18px;
 	position:relative;
 	margin-bottom: 12px;
 }
-h3.lined-title.lg {
+h3.lined-title.lg,
+h2.lined-title.lg {
 	font-size: 26px;
 	text-transform:uppercase;
 }
-h3.lined-title span {
+h3.lined-title span,
+h2.lined-title span {
 	background:#ffffff;
 	padding-right:20px;
 	position:relative;
 }
-h3.lined-title:before {
+h3.lined-title:before,
+h2.lined-title:before {
 	content:" ";
 	background-color:#ececec;
 	display:inline-block;
@@ -2922,6 +2926,21 @@ body:not(.narrow_container) .shortcut-wrapper.cart .counter {
 .cm_block {
 	width:100%;
 }
+.cm_block[style*="ffdd00"],
+.cm_block[style*="f7dd00"] {
+	color:#111111;
+}
+.cm_block[style*="ffdd00"] a,
+.cm_block[style*="f7dd00"] a,
+.cm_block[style*="ffdd00"] span.unsubscribe a,
+.cm_block[style*="f7dd00"] span.unsubscribe a {
+	color:#111111;
+}
+.cm_block[style*="ffdd00"] .sign-up-field .btn-neutral:not(:hover),
+.cm_block[style*="f7dd00"] .sign-up-field .btn-neutral:not(:hover) {
+	background:#111111;
+	color:#ffffff;
+}
 .cm_content {
 	display:block;
 	margin:auto;
@@ -3275,7 +3294,7 @@ body:not(.narrow_container) .shortcut-wrapper.cart .counter {
 .dark_field .sign-up-field :-moz-placeholder {color:rgba(51,51,51,0.6) !important;}
 .dark_field .sign-up-field ::-moz-placeholder {color:rgba(51,51,51,0.6) !important;}
 .dark_field .sign-up-field:-ms-input-placeholder {color:rgba(51,51,51,0.6) !important;}
-.dark_field span.unsubscribe a {color:#777777;}
+.dark_field span.unsubscribe a {color:#333333;}
 /* Unsubscribe */
 span.unsubscribe {
 	display:inline-block;
@@ -3730,7 +3749,8 @@ h4.follow-title {margin-bottom:5px;}
 	color:#ffffff;
 	text-decoration:underline;
 }
-#footer h5 {
+#footer h5,
+#footer .footer-title {
 	color: #fff;
 	font-size: 16px;
 	text-transform: uppercase;
@@ -3738,7 +3758,8 @@ h4.follow-title {margin-bottom:5px;}
 	letter-spacing: 1px;
 	margin-bottom:24px;
 }
-#footer h5:after {
+#footer h5:after,
+#footer .footer-title:after {
 	content:"";
 	display:block;
 	width:30px;

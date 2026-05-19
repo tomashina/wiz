@@ -22,9 +22,9 @@ jQuery(function(){
 		$.get($('base').attr('href') + 'index.php?route=extension/module/msmart_search/savephrase&phrase=' + encodeURIComponent( keyword ));
 	}
 	
-	function url_search( v ) {
-		var url = $('base').attr('href') + 'index.php?route=product/search';
-		v = v || '';
+		function url_search( v ) {
+			var url = $('base').attr('href') + 'index.php?route=product/search';
+			v = v || '';
 		
 		if( v !== '' ) {
 			url += '&search=' + encodeURIComponent( v );
@@ -34,8 +34,24 @@ jQuery(function(){
 			url += '&description=1';
 		}
 		
-		return url;
-	}
+			return url;
+		}
+
+		function applySearchAccessibility( $searchInput ) {
+			$searchInput.each(function(){
+				var $field = $(this),
+					label = $field.attr('aria-label') || $field.attr('placeholder') || 'Pretraga',
+					$wrapper = $field.closest('.msmart-search-live-filter');
+
+				$wrapper.attr('role', 'search');
+				$wrapper.find('.tt-input').attr('aria-label', label);
+				$wrapper.find('.tt-hint').attr({
+					'aria-hidden': 'true',
+					'tabindex': '-1'
+				});
+				$wrapper.find('.tt-menu').attr('aria-label', 'Rezultati pretrage');
+			});
+		}
 	
 	function base64_decode(data) {
 		var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
@@ -240,9 +256,9 @@ jQuery(function(){
 				$(this).parent().prepend('<div class="mslf-loading"></div>');
 			}
 		}
-	}).bind('typeahead:asyncreceive', function(a){
-		var _this = $(this),
-			$wrapper = _this.parent(),
+		}).bind('typeahead:asyncreceive', function(a){
+			var _this = $(this),
+				$wrapper = _this.parent(),
 			$datasetProductsCurrent = $wrapper.find('.tt-dataset-products').first(),
 			$datasetCategoriesCurrent = $wrapper.find('.tt-dataset-categories').first(),
 			$btnMoreCurrent = $wrapper.find('.mss-button-more').first();
@@ -328,10 +344,12 @@ jQuery(function(){
 
 				$(config.input_selector).parent().find('.tt-dataset').append( $datasetProducts );
 			},10);
-		}
-	});
-	
-	if( mode == 'standard' ) {
+			}
+		});
+
+		applySearchAccessibility( $input );
+		
+		if( mode == 'standard' ) {
 		$input.parent().each(function(){
 			var $wrapper = $(this),
 				$datasetProductsLocal = $wrapper.find('.tt-dataset').first().addClass('tt-dataset-products'),

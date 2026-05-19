@@ -66,8 +66,8 @@
         {% if header_search %}
         <div class="icon-element">
         <div class="dropdown-wrapper-click from-top hidden-sx hidden-sm hidden-xs">
-        <a class="shortcut-wrapper search-trigger from-top clicker">
-        <i class="icon-magnifier icon"></i>
+	        <a class="shortcut-wrapper search-trigger from-top clicker" href="#" aria-label="{{ basel_text_search }}">
+	        <i class="icon-magnifier icon" aria-hidden="true"></i>
         </a>
         <div class="dropdown-content dropdown-right">
         <div class="search-dropdown-holder">
@@ -81,15 +81,15 @@
         {% endif %}
         
         <div class="icon-element is_wishlist">
-        <a class="shortcut-wrapper wishlist" href="{{ wishlist }}">
+	        <a class="shortcut-wrapper wishlist" href="{{ wishlist }}" aria-label="{{ text_wishlist|e }}">
         <div class="wishlist-hover"><i class="icon-heart icon"></i><span class="counter wishlist-counter">{{ wishlist_counter }}</span></div>
         </a>
         </div>
         
         <div class="icon-element catalog_hide">
         <div id="cart" class="dropdown-wrapper from-top">
-        <a href="{{ shopping_cart }}" class="shortcut-wrapper cart">
-        <i id="cart-icon" class="global-cart icon"></i> <span id="cart-total" class="nowrap">
+	        <a href="{{ shopping_cart }}" class="shortcut-wrapper cart" aria-label="{{ text_shopping_cart|default('Košarica')|e }}">
+	        <i id="cart-icon" class="global-cart icon" aria-hidden="true"></i> <span id="cart-total" class="nowrap">
         <span class="counter cart-total-items">{{ cart_items }}</span> <span class="slash hidden-md hidden-sm hidden-xs">/</span>&nbsp;<b class="cart-total-amount hidden-sm hidden-xs">{{ cart_amount }}</b>
         </span>
         </a>
@@ -100,8 +100,8 @@
         </div>
         
         <div class="icon-element">
-        <a class="shortcut-wrapper menu-trigger hidden-md hidden-lg">
-        <i class="icon-line-menu icon"></i>
+	        <a class="shortcut-wrapper menu-trigger hidden-md hidden-lg" href="#" aria-label="Otvori izbornik">
+	        <i class="icon-line-menu icon" aria-hidden="true"></i>
         </a>
         </div>
         

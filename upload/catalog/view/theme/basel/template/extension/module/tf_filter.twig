@@ -1,6 +1,6 @@
 <div id="tf-filter-{{ module_class_id }}" class="panel tf-filter panel-default filter-container">
   <div class="panel-heading">
-    <h4 class="panel-title">{{ heading_title }}</h4>
+    <h2 class="panel-title">{{ heading_title }}</h2>
     {% if reset_all %}
       <span data-tf-reset="all" data-toggle="tooltip" title="{{ text_reset_all }}" class="tf-filter-reset hide text-danger"><i class="fa fa-times"></i></span>
     {% endif %}
@@ -25,8 +25,8 @@
             <div class="tf-filter-group-content">
               <div data-role="rangeslider"></div>
               <div class="row">
-                <div class="col-xs-6"><input type="number" class="form-control" name="tf_fp[min]" value="{{ filter['selected']['min'] }}" min="{{ filter['min_price'] }}" max="{{ filter['max_price'] - 1 }}" /></div>
-                <div class="col-xs-6"><input type="number" class="form-control" name="tf_fp[max]" value="{{ filter['selected']['max'] }}" min="{{ filter['min_price'] + 1 }}" max="{{ filter['max_price'] }}" /></div>
+                <div class="col-xs-6"><input type="number" class="form-control" name="tf_fp[min]" value="{{ filter['selected']['min'] }}" min="{{ filter['min_price'] }}" max="{{ filter['max_price'] - 1 }}" aria-label="{{ text_price|e }} minimum" /></div>
+                <div class="col-xs-6"><input type="number" class="form-control" name="tf_fp[max]" value="{{ filter['selected']['max'] }}" min="{{ filter['min_price'] + 1 }}" max="{{ filter['max_price'] }}" aria-label="{{ text_price|e }} maksimum" /></div>
               </div>
             </div>
           </div>
@@ -40,7 +40,7 @@
           </div>
           <div id="tf-filter-panel-{{ module_class_id }}-{{ key }}" class="collapse {{ not filter['collapse']?'in':'' }}" >
             {% if filter['search'] %}
-              <div class="tf-filter-group-search"><i class="fa fa-search"></i> <input type="search" placeholder="{{ text_search }}"/></div>
+              <div class="tf-filter-group-search"><i class="fa fa-search" aria-hidden="true"></i> <input type="search" placeholder="{{ text_search }}" aria-label="{{ text_sub_category|e }} {{ text_search|e }}"/></div>
             {% endif %}
             <div class="tf-filter-group-content {{ overflow }}">
               {% for sub_category in filter['values'] %}
@@ -82,7 +82,7 @@
           </div>
           <div id="tf-filter-panel-{{ module_class_id }}-{{ key }}" class="collapse {{ not filter['collapse']?'in':'' }}" >
             {% if filter['search'] %}
-              <div class="tf-filter-group-search"><i class="fa fa-search"></i> <input type="search" placeholder="{{ text_search }}"/></div>
+              <div class="tf-filter-group-search"><i class="fa fa-search" aria-hidden="true"></i> <input type="search" placeholder="{{ text_search }}" aria-label="{{ text_manufacturer|e }} {{ text_search|e }}"/></div>
             {% endif %}
             <div class="tf-filter-group-content {{ overflow }}">
               {% for manufacturer in filter['values'] %}
@@ -132,7 +132,7 @@
           </div>
           <div id="tf-filter-panel-{{ module_class_id }}-{{ key }}" class="collapse {{ not filter['collapse']?'in':'' }}" >
             <div class="tf-filter-group-content">
-              <input type="text" name="tf_fq" value="{{ filter['keyword'] }}" placeholder="{{ text_search_placeholder }}" class="form-control" />
+              <input type="text" name="tf_fq" value="{{ filter['keyword'] }}" placeholder="{{ text_search_placeholder }}" aria-label="{{ text_search|e }}" class="form-control" />
             </div>
           </div>
         </div>
@@ -321,7 +321,7 @@
           </div>
           <div id="tf-filter-panel-{{ module_class_id }}-{{ key }}" class="collapse {{ not filter['collapse']?'in':'' }}" >
             {% if filter['search'] %}
-              <div class="tf-filter-group-search"><i class="fa fa-search"></i> <input type="search" placeholder="{{ text_search }}"/></div>
+              <div class="tf-filter-group-search"><i class="fa fa-search" aria-hidden="true"></i> <input type="search" placeholder="{{ text_search }}" aria-label="{{ filter['name']|striptags|e }} {{ text_search|e }}"/></div>
             {% endif %}
             <div class="tf-filter-group-content {{ overflow }}">
               {% for value in filter['values'] %}
@@ -363,7 +363,7 @@
           </div>
           <div id="tf-filter-panel-{{ module_class_id }}-{{ key }}" data-custom-filter="{{ filter['filter_id'] }}" class="collapse {{ not filter['collapse']?'in':'' }}" >
             {% if filter['search'] %}
-              <div class="tf-filter-group-search"><i class="fa fa-search"></i> <input type="search" placeholder="{{ text_search }}"/></div>
+              <div class="tf-filter-group-search"><i class="fa fa-search" aria-hidden="true"></i> <input type="search" placeholder="{{ text_search }}" aria-label="{{ filter['name']|striptags|e }} {{ text_search|e }}"/></div>
             {% endif %}
             <div class="tf-filter-group-content {{ overflow }}">
               {% for value in filter['values'] %}
