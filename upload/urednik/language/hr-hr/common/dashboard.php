@@ -6,7 +6,7 @@ $_['heading_title']                = 'Nadzorna ploča';
 // Text
 $_['text_supplier_import']         = 'Import dobavljača';
 $_['text_smit_import']             = 'Smit B2B import';
-$_['text_smit_import_help']        = 'Odabir i import Smit artikala, uparivanje kategorija i dnevno ažuriranje količina.';
+$_['text_smit_import_help']        = 'Odabir i import Smit artikala, uparivanje kategorija te update cijena i količina.';
 $_['button_smit_import']           = 'Otvori Smit import';
 $_['text_colby_import']            = 'Colby B2B import';
 $_['text_colby_import_help']       = 'Import Colby artikala iz XML feeda, uparivanje kategorija te update PPC cijena i količina.';

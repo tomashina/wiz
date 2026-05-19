@@ -94,6 +94,8 @@
           <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
               <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> {{ button_save }}</button>
+              <a href="{{ update_products }}" class="btn btn-primary" onclick="return confirm('{{ text_confirm_update_products }}');"><i class="fa fa-refresh"></i> {{ button_update_products }}</a>
+              <a href="{{ update_prices }}" class="btn btn-info" onclick="return confirm('{{ text_confirm_update_prices }}');"><i class="fa fa-money"></i> {{ button_update_prices }}</a>
               <a href="{{ update_quantities }}" class="btn btn-warning" onclick="return confirm('{{ text_confirm_update_quantities }}');"><i class="fa fa-cubes"></i> {{ button_update_quantities }}</a>
             </div>
           </div>

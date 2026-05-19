@@ -79,6 +79,80 @@ class ModelExtensionModuleSmitImport extends Model {
 		);
 	}
 
+	public function updatePrices($products, $settings) {
+		$updated = 0;
+		$not_found = 0;
+		$skipped = 0;
+
+		foreach ($products as $product) {
+			if (empty($product['code'])) {
+				continue;
+			}
+
+			$price = $this->calculatePrice($product['prices'], $settings);
+
+			if ($price <= 0) {
+				$skipped++;
+				continue;
+			}
+
+			$query = $this->db->query("SELECT product_id FROM " . DB_PREFIX . "product WHERE model = '" . $this->db->escape($product['code']) . "'");
+
+			if ($query->num_rows) {
+				$this->db->query("UPDATE " . DB_PREFIX . "product SET price = '" . (float)$price . "', date_modified = NOW() WHERE model = '" . $this->db->escape($product['code']) . "'");
+				$updated += $query->num_rows;
+			} else {
+				$not_found++;
+			}
+		}
+
+		$this->cache->delete('product');
+
+		return array(
+			'updated'   => $updated,
+			'not_found' => $not_found,
+			'skipped'   => $skipped
+		);
+	}
+
+	public function updateProducts($products, $settings) {
+		$updated = 0;
+		$not_found = 0;
+		$skipped = 0;
+
+		foreach ($products as $product) {
+			if (empty($product['code'])) {
+				continue;
+			}
+
+			$price = $this->calculatePrice($product['prices'], $settings);
+			$price_sql = '';
+
+			if ($price > 0) {
+				$price_sql = ", price = '" . (float)$price . "'";
+			} else {
+				$skipped++;
+			}
+
+			$query = $this->db->query("SELECT product_id FROM " . DB_PREFIX . "product WHERE model = '" . $this->db->escape($product['code']) . "'");
+
+			if ($query->num_rows) {
+				$this->db->query("UPDATE " . DB_PREFIX . "product SET sku = '" . $this->db->escape($product['id']) . "', ean = '" . $this->db->escape($product['barcode']) . "', location = '" . $this->db->escape($this->supplier_name) . "', quantity = '" . (int)$product['quantity'] . "'" . $price_sql . ", date_modified = NOW() WHERE model = '" . $this->db->escape($product['code']) . "'");
+				$updated += $query->num_rows;
+			} else {
+				$not_found++;
+			}
+		}
+
+		$this->cache->delete('product');
+
+		return array(
+			'updated'   => $updated,
+			'not_found' => $not_found,
+			'skipped'   => $skipped
+		);
+	}
+
 	public function updateProductImagesFromSupplier($product_id, $product) {
 		$images = $this->downloadImages($product['images'], $product['code'], true);
 

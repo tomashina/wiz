@@ -107,9 +107,24 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 		$data['base_route'] = $this->hb_extension_route;
 		
 		$store_info = $this->model_setting_setting->getSetting('hb_webp', $data['store_id']);
+		$update_setting = false;
+
+		if (empty($store_info['hb_webp_cron_limit'])) {
+			$store_info['hb_webp_cron_limit'] = 10;
+			$update_setting = true;
+		}
+
+		if (empty($store_info['hb_webp_cron_key'])) {
+			$store_info['hb_webp_cron_key'] = md5(uniqid(mt_rand(), true));
+			$update_setting = true;
+		}
+
+		if ($update_setting) {
+			$this->model_setting_setting->editSetting('hb_webp', $store_info, $data['store_id']);
+		}
 		
-		$data['hb_webp_cron_limit'] 	= isset($store_info['hb_webp_cron_limit']) ? $store_info['hb_webp_cron_limit'] : 10;
-		$data['hb_webp_cron_key'] 		= isset($store_info['hb_webp_cron_key']) ? $store_info['hb_webp_cron_key'] : md5(rand());
+		$data['hb_webp_cron_limit'] 	= $store_info['hb_webp_cron_limit'];
+		$data['hb_webp_cron_key'] 		= $store_info['hb_webp_cron_key'];
 		
 		$data['hb_webp_cron'] = 'wget --quiet --delete-after "'.HTTPS_CATALOG.'index.php?route=extension/module/hb_webp/cron&store_id='.$data['store_id'].'&authkey='.$data['hb_webp_cron_key'].'"';
 

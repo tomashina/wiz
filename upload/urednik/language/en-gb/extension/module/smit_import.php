@@ -29,10 +29,14 @@ $_['text_feed_not_loaded'] = 'The product list has not been loaded yet. Click "R
 $_['text_settings_success'] = 'Settings and category mapping saved.';
 $_['text_import_success'] = 'Import complete. Created: %s, updated: %s, skipped: %s.';
 $_['text_quantity_success'] = 'Quantities updated. Updated products: %s, not found in shop: %s.';
+$_['text_price_success'] = 'Prices updated from the selected Smit price. Updated products: %s, not found in shop: %s, skipped without price: %s.';
+$_['text_update_success'] = 'Update complete. Updated products: %s, not found in shop: %s, skipped without price: %s.';
 $_['text_category_create_success'] = 'Category creation complete. Created: %s, mapped: %s.';
 $_['text_image_update_success'] = 'Smit images updated. Total images: %s.';
 $_['text_confirm_import'] = 'Import selected products?';
 $_['text_confirm_update_quantities'] = 'Update quantities for already imported products from Smit availability?';
+$_['text_confirm_update_prices'] = 'Update prices for already imported Smit products from the selected price?';
+$_['text_confirm_update_products'] = 'Update prices and quantities for already imported Smit products?';
 $_['text_confirm_create_categories'] = 'Create local categories for selected Smit categories and map them?';
 $_['text_pagination'] = 'Showing %d to %d of %d (%d Pages)';
 
@@ -55,7 +59,7 @@ $_['entry_update_existing_descriptions'] = 'Update descriptions for existing pro
 $_['entry_username'] = 'Username';
 $_['entry_password'] = 'Password';
 $_['entry_cron_token'] = 'Cron token';
-$_['help_cron_token'] = 'The cron URL updates quantities from Smit availability and can run once daily without an admin login.';
+$_['help_cron_token'] = 'The cron URL updates quantities from Smit availability by default. Add &action=prices for prices or &action=products for prices and quantities.';
 
 $_['column_image'] = 'Image';
 $_['column_product'] = 'Product';
@@ -72,6 +76,8 @@ $_['button_import_selected'] = 'Import selected';
 $_['button_save_mapping'] = 'Save mapping';
 $_['button_create_categories'] = 'Create selected categories';
 $_['button_update_quantities'] = 'Update quantities';
+$_['button_update_prices'] = 'Update prices';
+$_['button_update_products'] = 'Update prices and quantities';
 $_['button_save'] = 'Save';
 
 $_['error_credentials'] = 'Smit B2B username and password are not configured.';

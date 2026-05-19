@@ -29,10 +29,14 @@ $_['text_feed_not_loaded'] = 'Lista artikala još nije učitana. Klikni "Osvjež
 $_['text_settings_success'] = 'Postavke i uparivanje kategorija su spremljeni.';
 $_['text_import_success'] = 'Import završen. Novi artikli: %s, ažurirani: %s, preskočeni: %s.';
 $_['text_quantity_success'] = 'Količine su ažurirane. Ažurirano artikala: %s, nije pronađeno u shopu: %s.';
+$_['text_price_success'] = 'Cijene su ažurirane prema odabranoj Smit cijeni. Ažurirano artikala: %s, nije pronađeno u shopu: %s, preskočeno bez cijene: %s.';
+$_['text_update_success'] = 'Update je završen. Ažurirano artikala: %s, nije pronađeno u shopu: %s, preskočeno bez cijene: %s.';
 $_['text_category_create_success'] = 'Kreiranje kategorija završeno. Kreirano: %s, upareno: %s.';
 $_['text_image_update_success'] = 'Smit slike su ažurirane. Ukupno slika: %s.';
 $_['text_confirm_import'] = 'Importirati odabrane artikle?';
 $_['text_confirm_update_quantities'] = 'Ažurirati količine svih već importiranih artikala prema Smit stanju?';
+$_['text_confirm_update_prices'] = 'Ažurirati cijene svih već importiranih Smit artikala prema odabranoj cijeni?';
+$_['text_confirm_update_products'] = 'Ažurirati cijene i količine svih već importiranih Smit artikala?';
 $_['text_confirm_create_categories'] = 'Kreirati lokalne kategorije za odabrane Smit kategorije i upariti ih?';
 $_['text_pagination'] = 'Prikazano %d do %d od %d (%d stranica)';
 
@@ -55,7 +59,7 @@ $_['entry_update_existing_descriptions'] = 'Ažuriraj opise postojećih artikala
 $_['entry_username'] = 'Korisničko ime';
 $_['entry_password'] = 'Lozinka';
 $_['entry_cron_token'] = 'Cron token';
-$_['help_cron_token'] = 'Cron URL ažurira samo količine iz Smit stanja i može se pozvati 1x dnevno bez admin prijave.';
+$_['help_cron_token'] = 'Cron URL po defaultu ažurira samo količine iz Smit stanja. Dodaj &action=prices za cijene ili &action=products za cijene i količine.';
 
 $_['column_image'] = 'Slika';
 $_['column_product'] = 'Artikl';
@@ -72,6 +76,8 @@ $_['button_import_selected'] = 'Importiraj odabrano';
 $_['button_save_mapping'] = 'Spremi uparivanje';
 $_['button_create_categories'] = 'Kreiraj odabrane kategorije';
 $_['button_update_quantities'] = 'Ažuriraj količine';
+$_['button_update_prices'] = 'Ažuriraj cijene';
+$_['button_update_products'] = 'Update cijene i količine';
 $_['button_save'] = 'Spremi';
 
 $_['error_credentials'] = 'Smit B2B korisničko ime i lozinka nisu upisani.';

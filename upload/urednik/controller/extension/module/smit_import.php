@@ -142,6 +142,8 @@ class ControllerExtensionModuleSmitImport extends Controller {
 			$data['filter_action'] = 'index.php';
 			$data['import'] = $this->url->link($this->route . '/import', 'user_token=' . $this->session->data['user_token'] . $this->buildFilterUrl(), true);
 			$data['update_quantities'] = $this->url->link($this->route . '/updateQuantities', 'user_token=' . $this->session->data['user_token'] . '&return_route=products' . $this->buildFilterUrl(), true);
+			$data['update_prices'] = $this->url->link($this->route . '/updatePrices', 'user_token=' . $this->session->data['user_token'] . '&return_route=products' . $this->buildFilterUrl(), true);
+			$data['update_products'] = $this->url->link($this->route . '/updateProducts', 'user_token=' . $this->session->data['user_token'] . '&return_route=products' . $this->buildFilterUrl(), true);
 			$data['refresh'] = $this->url->link($this->route, 'user_token=' . $this->session->data['user_token'] . $this->buildFilterUrl(array('refresh')) . '&refresh=1', true);
 			$data['cancel'] = $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true);
 			$data['products_page'] = $this->url->link($this->route, 'user_token=' . $this->session->data['user_token'], true);
@@ -295,6 +297,8 @@ class ControllerExtensionModuleSmitImport extends Controller {
 			$data['active_tab'] = 'settings';
 			$data['save'] = $this->url->link($this->route . '/save', 'user_token=' . $this->session->data['user_token'], true);
 			$data['update_quantities'] = $this->url->link($this->route . '/updateQuantities', 'user_token=' . $this->session->data['user_token'] . '&return_route=settings', true);
+			$data['update_prices'] = $this->url->link($this->route . '/updatePrices', 'user_token=' . $this->session->data['user_token'] . '&return_route=settings', true);
+			$data['update_products'] = $this->url->link($this->route . '/updateProducts', 'user_token=' . $this->session->data['user_token'] . '&return_route=settings', true);
 			$data['cancel'] = $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true);
 			$data['settings'] = $settings;
 			$data['cron_url'] = HTTPS_SERVER . 'index.php?route=' . $this->route . '/cron&token=' . $settings['cron_token'];
@@ -475,6 +479,58 @@ class ControllerExtensionModuleSmitImport extends Controller {
 			}
 		}
 
+	public function updatePrices() {
+		$this->load->language($this->route);
+		$this->load->model('extension/module/smit_import');
+		$this->load->model('setting/setting');
+
+		$settings = $this->getSettings();
+
+		try {
+			$products = $this->normaliseProducts($this->fetchXml($this->products_endpoint, 'products', $settings, true));
+			$result = $this->model_extension_module_smit_import->updatePrices($products, $settings);
+
+			$this->session->data['success'] = sprintf($this->language->get('text_price_success'), $result['updated'], $result['not_found'], $result['skipped']);
+		} catch (Exception $e) {
+			$this->session->data['warning'] = $e->getMessage();
+		}
+
+			$return_route = isset($this->request->get['return_route']) ? $this->request->get['return_route'] : 'settings';
+
+			if ($return_route == 'products') {
+				$this->response->redirect($this->url->link($this->route, 'user_token=' . $this->session->data['user_token'] . $this->buildFilterUrl(), true));
+			} else {
+				$this->response->redirect($this->url->link($this->route . '/settings', 'user_token=' . $this->session->data['user_token'], true));
+			}
+		}
+
+	public function updateProducts() {
+		$this->load->language($this->route);
+		$this->load->model('extension/module/smit_import');
+		$this->load->model('setting/setting');
+
+		$settings = $this->getSettings();
+
+		try {
+			$products = $this->normaliseProducts($this->fetchXml($this->products_endpoint, 'products', $settings, true));
+			$availability = $this->normaliseAvailability($this->fetchXml($this->availability_endpoint, 'availability', $settings, true));
+			$products = $this->mergeAvailabilityIntoProducts($products, $availability);
+			$result = $this->model_extension_module_smit_import->updateProducts($products, $settings);
+
+			$this->session->data['success'] = sprintf($this->language->get('text_update_success'), $result['updated'], $result['not_found'], $result['skipped']);
+		} catch (Exception $e) {
+			$this->session->data['warning'] = $e->getMessage();
+		}
+
+			$return_route = isset($this->request->get['return_route']) ? $this->request->get['return_route'] : 'settings';
+
+			if ($return_route == 'products') {
+				$this->response->redirect($this->url->link($this->route, 'user_token=' . $this->session->data['user_token'] . $this->buildFilterUrl(), true));
+			} else {
+				$this->response->redirect($this->url->link($this->route . '/settings', 'user_token=' . $this->session->data['user_token'], true));
+			}
+		}
+
 	public function updateProductImages() {
 		$this->load->language($this->route);
 		$this->load->model('catalog/product');
@@ -536,13 +592,27 @@ class ControllerExtensionModuleSmitImport extends Controller {
 		}
 
 		try {
-			$availability = $this->normaliseAvailability($this->fetchXml($this->availability_endpoint, 'availability', $settings, true));
-			$result = $this->model_extension_module_smit_import->updateQuantities($availability);
+			$action = isset($this->request->get['action']) ? $this->request->get['action'] : 'quantities';
+
+			if ($action == 'prices') {
+				$products = $this->normaliseProducts($this->fetchXml($this->products_endpoint, 'products', $settings, true));
+				$result = $this->model_extension_module_smit_import->updatePrices($products, $settings);
+			} elseif ($action == 'products') {
+				$products = $this->normaliseProducts($this->fetchXml($this->products_endpoint, 'products', $settings, true));
+				$availability = $this->normaliseAvailability($this->fetchXml($this->availability_endpoint, 'availability', $settings, true));
+				$result = $this->model_extension_module_smit_import->updateProducts($this->mergeAvailabilityIntoProducts($products, $availability), $settings);
+			} else {
+				$action = 'quantities';
+				$availability = $this->normaliseAvailability($this->fetchXml($this->availability_endpoint, 'availability', $settings, true));
+				$result = $this->model_extension_module_smit_import->updateQuantities($availability);
+			}
 
 			$this->response->setOutput(json_encode(array(
 				'success'   => true,
+				'action'    => $action,
 				'updated'   => $result['updated'],
-				'not_found' => $result['not_found']
+				'not_found' => $result['not_found'],
+				'skipped'   => isset($result['skipped']) ? $result['skipped'] : 0
 			)));
 		} catch (Exception $e) {
 			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . ' 500 Internal Server Error');
@@ -723,6 +793,37 @@ class ControllerExtensionModuleSmitImport extends Controller {
 				'quantity' => isset($node->availability->available_quantity) ? (int)$node->availability->available_quantity : 0,
 				'prices'   => $this->normalisePrices($node->prices)
 			);
+		}
+
+		return $products;
+	}
+
+	private function mergeAvailabilityIntoProducts($products, $availability) {
+		$quantities = array();
+		$seen = array();
+
+		foreach ($availability as $item) {
+			if (!empty($item['code'])) {
+				$quantities[$item['code']] = $item;
+			}
+		}
+
+		foreach ($products as &$product) {
+			if (!empty($product['code'])) {
+				$seen[$product['code']] = true;
+			}
+
+			if (!empty($product['code']) && isset($quantities[$product['code']])) {
+				$product['quantity'] = (int)$quantities[$product['code']]['quantity'];
+			}
+		}
+
+		unset($product);
+
+		foreach ($availability as $item) {
+			if (!empty($item['code']) && empty($seen[$item['code']])) {
+				$products[] = $item;
+			}
 		}
 
 		return $products;
