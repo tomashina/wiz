@@ -41,6 +41,14 @@ class ModelToolImage extends Model {
 				copy(DIR_IMAGE . $image_old, DIR_IMAGE . $image_new);
 			}
 		}
+
+		if ($this->supportsWebp()) {
+			$webp_image = $this->ensureWebpImage($image_new);
+
+			if ($webp_image) {
+				$image_new = $webp_image;
+			}
+		}
 		
 		$image_new = str_replace(' ', '%20', $image_new);  // fix bug when attach image on email (gmail.com). it is automatic changing space " " to +
 		
@@ -49,5 +57,71 @@ class ModelToolImage extends Model {
 		} else {
 			return $this->config->get('config_url') . 'image/' . $image_new;
 		}
+	}
+
+	private function supportsWebp() {
+		return isset($this->request->server['HTTP_ACCEPT']) && strpos($this->request->server['HTTP_ACCEPT'], 'image/webp') !== false;
+	}
+
+	private function ensureWebpImage($image) {
+		$webp_image = $this->getWebpImageName($image);
+
+		if (!$webp_image || !is_file(DIR_IMAGE . $image)) {
+			return false;
+		}
+
+		if (is_file(DIR_IMAGE . $webp_image) && filemtime(DIR_IMAGE . $webp_image) >= filemtime(DIR_IMAGE . $image)) {
+			return $webp_image;
+		}
+
+		$image_info = @getimagesize(DIR_IMAGE . $image);
+
+		if (!$image_info || !in_array($image_info[2], array(IMAGETYPE_PNG, IMAGETYPE_JPEG))) {
+			return false;
+		}
+
+		if (!class_exists('WebPConvert\\WebPConvert')) {
+			$autoload = DIR_SYSTEM . 'library/vendor/huntbee-webp/autoload.php';
+
+			if (is_file($autoload)) {
+				require_once $autoload;
+			}
+		}
+
+		if (!class_exists('WebPConvert\\WebPConvert')) {
+			return false;
+		}
+
+		$destination = DIR_IMAGE . $webp_image;
+		$destination_dir = dirname($destination);
+
+		if (!is_dir($destination_dir)) {
+			@mkdir($destination_dir, 0777, true);
+		}
+
+		try {
+			\WebPConvert\WebPConvert::convert(DIR_IMAGE . $image, $destination, array());
+		} catch (\Exception $e) {
+			$this->log->write('Extension - Huntbee WebP Compression (Auto): Issue while processing (image) path ' . DIR_IMAGE . $image . '. Issue: ' . $e->getMessage());
+			return false;
+		} catch (\Throwable $e) {
+			$this->log->write('Extension - Huntbee WebP Compression (Auto): Issue while processing (image) path ' . DIR_IMAGE . $image . '. Issue: ' . $e->getMessage());
+			return false;
+		}
+
+		return is_file($destination) ? $webp_image : false;
+	}
+
+	private function getWebpImageName($image) {
+		$extension_position = utf8_strrpos($image, '.');
+
+		if ($extension_position === false) {
+			return false;
+		}
+
+		$webp_image = utf8_substr($image, 0, $extension_position);
+		$webp_image = str_replace('cache/', 'webp/', $webp_image);
+
+		return $webp_image . '.webp';
 	}
 }

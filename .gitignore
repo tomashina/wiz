@@ -35,6 +35,7 @@ storagewiz/modification/*
 
 # Generated image cache
 upload/image/cache/
+upload/image/webp/
 
 # Uploaded product/media catalog is deployed separately from Git.
 upload/image/catalog/**
