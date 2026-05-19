@@ -1,3 +1,19 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteCond %{HTTP_ACCEPT} image/webp [NC]
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteCond %{DOCUMENT_ROOT}/image/webp/$1.webp -f
+  RewriteRule ^cache/(.+)\.(jpe?g|png)$ webp/$1.webp [T=image/webp,E=webp:1,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header append Vary Accept env=REDIRECT_webp
+  Header append Vary Accept env=webp
+</IfModule>
+
+AddType image/webp .webp
+
 <Files ~ "\.(jpg|jpeg|png|gif)$">
    order deny,allow
    allow from all

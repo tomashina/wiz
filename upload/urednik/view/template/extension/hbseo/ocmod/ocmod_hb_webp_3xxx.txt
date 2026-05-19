@@ -26,9 +26,26 @@
 			$webp_file		= str_replace('cache/','webp/',$webp_file);
 				
     		$webp_file 		= $webp_file.'.webp';
-    		if (file_exists(DIR_IMAGE .$webp_file) and (isset($_SERVER['HTTP_ACCEPT'])) and (strpos($_SERVER['HTTP_ACCEPT'], 'image/webp') !== false)) {
-    			$image_new = $webp_file;
-    		}
+
+			$webp_supported = false;
+			$webp_accept = isset($_SERVER['HTTP_ACCEPT']) ? $_SERVER['HTTP_ACCEPT'] : '';
+			$webp_user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+
+			if (stripos($webp_accept, 'image/webp') !== false) {
+				$webp_supported = true;
+			} elseif (preg_match('/Firefox\/([0-9]+)/i', $webp_user_agent, $webp_match)) {
+				$webp_supported = (int)$webp_match[1] >= 65;
+			} elseif (preg_match('/Edg\/([0-9]+)/i', $webp_user_agent, $webp_match)) {
+				$webp_supported = (int)$webp_match[1] >= 18;
+			} elseif (preg_match('/(?:Chrome|Chromium|OPR)\/([0-9]+)/i', $webp_user_agent, $webp_match)) {
+				$webp_supported = (int)$webp_match[1] >= 32;
+			} elseif (preg_match('/Version\/([0-9]+).*Safari/i', $webp_user_agent, $webp_match)) {
+				$webp_supported = (int)$webp_match[1] >= 14;
+			}
+
+			if (file_exists(DIR_IMAGE .$webp_file) and $webp_supported) {
+				$image_new = $webp_file;
+			}
 			//HUNTBEE WEBP
 			]]>
             </add>
@@ -55,9 +72,26 @@
     		$webp_file		= str_replace('cache/','webp/',$webp_file);
     		
     		$webp_file 		= $webp_file.'.webp';
-    		if (file_exists(DIR_IMAGE .$webp_file) and (isset($_SERVER['HTTP_ACCEPT'])) and (strpos($_SERVER['HTTP_ACCEPT'], 'image/webp') !== false)) {
-    			$image_new = $webp_file;
-    		}
+
+			$webp_supported = false;
+			$webp_accept = isset($_SERVER['HTTP_ACCEPT']) ? $_SERVER['HTTP_ACCEPT'] : '';
+			$webp_user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+
+			if (stripos($webp_accept, 'image/webp') !== false) {
+				$webp_supported = true;
+			} elseif (preg_match('/Firefox\/([0-9]+)/i', $webp_user_agent, $webp_match)) {
+				$webp_supported = (int)$webp_match[1] >= 65;
+			} elseif (preg_match('/Edg\/([0-9]+)/i', $webp_user_agent, $webp_match)) {
+				$webp_supported = (int)$webp_match[1] >= 18;
+			} elseif (preg_match('/(?:Chrome|Chromium|OPR)\/([0-9]+)/i', $webp_user_agent, $webp_match)) {
+				$webp_supported = (int)$webp_match[1] >= 32;
+			} elseif (preg_match('/Version\/([0-9]+).*Safari/i', $webp_user_agent, $webp_match)) {
+				$webp_supported = (int)$webp_match[1] >= 14;
+			}
+
+			if (file_exists(DIR_IMAGE .$webp_file) and $webp_supported) {
+				$image_new = $webp_file;
+			}
 			//HUNTBEE WEBP
 			]]>
             </add>

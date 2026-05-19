@@ -60,7 +60,31 @@ class ModelToolImage extends Model {
 	}
 
 	private function supportsWebp() {
-		return isset($this->request->server['HTTP_ACCEPT']) && strpos($this->request->server['HTTP_ACCEPT'], 'image/webp') !== false;
+		$accept = isset($this->request->server['HTTP_ACCEPT']) ? $this->request->server['HTTP_ACCEPT'] : '';
+
+		if (stripos($accept, 'image/webp') !== false) {
+			return true;
+		}
+
+		$user_agent = isset($this->request->server['HTTP_USER_AGENT']) ? $this->request->server['HTTP_USER_AGENT'] : '';
+
+		if (preg_match('/Firefox\/([0-9]+)/i', $user_agent, $match)) {
+			return (int)$match[1] >= 65;
+		}
+
+		if (preg_match('/Edg\/([0-9]+)/i', $user_agent, $match)) {
+			return (int)$match[1] >= 18;
+		}
+
+		if (preg_match('/(?:Chrome|Chromium|OPR)\/([0-9]+)/i', $user_agent, $match)) {
+			return (int)$match[1] >= 32;
+		}
+
+		if (preg_match('/Version\/([0-9]+).*Safari/i', $user_agent, $match)) {
+			return (int)$match[1] >= 14;
+		}
+
+		return false;
 	}
 
 	private function ensureWebpImage($image) {
