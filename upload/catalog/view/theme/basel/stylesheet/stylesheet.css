@@ -4516,6 +4516,11 @@ a.button-circle {
 .single-product .image {
 	position:relative;
 	margin-bottom:12px;
+	background-color:#fff;
+}
+.single-product .image > a:first-child,
+.single-product .image img {
+	background-color:#fff;
 }
 .single-product .image .thumb2 {
 	position:absolute;

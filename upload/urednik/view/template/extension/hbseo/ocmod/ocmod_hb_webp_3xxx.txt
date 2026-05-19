@@ -107,13 +107,37 @@
 				
 				$webp_source_without_extension		= str_replace('/cache/','/webp/',$webp_source_without_extension);
 				
-				$webp_destination 	= $webp_source_without_extension.'.webp';
-				$options = [];
-				try {
-					WebPConvert::convert($webp_source, $webp_destination, $options);
-					$webp_image = $image_new.'.webp';
-				}catch (Exception $e){
-					$this->log->write('Extension - Huntbee WebP Compression (Auto): Issue while processing (image) path '.$webp_source.'. Issue: '.$e->getMessage());
+					$webp_destination 	= $webp_source_without_extension.'.webp';
+					$options = [];
+					try {
+						$webp_done = false;
+						if ($image_type == IMAGETYPE_PNG && function_exists('imagecreatefrompng') && function_exists('imagewebp')) {
+							if (!is_dir(dirname($webp_destination))) {
+								@mkdir(dirname($webp_destination), 0777, true);
+							}
+							$webp_source_image = @imagecreatefrompng($webp_source);
+							if ($webp_source_image) {
+								$webp_width = imagesx($webp_source_image);
+								$webp_height = imagesy($webp_source_image);
+								$webp_canvas = imagecreatetruecolor($webp_width, $webp_height);
+								if ($webp_canvas) {
+									$webp_white = imagecolorallocate($webp_canvas, 255, 255, 255);
+									imagefilledrectangle($webp_canvas, 0, 0, $webp_width, $webp_height, $webp_white);
+									imagealphablending($webp_canvas, true);
+									imagesavealpha($webp_canvas, false);
+									imagecopy($webp_canvas, $webp_source_image, 0, 0, 0, 0, $webp_width, $webp_height);
+									$webp_done = imagewebp($webp_canvas, $webp_destination, 85);
+									imagedestroy($webp_canvas);
+								}
+								imagedestroy($webp_source_image);
+							}
+						}
+						if (!$webp_done) {
+							WebPConvert::convert($webp_source, $webp_destination, $options);
+						}
+						$webp_image = $image_new.'.webp';
+					}catch (Exception $e){
+						$this->log->write('Extension - Huntbee WebP Compression (Auto): Issue while processing (image) path '.$webp_source.'. Issue: '.$e->getMessage());
 				}
 			}
 			]]>
@@ -129,13 +153,37 @@
 				
 				$webp_source_without_extension		= str_replace('/cache/','/webp/',$webp_source_without_extension);
 						
-				$webp_destination 	= $webp_source_without_extension.'.webp';
-				$options = [];
-				try {
-					WebPConvert::convert($webp_source, $webp_destination, $options);
-					$webp_image = $image_new.'.webp';
-				}catch (Exception $e){
-					$this->log->write('Extension - Huntbee WebP Compression (Auto): Issue while processing (image) path '.$webp_source.'. Issue: '.$e->getMessage());
+					$webp_destination 	= $webp_source_without_extension.'.webp';
+					$options = [];
+					try {
+						$webp_done = false;
+						if ($image_type == IMAGETYPE_PNG && function_exists('imagecreatefrompng') && function_exists('imagewebp')) {
+							if (!is_dir(dirname($webp_destination))) {
+								@mkdir(dirname($webp_destination), 0777, true);
+							}
+							$webp_source_image = @imagecreatefrompng($webp_source);
+							if ($webp_source_image) {
+								$webp_width = imagesx($webp_source_image);
+								$webp_height = imagesy($webp_source_image);
+								$webp_canvas = imagecreatetruecolor($webp_width, $webp_height);
+								if ($webp_canvas) {
+									$webp_white = imagecolorallocate($webp_canvas, 255, 255, 255);
+									imagefilledrectangle($webp_canvas, 0, 0, $webp_width, $webp_height, $webp_white);
+									imagealphablending($webp_canvas, true);
+									imagesavealpha($webp_canvas, false);
+									imagecopy($webp_canvas, $webp_source_image, 0, 0, 0, 0, $webp_width, $webp_height);
+									$webp_done = imagewebp($webp_canvas, $webp_destination, 85);
+									imagedestroy($webp_canvas);
+								}
+								imagedestroy($webp_source_image);
+							}
+						}
+						if (!$webp_done) {
+							WebPConvert::convert($webp_source, $webp_destination, $options);
+						}
+						$webp_image = $image_new.'.webp';
+					}catch (Exception $e){
+						$this->log->write('Extension - Huntbee WebP Compression (Auto): Issue while processing (image) path '.$webp_source.'. Issue: '.$e->getMessage());
 				}
 			}
 			]]>

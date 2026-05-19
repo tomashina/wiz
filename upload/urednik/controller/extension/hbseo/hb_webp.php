@@ -291,13 +291,18 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 						$webp_source_without_extension 		= utf8_substr($webp_source, 0, utf8_strrpos($webp_source, "."));
 						$webp_source_without_extension		= str_replace('/cache/','/webp/',$webp_source_without_extension);
 						$webp_source_without_extension		= str_replace('\\cache\\','\\webp\\',$webp_source_without_extension); //localhost windows testing
-						$webp_destination 	= $webp_source_without_extension.'.webp';
-						$options = [];
-						try{
-							WebPConvert::convert($webp_source, $webp_destination, $options);
-							$this->model_extension_hbseo_hb_webp->deleteid($id);
-						}catch (Exception $e){
-							$this->log->write('Extension - Huntbee WebP Compression: Issue while processing (image) path '.$webp_source.'. Issue: '.$e->getMessage());
+							$webp_destination 	= $webp_source_without_extension.'.webp';
+							$options = [];
+							try{
+								if ($image_type == IMAGETYPE_PNG && $this->convertPngToOpaqueWebp($webp_source, $webp_destination)) {
+									$this->model_extension_hbseo_hb_webp->deleteid($id);
+									continue;
+								}
+
+								WebPConvert::convert($webp_source, $webp_destination, $options);
+								$this->model_extension_hbseo_hb_webp->deleteid($id);
+							}catch (Exception $e){
+								$this->log->write('Extension - Huntbee WebP Compression: Issue while processing (image) path '.$webp_source.'. Issue: '.$e->getMessage());
 						}
 					}
 				}
@@ -309,6 +314,40 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 			
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
+	}
+
+	private function convertPngToOpaqueWebp($source, $destination) {
+		if (!function_exists('imagecreatefrompng') || !function_exists('imagewebp')) {
+			return false;
+		}
+
+		$image = @imagecreatefrompng($source);
+
+		if (!$image) {
+			return false;
+		}
+
+		$width = imagesx($image);
+		$height = imagesy($image);
+		$canvas = imagecreatetruecolor($width, $height);
+
+		if (!$canvas) {
+			imagedestroy($image);
+			return false;
+		}
+
+		$white = imagecolorallocate($canvas, 255, 255, 255);
+		imagefilledrectangle($canvas, 0, 0, $width, $height, $white);
+		imagealphablending($canvas, true);
+		imagesavealpha($canvas, false);
+		imagecopy($canvas, $image, 0, 0, 0, 0, $width, $height);
+
+		$result = imagewebp($canvas, $destination, 85);
+
+		imagedestroy($canvas);
+		imagedestroy($image);
+
+		return $result && is_file($destination);
 	}
 	
 	public function clearcache(){

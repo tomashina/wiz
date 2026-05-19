@@ -124,6 +124,10 @@ class ModelToolImage extends Model {
 		}
 
 		try {
+			if ($image_info[2] == IMAGETYPE_PNG && $this->convertPngToOpaqueWebp(DIR_IMAGE . $image, $destination)) {
+				return $webp_image;
+			}
+
 			\WebPConvert\WebPConvert::convert(DIR_IMAGE . $image, $destination, array());
 		} catch (\Exception $e) {
 			$this->log->write('Extension - Huntbee WebP Compression (Auto): Issue while processing (image) path ' . DIR_IMAGE . $image . '. Issue: ' . $e->getMessage());
@@ -134,6 +138,40 @@ class ModelToolImage extends Model {
 		}
 
 		return is_file($destination) ? $webp_image : false;
+	}
+
+	private function convertPngToOpaqueWebp($source, $destination) {
+		if (!function_exists('imagecreatefrompng') || !function_exists('imagewebp')) {
+			return false;
+		}
+
+		$image = @imagecreatefrompng($source);
+
+		if (!$image) {
+			return false;
+		}
+
+		$width = imagesx($image);
+		$height = imagesy($image);
+		$canvas = imagecreatetruecolor($width, $height);
+
+		if (!$canvas) {
+			imagedestroy($image);
+			return false;
+		}
+
+		$white = imagecolorallocate($canvas, 255, 255, 255);
+		imagefilledrectangle($canvas, 0, 0, $width, $height, $white);
+		imagealphablending($canvas, true);
+		imagesavealpha($canvas, false);
+		imagecopy($canvas, $image, 0, 0, 0, 0, $width, $height);
+
+		$result = imagewebp($canvas, $destination, 85);
+
+		imagedestroy($canvas);
+		imagedestroy($image);
+
+		return $result && is_file($destination);
 	}
 
 	private function getWebpImageName($image) {
