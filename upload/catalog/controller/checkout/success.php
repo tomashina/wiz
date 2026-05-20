@@ -5,6 +5,7 @@ class ControllerCheckoutSuccess extends Controller {
 
 		$data = array();
 		$data['ga4_purchase'] = '';
+		$bank_success_append = '';
 
 		if (isset($this->session->data['order_id'])) {
 			$order_id = (int)$this->session->data['order_id'];
@@ -25,6 +26,21 @@ class ControllerCheckoutSuccess extends Controller {
 
 				$order_totals = $this->model_checkout_order->getOrderTotals($order_id);
 				$data['ga4_purchase'] = $this->model_extension_analytics_ga4->encode($this->model_extension_analytics_ga4->getPurchaseEvent($order_info, $order_products, $order_totals));
+
+				if ($order_info['payment_code'] == 'bank_transfer') {
+					require_once(DIR_SYSTEM . 'library/dryzen_bank_transfer_qr.php');
+
+					$dryzen_bank_transfer_qr = new DryzenBankTransferQr($this->registry);
+					$qr_file = $dryzen_bank_transfer_qr->generateForOrder($order_info);
+					$bank_instructions = nl2br($this->config->get('payment_bank_transfer_bank' . $order_info['language_id']));
+					$bank_instructions = str_replace('%order_id%', $order_info['order_id'], $bank_instructions);
+
+					if ($bank_instructions) {
+						$bank_success_append = '<div class="bank-transfer-instructions" style="margin-top:20px;">' . $bank_instructions . '</div>';
+					}
+
+					$bank_success_append .= $dryzen_bank_transfer_qr->getImageHtml($order_info, $qr_file);
+				}
 			}
 
 			$this->cart->clear();
@@ -71,6 +87,10 @@ class ControllerCheckoutSuccess extends Controller {
 			$data['text_message'] = sprintf($this->language->get('text_customer'), $this->url->link('account/account', '', true), $this->url->link('account/order', '', true), $this->url->link('account/download', '', true), $this->url->link('information/contact'));
 		} else {
 			$data['text_message'] = sprintf($this->language->get('text_guest'), $this->url->link('information/contact'));
+		}
+
+		if ($bank_success_append) {
+			$data['text_message'] .= $bank_success_append;
 		}
 
 		$data['continue'] = $this->url->link('common/home');

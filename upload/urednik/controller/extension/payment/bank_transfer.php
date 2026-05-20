@@ -104,6 +104,40 @@ class ControllerExtensionPaymentBankTransfer extends Controller {
 			$data['payment_bank_transfer_sort_order'] = $this->config->get('payment_bank_transfer_sort_order');
 		}
 
+		$dryzen_bank_transfer_qr_defaults = array(
+			'qr_status'      => '1',
+			'qr_company'     => 'GORDOM USLUGE d.o.o.',
+			'qr_address'     => 'Wickerhauserova ulica 52',
+			'qr_city'        => '10000 Zagreb',
+			'qr_iban'        => 'HR6824020061100462543',
+			'qr_model'       => 'HR00',
+			'qr_reference'   => '{order_id}{year2}',
+			'qr_purpose'     => 'SUPP',
+			'qr_description' => 'Web narudzba Dryzen'
+		);
+
+		foreach ($dryzen_bank_transfer_qr_defaults as $dryzen_key => $dryzen_default) {
+			if (isset($this->request->post['payment_bank_transfer_' . $dryzen_key])) {
+				$data['payment_bank_transfer_' . $dryzen_key] = $this->request->post['payment_bank_transfer_' . $dryzen_key];
+			} else {
+				$dryzen_value = $this->config->get('payment_bank_transfer_' . $dryzen_key);
+				$data['payment_bank_transfer_' . $dryzen_key] = ($dryzen_value !== null && $dryzen_value !== '') ? $dryzen_value : $dryzen_default;
+			}
+		}
+
+		$data['text_qr_settings'] = $this->language->get('text_qr_settings');
+		$data['entry_qr_status'] = $this->language->get('entry_qr_status');
+		$data['entry_qr_company'] = $this->language->get('entry_qr_company');
+		$data['entry_qr_address'] = $this->language->get('entry_qr_address');
+		$data['entry_qr_city'] = $this->language->get('entry_qr_city');
+		$data['entry_qr_iban'] = $this->language->get('entry_qr_iban');
+		$data['entry_qr_model'] = $this->language->get('entry_qr_model');
+		$data['entry_qr_reference'] = $this->language->get('entry_qr_reference');
+		$data['entry_qr_purpose'] = $this->language->get('entry_qr_purpose');
+		$data['entry_qr_description'] = $this->language->get('entry_qr_description');
+		$data['help_qr_reference'] = $this->language->get('help_qr_reference');
+		$data['help_qr_description'] = $this->language->get('help_qr_description');
+
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
