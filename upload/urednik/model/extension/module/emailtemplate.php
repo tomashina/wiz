@@ -834,7 +834,7 @@ class ModelExtensionModuleEmailTemplate extends Model {
                 try {
 					$file_path = $this->emailtemplate->getTemplatePath('order_products/' . $cart_products_layout . '.twig');
 
-					$template = $twig->loadTemplate($file_path);
+					$template = method_exists($twig, 'load') ? $twig->load($file_path) : $twig->loadTemplate($file_path);
 
                     $template_data = $this->emailtemplate->language_data;
 					$template_data['config'] = $this->emailtemplate->data['config'];
@@ -912,35 +912,35 @@ class ModelExtensionModuleEmailTemplate extends Model {
                 try {
 					$file_path = $this->emailtemplate->getTemplatePath('order_products/' . $order_products_layout . '.twig');
 
-					$template = $twig->loadTemplate($file_path);
+					$template = method_exists($twig, 'load') ? $twig->load($file_path) : $twig->loadTemplate($file_path);
 
-					$template->data = $this->emailtemplate->language_data;
-					$template->data['config'] = $this->emailtemplate->data['config'];
-					$template->data['emailtemplate'] = $this->emailtemplate->data['emailtemplate'];
-					$template->data['key'] = 'order_product';
+					$template_data = $this->emailtemplate->language_data;
+					$template_data['config'] = $this->emailtemplate->data['config'];
+					$template_data['emailtemplate'] = $this->emailtemplate->data['emailtemplate'];
+					$template_data['key'] = 'order_product';
 
 					if (isset($this->emailtemplate->data['order'])) {
-						$template->data['order'] = $this->emailtemplate->data['order'];
+						$template_data['order'] = $this->emailtemplate->data['order'];
 					}
 
 					// All vars that being with order_
 					foreach($this->emailtemplate->data as $key => $val) {
 						if (is_string($key) && strpos($key, 'order_') === 0) {
-							$template->data[$key] = $val;
+							$template_data[$key] = $val;
 						}
 					}
 
 					if (isset($ordered['products'])) {
-						$template->data['products'] = $ordered['products'];
+						$template_data['products'] = $ordered['products'];
 					}
 					if (!empty($ordered['vouchers']) && is_array($ordered['vouchers'])) {
-						$template->data['vouchers'] = $ordered['vouchers'];
+						$template_data['vouchers'] = $ordered['vouchers'];
 					}
 					if (!empty($ordered['totals']) && is_array($ordered['totals'])) {
-						$template->data['totals'] = $ordered['totals'];
+						$template_data['totals'] = $ordered['totals'];
 					}
 
-                    $this->emailtemplate->data['html_order_product'] = $template->render($template->data);
+                    $this->emailtemplate->data['html_order_product'] = $template->render($template_data);
                 } catch (Exception $e) {
 					throw $e;
                 }
