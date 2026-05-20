@@ -61,6 +61,7 @@ $_['error_minimum_order']			 = 'Warning: You need a minimum order of %s before y
 $_['error_comment']					 = 'Warning: Order comment is required.';
 
 // Text
+$_['heading_title']                  = 'Potvrdi narudžbu';
 $_['text_checkout_option']           = 'Prijava';
 $_['text_checkout_account']          = 'Vaši podaci';
 $_['text_checkout_payment_address']  = 'Adresa naplate';
