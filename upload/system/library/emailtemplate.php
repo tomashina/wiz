@@ -621,14 +621,24 @@ class EmailTemplate {
             return $this->twig;
         }
 
-        // Depreciated should be using composer
-        if (!class_exists ('Twig_Loader_Filesystem')) {
-            include_once(DIR_SYSTEM . 'library/template/Twig/Autoloader.php');
+        // Deprecated, should be using composer.
+        if (!class_exists('\Twig\Environment') && !class_exists('Twig_Loader_Filesystem')) {
+            if (defined('DIR_STORAGE') && is_file(DIR_STORAGE . 'vendor/autoload.php')) {
+                require_once(DIR_STORAGE . 'vendor/autoload.php');
+            }
 
-            if (class_exists('Composer')) {
-                \Composer::register();
-            } else {
-                \Twig_Autoloader::register();
+            if (!class_exists('\Twig\Environment') && !class_exists('Twig_Loader_Filesystem')) {
+                $twig_autoloader = DIR_SYSTEM . 'library/template/Twig/Autoloader.php';
+
+                if (is_file($twig_autoloader)) {
+                    include_once($twig_autoloader);
+
+                    if (class_exists('Composer')) {
+                        \Composer::register();
+                    } elseif (class_exists('Twig_Autoloader')) {
+                        \Twig_Autoloader::register();
+                    }
+                }
             }
         }
 
@@ -649,7 +659,7 @@ class EmailTemplate {
             }
 
             $this->twig = new \Twig\Environment($loader, $config);
-        } else {
+        } elseif (class_exists('Twig_Loader_Filesystem')) {
             $loader = new \Twig_Loader_Filesystem(DIR_TEMPLATE);
 
             if (defined('DIR_CATALOG')) {
@@ -660,6 +670,8 @@ class EmailTemplate {
             }
 
             $this->twig = new \Twig_Environment($loader, $config);
+        } else {
+            throw new \Exception('Unable to initialise Twig template engine');
         }
 
         return $this->twig;
