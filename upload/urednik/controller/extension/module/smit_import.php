@@ -1,9 +1,18 @@
 <?php
 class ControllerExtensionModuleSmitImport extends Controller {
 	private $route = 'extension/module/smit_import';
-	private $products_endpoint = 'https://cms.smit-electronic.hr/api/b2b/products/xml';
-	private $categories_endpoint = 'https://cms.smit-electronic.hr/api/b2b/categories/xml';
-	private $availability_endpoint = 'https://cms.smit-electronic.hr/api/b2b/availability/xml';
+	private $products_endpoint = array(
+		'https://smit-electronic.hr/api/b2b/products/xml',
+		'https://cms.smit-electronic.hr/api/b2b/products/xml'
+	);
+	private $categories_endpoint = array(
+		'https://smit-electronic.hr/api/b2b/categories/xml',
+		'https://cms.smit-electronic.hr/api/b2b/categories/xml'
+	);
+	private $availability_endpoint = array(
+		'https://smit-electronic.hr/api/b2b/availability/xml',
+		'https://cms.smit-electronic.hr/api/b2b/availability/xml'
+	);
 
 	public function index() {
 		$this->load->language($this->route);
@@ -693,7 +702,8 @@ class ControllerExtensionModuleSmitImport extends Controller {
 				throw new Exception($this->language->get('error_credentials'));
 			}
 
-			$content = $this->requestFeed($endpoint, $settings['username'], $settings['password']);
+			$timeout = ($cache_key == 'products') ? 180 : 90;
+			$content = $this->requestFeed($endpoint, $settings['username'], $settings['password'], $timeout);
 
 			if ($content) {
 				file_put_contents($cache_file, $content);
@@ -710,13 +720,30 @@ class ControllerExtensionModuleSmitImport extends Controller {
 		return $xml;
 	}
 
-	private function requestFeed($endpoint, $username, $password) {
+	private function requestFeed($endpoint, $username, $password, $timeout = 90) {
+		$endpoints = is_array($endpoint) ? $endpoint : array($endpoint);
+		$errors = array();
+
+		foreach ($endpoints as $url) {
+			$content = $this->requestFeedUrl($url, $username, $password, $timeout, $error);
+
+			if ($content !== false) {
+				return $content;
+			}
+
+			$errors[] = $error;
+		}
+
+		throw new Exception(sprintf($this->language->get('error_feed'), 0, implode(' | ', array_filter($errors))));
+	}
+
+	private function requestFeedUrl($endpoint, $username, $password, $timeout, &$error_message) {
 		if (function_exists('curl_init')) {
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $endpoint);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 90);
+			curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 			curl_setopt($ch, CURLOPT_USERPWD, $username . ':' . $password);
 			curl_setopt($ch, CURLOPT_USERAGENT, 'Wiz Smit Import');
@@ -727,7 +754,8 @@ class ControllerExtensionModuleSmitImport extends Controller {
 			curl_close($ch);
 
 			if ($content === false || $status_code < 200 || $status_code >= 300) {
-				throw new Exception(sprintf($this->language->get('error_feed'), $status_code, $error));
+				$error_message = $this->buildEndpointError($endpoint, $status_code, $error, $content);
+				return false;
 			}
 
 			return $content;
@@ -737,17 +765,30 @@ class ControllerExtensionModuleSmitImport extends Controller {
 			'http' => array(
 				'method'  => 'GET',
 				'header'  => 'Authorization: Basic ' . base64_encode($username . ':' . $password),
-				'timeout' => 90
+				'timeout' => $timeout
 			)
 		));
 
 		$content = @file_get_contents($endpoint, false, $context);
 
 		if ($content === false) {
-			throw new Exception(sprintf($this->language->get('error_feed'), 0, 'file_get_contents'));
+			$error_message = $this->buildEndpointError($endpoint, 0, 'file_get_contents', '');
+			return false;
 		}
 
 		return $content;
+	}
+
+	private function buildEndpointError($endpoint, $status_code, $error, $content) {
+		$message = $error;
+		$body = trim(strip_tags((string)$content));
+
+		if ($body !== '') {
+			$body = preg_replace('/\s+/', ' ', $body);
+			$message = trim($message . ' ' . substr($body, 0, 180));
+		}
+
+		return $endpoint . ' HTTP ' . (int)$status_code . ($message !== '' ? ': ' . $message : '');
 	}
 
 	private function normaliseProducts($xml) {
