@@ -8,6 +8,9 @@ class ControllerExtensionFeedGoogleBase extends Controller {
 		$this->document->setTitle($this->language->get('heading_title'));
 
 		$this->load->model('setting/setting');
+		$this->load->model('extension/feed/google_base');
+
+		$this->model_extension_feed_google_base->setup();
 
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
 			$this->model_setting_setting->editSetting('feed_google_base', $this->request->post);
@@ -46,10 +49,15 @@ class ControllerExtensionFeedGoogleBase extends Controller {
 
 		$data['user_token'] = $this->session->data['user_token'];
 
-		$data['data_feed'] = HTTP_CATALOG . 'index.php?route=extension/feed/google_base';
+		$data['data_feed'] = rtrim(HTTPS_CATALOG, '/') . '/googlebase.xml';
+		$data['feed_open'] = $data['data_feed'];
+		$data['mapped_categories_total'] = $this->model_extension_feed_google_base->getTotalCategories();
+		$data['text_mapped_categories_count'] = sprintf($this->language->get('text_mapped_categories'), $data['mapped_categories_total']);
 
 		if (isset($this->request->post['feed_google_base_status'])) {
 			$data['feed_google_base_status'] = $this->request->post['feed_google_base_status'];
+		} elseif (!$this->config->has('feed_google_base_status')) {
+			$data['feed_google_base_status'] = 1;
 		} else {
 			$data['feed_google_base_status'] = $this->config->get('feed_google_base_status');
 		}

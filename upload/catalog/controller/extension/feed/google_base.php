@@ -1,207 +1,186 @@
 <?php
 class ControllerExtensionFeedGoogleBase extends Controller {
+	const LANGUAGE_CODE = 'hr-hr';
+	const CURRENCY_CODE = 'EUR';
+
 	public function index() {
-		if ($this->config->get('feed_google_base_status')) {
-			$output  = '<?xml version="1.0" encoding="UTF-8" ?>';
-			$output .= '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">';
-			$output .= '  <channel>';
-			$output .= '  <title>' . $this->config->get('config_name') . '</title>';
-			$output .= '  <description>' . $this->config->get('config_meta_description') . '</description>';
-			$output .= '  <link>' . $this->config->get('config_url') . '</link>';
+		if ($this->config->has('feed_google_base_status') && !$this->config->get('feed_google_base_status')) {
+			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . ' 404 Not Found');
+			$this->response->setOutput('Google Merchant XML feed is disabled.');
+			return;
+		}
 
-			$this->load->model('extension/feed/google_base');
-			$this->load->model('catalog/category');
-			$this->load->model('catalog/product');
+		$this->load->model('extension/feed/google_base');
 
-			$this->load->model('tool/image');
+		$language_id = $this->model_extension_feed_google_base->getLanguageId(self::LANGUAGE_CODE);
+		$products = $this->model_extension_feed_google_base->getProducts($language_id);
+		$google_categories = $this->model_extension_feed_google_base->getProductGoogleCategories();
+		$product_types = $this->model_extension_feed_google_base->getProductTypes($language_id);
 
-			$product_data = array();
+		$store_url = rtrim($this->config->get('config_ssl') ?: $this->config->get('config_url'), '/') . '/';
+		$store_name = $this->plainText($this->config->get('config_name'), 150);
+		$store_description = $this->plainText($this->config->get('config_meta_description'), 5000);
 
-			$google_base_categories = $this->model_extension_feed_google_base->getCategories();
+		$output = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+		$output .= '<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">' . "\n";
+		$output .= "  <channel>\n";
+		$output .= '    <title>' . $this->xml($store_name) . "</title>\n";
+		$output .= '    <link>' . $this->xml($store_url) . "</link>\n";
+		$output .= '    <description>' . $this->xml($store_description) . "</description>\n";
 
-			foreach ($google_base_categories as $google_base_category) {
-				$filter_data = array(
-					'filter_category_id' => $google_base_category['category_id'],
-					'filter_filter'      => false
-				);
+		foreach ($products as $product) {
+			$title = $this->plainText($product['name'], 150);
+			$description = $this->plainText($product['description'], 5000);
+			$link = html_entity_decode($this->url->link('product/product', 'product_id=' . (int)$product['product_id'], true), ENT_QUOTES, 'UTF-8');
+			$image_link = $this->getImageLink($product['image']);
 
-				$products = $this->model_catalog_product->getProducts($filter_data);
+			if ($title === '' || $description === '' || $image_link === '') {
+				continue;
+			}
 
-				foreach ($products as $product) {
-					if (!in_array($product['product_id'], $product_data) && $product['description']) {
-						
-						$product_data[] = $product['product_id'];
-						
-						$output .= '<item>';
-						$output .= '<title><![CDATA[' . $product['name'] . ']]></title>';
-						$output .= '<link>' . $this->url->link('product/product', 'product_id=' . $product['product_id']) . '</link>';
-						$output .= '<description><![CDATA[' . strip_tags(html_entity_decode($product['description'], ENT_QUOTES, 'UTF-8')) . ']]></description>';
-						$output .= '<g:brand><![CDATA[' . html_entity_decode((string)$product['manufacturer'], ENT_QUOTES, 'UTF-8') . ']]></g:brand>';
-						$output .= '<g:condition>new</g:condition>';
-						$output .= '<g:id>' . $product['product_id'] . '</g:id>';
+			$price = $product['special'] !== null ? $product['special'] : ($product['discount'] !== null ? $product['discount'] : $product['price']);
+			$price = $this->tax->calculate((float)$price, (int)$product['tax_class_id']);
+			$price = $this->currency->format($price, self::CURRENCY_CODE, $this->currency->getValue(self::CURRENCY_CODE), false);
+			$price = number_format((float)$price, 2, '.', '');
+			$gtin = $this->getGtin($product);
+			$brand = $this->getBrand($product);
+			$mpn = $this->plainText($product['mpn'] !== '' ? $product['mpn'] : $product['model'], 70);
 
-						if ($product['image']) {
-							$output .= '  <g:image_link>' . $this->model_tool_image->resize($product['image'], 500, 500) . '</g:image_link>';
-						} else {
-							$output .= '  <g:image_link></g:image_link>';
-						}
+			$output .= "    <item>\n";
+			$output .= '      <g:id>' . (int)$product['product_id'] . "</g:id>\n";
+			$output .= '      <g:title>' . $this->xml($title) . "</g:title>\n";
+			$output .= '      <g:description>' . $this->xml($description) . "</g:description>\n";
+			$output .= '      <g:link>' . $this->xml($link) . "</g:link>\n";
+			$output .= '      <g:image_link>' . $this->xml($image_link) . "</g:image_link>\n";
+			$output .= "      <g:availability>in_stock</g:availability>\n";
+			$output .= '      <g:price>' . $this->xml($price . ' ' . self::CURRENCY_CODE) . "</g:price>\n";
+			$output .= "      <g:condition>new</g:condition>\n";
 
-						$output .= '  <g:model_number>' . $product['model'] . '</g:model_number>';
+			if ($brand !== '') {
+				$output .= '      <g:brand>' . $this->xml($brand) . "</g:brand>\n";
+			}
 
-						if ($product['mpn']) {
-							$output .= '  <g:mpn><![CDATA[' . $product['mpn'] . ']]></g:mpn>' ;
-						} else {
-							$output .= '  <g:identifier_exists>false</g:identifier_exists>';
-						}
+			if ($gtin !== '') {
+				$output .= '      <g:gtin>' . $gtin . "</g:gtin>\n";
+			}
 
-						if ($product['upc']) {
-							$output .= '  <g:upc>' . $product['upc'] . '</g:upc>';
-						}
+			if ($mpn !== '') {
+				$output .= '      <g:mpn>' . $this->xml($mpn) . "</g:mpn>\n";
+			}
 
-						if ($product['ean']) {
-							$output .= '  <g:ean>' . $product['ean'] . '</g:ean>';
-						}
+			if ($gtin === '' && ($brand === '' || $mpn === '')) {
+				$output .= "      <g:identifier_exists>false</g:identifier_exists>\n";
+			}
 
-						$currencies = array(
-							'USD', // US Dollar
-							'EUR', // Euro
-							'GBP', // British Pound
-							'ARS', // Argentinian Peso
-							'AUD', // Australian Dollar
-							'BHD', // Bahraini Dinar
-							'BYN', // Belarusian Ruble
-							'BRL', // Brazilian Real
-							'CAD', // Canadian Dollar
-							'ARS', // Argentinian Peso
-							'AUD', // Australian Dollar
-							'BHD', // Bahraini Dinar
-							'BYN', // Belarusian Ruble
-							'BRL', // Brazilian Real
-							'CAD', // Canadian Dollar
-							'CLP', // Chilean Peso
-							'COP', // Colombian Peso
-							'CZK', // Czech Koruna
-							'DKK', // Danish Krone
-							'EGP', // Egyptian Pound
-							'ETB', // Ethiopian Birr
-							'GEL', // Georgian Lari
-							'GHS', // Ghanaian Cedi
-							'HKD', // Hong Kong Dollar
-							'HUF', // Hungarian Forint
-							'INR', // Indian Rupee
-							'IDR', // Indonesian Rupiah
-							'ILS', // Israeli New Shekel
-							'JPY', // Japanese Yen
-							'JOD', // Jordanian Dinar
-							'KZT', // Kazakhstani Tenge
-							'KES', // Kenyan Shilling
-							'KWD', // Kuwaiti Dinar
-							'LBP', // Lebanese Pound
-							'MYR', // Malaysia Ringgit
-							'MUR', // Mauritian Rupee
-							'MXN', // Mexican Peso
-							'NZD', // New Zealand Dollar
-							'NGN', // Nigerian Naira
-							'NOK', // Norwegian Krone
-							'OMR', // Omani Rial
-							'PYG', // Paraguay Guarani
-							'PEN', // Peruvian Sol
-							'PHP', // Philippine Peso
-							'PLN', // Poland Złoty
-							'RON', // Romanian Leu
-							'RUB', // Russian Ruble
-							'SAR', // Saudi Riyal
-							'SGD', // Singapore Dollar
-							'ZAR', // South African Rand
-							'KRW', // South Korean Won
-							'SEK', // Swedish Krona
-							'CHF', // Swiss Franc
-							'TWD', // New Taiwan Dollar
-							'TZS', // Tanzanian Shilling
-							'THB', // Thai Baht
-							'TRY', // Turkish Lira
-							'UGX', // Ugandan Shilling
-							'UAH', // Ukrainian Hryvnia
-							'AED', // United Arab Emirates Dirham
-							'UYU', // Uruguayan Peso
-							'UZS', // Uzbekistani Som
-							'VND', // Vietnamese Dong
-							'ZMW'  // Zambian Kwacha
-						);
+			if (isset($google_categories[$product['product_id']])) {
+				$output .= '      <g:google_product_category>' . (int)$google_categories[$product['product_id']] . "</g:google_product_category>\n";
+			}
 
-						if (in_array($this->session->data['currency'], $currencies)) {
-							$currency_code = $this->session->data['currency'];
-							$currency_value = $this->currency->getValue($this->session->data['currency']);
-						} else {
-							$currency_code = 'USD';
-							$currency_value = $this->currency->getValue('USD');
-						}
+			if (isset($product_types[$product['product_id']])) {
+				$product_type = $this->plainText($product_types[$product['product_id']], 750);
 
-						if ((float)$product['special']) {
-							$output .= '  <g:price>' .  $this->currency->format($this->tax->calculate($product['special'], $product['tax_class_id']), $currency_code, $currency_value, false) . ' ' . $currency_code . '</g:price>';
-						} else {
-							$output .= '  <g:price>' . $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id']), $currency_code, $currency_value, false) . ' ' . $currency_code . '</g:price>';
-						}
-
-						$output .= '  <g:google_product_category>' . $google_base_category['google_base_category_id'] . '</g:google_product_category>';
-
-						$categories = $this->model_catalog_product->getCategories($product['product_id']);
-
-						foreach ($categories as $category) {
-							$path = $this->getPath($category['category_id']);
-
-							if ($path) {
-								$string = '';
-
-								foreach (explode('_', $path) as $path_id) {
-									$category_info = $this->model_catalog_category->getCategory($path_id);
-
-									if ($category_info) {
-										if (!$string) {
-											$string = $category_info['name'];
-										} else {
-											$string .= ' &gt; ' . $category_info['name'];
-										}
-									}
-								}
-
-								$output .= '<g:product_type><![CDATA[' . $string . ']]></g:product_type>';
-							}
-						}
-
-						$output .= '  <g:quantity>' . $product['quantity'] . '</g:quantity>';
-						$output .= '  <g:weight>' . $this->weight->format($product['weight'], $product['weight_class_id']) . '</g:weight>';
-						$output .= '  <g:availability><![CDATA[' . ($product['quantity'] ? 'in stock' : 'out of stock') . ']]></g:availability>';
-						$output .= '</item>';
-					}
+				if ($product_type !== '') {
+					$output .= '      <g:product_type>' . $this->xml($product_type) . "</g:product_type>\n";
 				}
 			}
 
-			$output .= '  </channel>';
-			$output .= '</rss>';
-
-			$this->response->addHeader('Content-Type: application/rss+xml');
-			$this->response->setOutput($output);
+			$output .= "    </item>\n";
 		}
+
+		$output .= "  </channel>\n";
+		$output .= "</rss>\n";
+
+		$this->response->addHeader('Content-Type: application/xml; charset=UTF-8');
+		$this->response->addHeader('X-Robots-Tag: noindex, nofollow');
+		$this->response->setOutput($output);
 	}
 
-	protected function getPath($parent_id, $current_path = '') {
-		$category_info = $this->model_catalog_category->getCategory($parent_id);
+	private function getImageLink($image) {
+		$image = ltrim((string)$image, '/');
 
-		if ($category_info) {
-			if (!$current_path) {
-				$new_path = $category_info['category_id'];
-			} else {
-				$new_path = $category_info['category_id'] . '_' . $current_path;
-			}
+		if ($image === '' || !is_file(DIR_IMAGE . $image)) {
+			return '';
+		}
 
-			$path = $this->getPath($category_info['parent_id'], $new_path);
+		$base_url = rtrim($this->config->get('config_ssl') ?: $this->config->get('config_url'), '/') . '/';
+		$segments = explode('/', str_replace('\\', '/', $image));
+		$segments = array_map('rawurlencode', $segments);
 
-			if ($path) {
-				return $path;
-			} else {
-				return $new_path;
+		return $base_url . 'image/' . implode('/', $segments);
+	}
+
+	private function getGtin($product) {
+		$candidates = array($product['ean'], $product['upc'], $product['jan'], $product['isbn'], $product['sku'], $product['model']);
+
+		foreach ($candidates as $candidate) {
+			$gtin = preg_replace('/[^0-9]/', '', (string)$candidate);
+
+			if ($this->isValidGtin($gtin)) {
+				return $gtin;
 			}
 		}
+
+		return '';
+	}
+
+	private function getBrand($product) {
+		$brand = $this->plainText($product['manufacturer'], 70);
+
+		if ($brand !== '') {
+			return $brand;
+		}
+
+		$overrides = array(
+			3443  => 'Renkforce',
+			11783 => 'Subsonic'
+		);
+
+		return isset($overrides[$product['product_id']]) ? $overrides[$product['product_id']] : '';
+	}
+
+	private function isValidGtin($gtin) {
+		$length = strlen($gtin);
+
+		if (!in_array($length, array(8, 12, 13, 14), true)) {
+			return false;
+		}
+
+		$sum = 0;
+		$position = 0;
+
+		for ($index = $length - 2; $index >= 0; $index--) {
+			$sum += (int)$gtin[$index] * ($position % 2 === 0 ? 3 : 1);
+			$position++;
+		}
+
+		$check_digit = (10 - ($sum % 10)) % 10;
+
+		return $check_digit === (int)$gtin[$length - 1];
+	}
+
+	private function plainText($value, $limit) {
+		$value = (string)$value;
+
+		for ($pass = 0; $pass < 3; $pass++) {
+			$decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+			if ($decoded === $value) {
+				break;
+			}
+
+			$value = $decoded;
+		}
+
+		$value = preg_replace('/<(br|\/p|\/div|\/li|\/h[1-6])\b[^>]*>/iu', ' ', $value);
+		$value = strip_tags($value);
+		$value = preg_replace('/[^\x{0009}\x{000A}\x{000D}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]/u', '', $value);
+		$value = preg_replace('/\s+/u', ' ', $value);
+		$value = trim($value);
+
+		return utf8_substr($value, 0, $limit);
+	}
+
+	private function xml($value) {
+		return htmlspecialchars((string)$value, ENT_QUOTES | ENT_XML1, 'UTF-8');
 	}
 }

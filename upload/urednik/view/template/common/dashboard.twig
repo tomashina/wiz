@@ -3,6 +3,7 @@
   <div class="page-header">
     <div class="container-fluid">
       <div class="pull-right">
+        {% if google_merchant %}<a href="{{ google_merchant.href }}" title="{{ button_google_merchant }}" data-toggle="tooltip" class="btn btn-danger"><i class="fa fa-google"></i> {{ button_google_merchant }}</a>{% endif %}
         <button type="button" id="button-developer" title="{{ button_developer  }}" data-loading-text="{{ text_loading }}" class="btn btn-info"><i class="fa fa-cog"></i></button>
       </div>
       <h1>{{ heading_title }}</h1>

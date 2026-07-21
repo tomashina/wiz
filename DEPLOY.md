@@ -81,3 +81,28 @@ git pull
 ```
 
 Nakon izmjena koje diraju OCMOD/modifikacije, ocisti OpenCart cache i osvjezi modifications iz admina.
+
+## Google Merchant XML feed
+
+Produkcijski URL feeda je:
+
+```text
+https://www.wiz.hr/googlebase.xml
+```
+
+Nakon prvog deploya otvori **Google Merchant XML** preko precaca desno na nadzornoj ploci. Modul ce, ako mapiranja jos ne postoje, postaviti pocetna mapiranja wiz.hr kategorija. Provjeri da je status ukljucen i spremi postavke.
+
+U Merchant Centeru izaberi data source iz datoteke i postavi **Scheduled fetch** jednom dnevno:
+
+- URL: `https://www.wiz.hr/googlebase.xml`
+- jezik: hrvatski
+- valuta: EUR
+- zemlja: Hrvatska
+
+Scheduled fetch je dnevni cron za ovaj dinamicki feed: XML se generira iz trenutasnih cijena, kolicina i statusa pri svakom Googleovu dohvacanju, pa zaseban server cron nije potreban.
+
+Brza provjera nakon deploya:
+
+```bash
+curl --fail --silent --show-error https://www.wiz.hr/googlebase.xml | xmllint --noout -
+```

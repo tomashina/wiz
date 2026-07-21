@@ -94,6 +94,14 @@ class ControllerCommonDashboard extends Controller {
 			'href' => $this->url->link('extension/module/colby_import', 'user_token=' . $this->session->data['user_token'], true)
 		);
 
+		if ($this->user->hasPermission('access', 'extension/feed/google_base')) {
+			$data['google_merchant'] = array(
+				'href' => $this->url->link('extension/feed/google_base', 'user_token=' . $this->session->data['user_token'], true)
+			);
+		} else {
+			$data['google_merchant'] = array();
+		}
+
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');

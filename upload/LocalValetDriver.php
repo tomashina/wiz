@@ -18,7 +18,13 @@ class LocalValetDriver extends BasicValetDriver
 
         $path = trim($uri, '/');
 
-        if ($path !== ''
+        if ($path === 'googlebase.xml') {
+            $_GET['route'] = 'extension/feed/google_base';
+            $_REQUEST['route'] = 'extension/feed/google_base';
+        } elseif ($path === 'sitemap.xml') {
+            $_GET['route'] = 'extension/feed/google_sitemap';
+            $_REQUEST['route'] = 'extension/feed/google_sitemap';
+        } elseif ($path !== ''
             && $path !== 'index.php'
             && !str_starts_with($path, 'urednik/')
             && !isset($_GET['_route_'])

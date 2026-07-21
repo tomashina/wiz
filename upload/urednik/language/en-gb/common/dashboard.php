@@ -10,6 +10,7 @@ $_['button_smit_import'] = 'Open Smit import';
 $_['text_colby_import'] = 'Colby B2B import';
 $_['text_colby_import_help'] = 'Import Colby products from XML, map categories, and update PPC prices and quantities.';
 $_['button_colby_import'] = 'Open Colby import';
+$_['button_google_merchant'] = 'Google Merchant XML';
 
 // Error
 $_['error_install'] = 'Warning: Install folder still exists and should be deleted for security reasons!';
