@@ -82,6 +82,59 @@ git pull
 
 Nakon izmjena koje diraju OCMOD/modifikacije, ocisti OpenCart cache i osvjezi modifications iz admina.
 
+## XML karta web-lokacije (Google indeksiranje)
+
+Glavna karta za indeksiranje je dinamicki sitemap indeks:
+
+```text
+https://www.wiz.hr/sitemap.xml
+```
+
+Indeks upucuje na karte `/sitemap-products-1.xml`, `/sitemap-categories-1.xml`,
+`/sitemap-manufacturers-1.xml` i `/sitemap-information-1.xml`. Svaka karta sadrzi
+najvise 1000 URL-ova; dodatne se stranice automatski dodaju prema velicini kataloga.
+Generiranje ne ovisi o statusu starog Google Sitemap feed modula niti o HuntBee
+postavkama. Zaseban cron ili izrada fizickih XML datoteka nisu potrebni.
+
+Karte ukljucuju omogucene proizvode kojima je nastupio `date_available`, ukljucujuci
+proizvode bez zalihe, te omogucene kategorije trenutne trgovine i jezika. Zadrzane
+su i javne stranice proizvodjaca i informacija. URL-ovi proizvoda nemaju kategoriju
+u putanji; kategorije koriste isti URL kao vlastita kanonska oznaka. `lastmod`
+se navodi samo kada proizvod ili kategorija imaju valjan, nebuduci datum promjene.
+
+Pri objavi ovih SEO promjena:
+
+1. Objavi sve izmijenjene datoteke, ukljucujuci novi model
+   `upload/catalog/model/extension/feed/google_sitemap.php`, kontroler,
+   `upload/.htaccess`, `upload/robots.txt` i izmjene kanonskih URL-ova.
+2. U administraciji otvori **Extensions > Modifications** i osvjezi modifikacije,
+   zatim ocisti OpenCart i cache teme kako stari URL-ovi ne bi ostali u prikazu.
+3. Provjeri da `config_url` i `config_ssl` na produkciji koriste kanonsku adresu
+   `https://www.wiz.hr/` i da su SEO URL-ovi ukljuceni.
+4. Otvori indeks i sve karte navedene u njemu: svaka mora vratiti HTTP 200 i valjan
+   XML. Provjeri da se uzorak URL-a proizvoda iz karte podudara s njegovim
+   canonicalom, a stari URL s kategorijom vraca 301 na taj URL.
+5. Provjeri da produkcijski `robots.txt` sadrzi
+   `Sitemap: https://www.wiz.hr/sitemap.xml`.
+6. U Google Search Console za svojstvo `https://www.wiz.hr/` (ili domensko
+   svojstvo `wiz.hr`) otvori **Sitemaps**, unesi puni URL
+   `https://www.wiz.hr/sitemap.xml` (ili `sitemap.xml` ako je prefiks vec prikazan)
+   i klikni **Submit**.
+   Prijava zahtijeva pristup odgovarajucem Search Console svojstvu; nije dio
+   samog deploya. Ako je stara HuntBee karta vec prijavljena, ukloni staru prijavu
+   nakon uspjesnog dohvata nove karte.
+
+Brza provjera nakon deploya:
+
+```bash
+curl --fail --silent --show-error https://www.wiz.hr/sitemap.xml | xmllint --noout -
+curl --fail --silent --show-error https://www.wiz.hr/sitemap-products-1.xml | xmllint --noout -
+curl --fail --silent --show-error https://www.wiz.hr/sitemap-categories-1.xml | xmllint --noout -
+```
+
+Ova karta sluzi za Google indeksiranje. `googlebase.xml` ostaje zaseban Merchant
+Center feed i ne prijavljuje se kao sitemap.
+
 ## Google Merchant XML feed
 
 Produkcijski URL feeda je:

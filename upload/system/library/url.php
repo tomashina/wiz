@@ -46,6 +46,19 @@ class Url {
 	 * @return	string
  	*/
 	public function link($route, $args = '', $secure = false) {
+		// Product URLs must be identical in listings, canonical tags and sitemaps.
+		if ($route === 'product/product') {
+			if (!is_array($args)) {
+				parse_str(html_entity_decode((string)$args, ENT_QUOTES, 'UTF-8'), $args);
+			}
+
+			foreach (array('path', 'manufacturer_id', 'search', 'tag', 'description', 'category_id', 'sub_category', 'sort', 'order', 'page', 'limit', 'filter', 'filter_name', 'filter_sub_category', 'filter_description') as $key) {
+				unset($args[$key]);
+			}
+
+			$secure = true;
+		}
+
 		if ($this->ssl && $secure) {
 			$url = $this->ssl . 'index.php?route=' . $route;
 		} else {
@@ -54,7 +67,7 @@ class Url {
 		
 		if ($args) {
 			if (is_array($args)) {
-				$url .= '&amp;' . http_build_query($args);
+				$url .= '&amp;' . http_build_query($args, '', '&amp;');
 			} else {
 				$url .= str_replace('&', '&amp;', '&' . ltrim($args, '&'));
 			}
