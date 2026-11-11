@@ -55,6 +55,9 @@ $_['entry_use_category_map'] = 'Koristi uparivanje Colby kategorija kad postoji'
 $_['entry_auto_create_category'] = 'Ako kategorija nije uparena, automatski kreiraj lokalnu Colby kategoriju';
 $_['entry_update_existing_descriptions'] = 'Ažuriraj opise postojećih artikala';
 $_['entry_feed_url'] = 'Colby XML feed';
+$_['entry_wiz_feed_password'] = 'Lozinka za wiz.xml';
+$_['help_wiz_feed_password'] = 'Za prelazak na wiz.xml upiši lozinku i spremi postavke. Prazno polje zadržava aktivni izvor.';
+$_['entry_use_legacy_feed'] = 'Vrati se na colbyhr.xml';
 $_['entry_cron_token'] = 'Cron token';
 $_['help_cron_token'] = 'Cron URL po defaultu ažurira cijene i količine iz Colby feeda. Dodaj &action=prices ili &action=quantities za samo jednu vrstu updatea.';
 
@@ -78,6 +81,8 @@ $_['button_update_products'] = 'Update cijene i količine';
 $_['button_save'] = 'Spremi';
 
 $_['error_feed'] = 'Colby feed nije dostupan. HTTP: %s. %s';
+$_['error_feed_permission'] = 'Nemaš ovlast za promjenu Colby izvora.';
+$_['error_feed_settings'] = 'Promjenu Colby izvora nije moguće spremiti.';
 $_['error_xml'] = 'Colby feed nije ispravan XML.';
 $_['error_selected'] = 'Odaberi barem jedan artikl za import.';
 $_['error_category_selected'] = 'Odaberi barem jednu Colby kategoriju za kreiranje.';

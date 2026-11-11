@@ -137,7 +137,8 @@ class ModelExtensionModuleColbyImport extends Model {
 			$query = $this->db->query("SELECT product_id FROM " . DB_PREFIX . "product WHERE model = '" . $this->db->escape($product['code']) . "'");
 
 			if ($query->num_rows) {
-				$this->db->query("UPDATE " . DB_PREFIX . "product SET sku = '" . $this->db->escape($product['id']) . "', ean = '" . $this->db->escape($product['barcode']) . "', location = '" . $this->db->escape($this->supplier_name) . "', quantity = '" . (int)$product['quantity'] . "'" . $price_sql . ", date_modified = NOW() WHERE model = '" . $this->db->escape($product['code']) . "'");
+				$sku_sql = isset($product['id']) ? ", sku = '" . $this->db->escape($product['id']) . "'" : '';
+				$this->db->query("UPDATE " . DB_PREFIX . "product SET ean = '" . $this->db->escape($product['barcode']) . "', location = '" . $this->db->escape($this->supplier_name) . "', quantity = '" . (int)$product['quantity'] . "'" . $sku_sql . $price_sql . ", date_modified = NOW() WHERE model = '" . $this->db->escape($product['code']) . "'");
 				$updated += $query->num_rows;
 			} else {
 				$not_found++;
@@ -240,7 +241,7 @@ class ModelExtensionModuleColbyImport extends Model {
 
 		$data = array(
 			'model'               => $product['code'],
-			'sku'                 => $product['id'],
+			'sku'                 => $product['id'] ?? '',
 			'upc'                 => '',
 			'ean'                 => $product['barcode'],
 			'jan'                 => '',
@@ -287,7 +288,8 @@ class ModelExtensionModuleColbyImport extends Model {
 			$image_sql = ", image = '" . $this->db->escape($images[0]) . "'";
 		}
 
-		$this->db->query("UPDATE " . DB_PREFIX . "product SET sku = '" . $this->db->escape($product['id']) . "', ean = '" . $this->db->escape($product['barcode']) . "', location = '" . $this->db->escape($this->supplier_name) . "', quantity = '" . (int)$product['quantity'] . "', subtract = '1', stock_status_id = '" . (int)$stock_status_id . "', manufacturer_id = '" . (int)$manufacturer_id . "', shipping = '1', price = '" . (float)$price . "', tax_class_id = '" . (!empty($settings['tax_class_id']) ? (int)$settings['tax_class_id'] : 0) . "', status = '1', date_modified = NOW()" . $image_sql . " WHERE product_id = '" . (int)$existing['product_id'] . "'");
+		$sku_sql = isset($product['id']) ? ", sku = '" . $this->db->escape($product['id']) . "'" : '';
+		$this->db->query("UPDATE " . DB_PREFIX . "product SET ean = '" . $this->db->escape($product['barcode']) . "', location = '" . $this->db->escape($this->supplier_name) . "', quantity = '" . (int)$product['quantity'] . "', subtract = '1', stock_status_id = '" . (int)$stock_status_id . "', manufacturer_id = '" . (int)$manufacturer_id . "', shipping = '1', price = '" . (float)$price . "', tax_class_id = '" . (!empty($settings['tax_class_id']) ? (int)$settings['tax_class_id'] : 0) . "', status = '1', date_modified = NOW()" . $sku_sql . $image_sql . " WHERE product_id = '" . (int)$existing['product_id'] . "'");
 
 		$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_category WHERE product_id = '" . (int)$existing['product_id'] . "' AND category_id = '" . (int)$category_id . "'");
 		$this->db->query("INSERT INTO " . DB_PREFIX . "product_to_category SET product_id = '" . (int)$existing['product_id'] . "', category_id = '" . (int)$category_id . "'");

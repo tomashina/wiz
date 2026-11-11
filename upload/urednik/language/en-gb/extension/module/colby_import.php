@@ -55,6 +55,9 @@ $_['entry_use_category_map'] = 'Use Colby category mapping when available';
 $_['entry_auto_create_category'] = 'Automatically create a local Colby category when missing';
 $_['entry_update_existing_descriptions'] = 'Update descriptions for existing products';
 $_['entry_feed_url'] = 'Colby XML feed';
+$_['entry_wiz_feed_password'] = 'wiz.xml password';
+$_['help_wiz_feed_password'] = 'Enter the password and save to switch to wiz.xml. Leave the field blank to keep the active feed.';
+$_['entry_use_legacy_feed'] = 'Switch back to colbyhr.xml';
 $_['entry_cron_token'] = 'Cron token';
 $_['help_cron_token'] = 'The cron URL updates Colby prices and quantities by default. Add &action=prices or &action=quantities to update only one field.';
 
@@ -78,6 +81,8 @@ $_['button_update_products'] = 'Update prices and quantities';
 $_['button_save'] = 'Save';
 
 $_['error_feed'] = 'Colby feed is unavailable. HTTP: %s. %s';
+$_['error_feed_permission'] = 'You do not have permission to change the Colby feed.';
+$_['error_feed_settings'] = 'Could not save the Colby feed change.';
 $_['error_xml'] = 'Colby feed is not valid XML.';
 $_['error_selected'] = 'Select at least one product to import.';
 $_['error_category_selected'] = 'Select at least one Colby category to create.';

@@ -2,6 +2,7 @@
 class ControllerExtensionModuleColbyImport extends Controller {
 	private $route = 'extension/module/colby_import';
 	private $feed_endpoint = 'https://cdn.colby.si/xml/colbyhr.xml';
+	private $wiz_feed_endpoint = 'https://cdn.colby.si/xml/wiz.xml';
 
 	public function index() {
 		$this->load->language($this->route);
@@ -151,6 +152,7 @@ class ControllerExtensionModuleColbyImport extends Controller {
 			$data['local_category_names'] = $local_category_names;
 			$data['category_map'] = $category_map;
 			$data['tax_classes'] = $this->model_localisation_tax_class->getTaxClasses();
+			unset($settings['wiz_feed_password']);
 			$data['settings'] = $settings;
 			$data['price_modes'] = array(
 				'ppc'       => $this->language->get('text_price_ppc'),
@@ -228,6 +230,7 @@ class ControllerExtensionModuleColbyImport extends Controller {
 				'sort'  => 'name',
 				'order' => 'ASC'
 			));
+			unset($settings['wiz_feed_password']);
 			$data['settings'] = $settings;
 			$data['category_map'] = !empty($settings['category_map']) && is_array($settings['category_map']) ? $settings['category_map'] : array();
 
@@ -293,9 +296,12 @@ class ControllerExtensionModuleColbyImport extends Controller {
 			$data['update_prices'] = $this->url->link($this->route . '/updatePrices', 'user_token=' . $this->session->data['user_token'] . '&return_route=settings', true);
 			$data['update_products'] = $this->url->link($this->route . '/updateProducts', 'user_token=' . $this->session->data['user_token'] . '&return_route=settings', true);
 			$data['cancel'] = $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true);
+			$data['wiz_feed_active'] = $settings['wiz_feed_password'] !== '';
+			$data['can_change_feed'] = $this->user->hasPermission('modify', $this->route);
+			unset($settings['wiz_feed_password']);
 			$data['settings'] = $settings;
 			$data['cron_url'] = HTTPS_SERVER . 'index.php?route=' . $this->route . '/cron&token=' . $settings['cron_token'];
-			$data['feed_url'] = $this->feed_endpoint;
+			$data['feed_url'] = $data['wiz_feed_active'] ? $this->wiz_feed_endpoint : $this->feed_endpoint;
 			$data['tax_classes'] = $this->model_localisation_tax_class->getTaxClasses();
 			$data['price_modes'] = array(
 				'ppc'       => $this->language->get('text_price_ppc'),
@@ -330,9 +336,29 @@ class ControllerExtensionModuleColbyImport extends Controller {
 
 		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
 			$settings = $this->settingsFromPost($this->getSettings());
-			$this->saveSettings($settings);
+			$feed_password = $this->request->post['colby_wiz_feed_password'] ?? '';
+			$use_legacy_feed = !empty($this->request->post['colby_use_legacy_feed']);
 
-			$this->session->data['success'] = $this->language->get('text_settings_success');
+			try {
+				if ($feed_password !== '' || $use_legacy_feed) {
+					if (!$this->user->hasPermission('modify', $this->route) || !is_string($feed_password)) {
+						throw new Exception($this->language->get('error_feed_permission'));
+					}
+
+					$settings['wiz_feed_password'] = $use_legacy_feed ? '' : html_entity_decode($feed_password, ENT_QUOTES, 'UTF-8');
+
+					if ($settings['wiz_feed_password'] !== '' && !$this->normaliseProducts($this->fetchXml('products', $settings, true))) {
+						throw new Exception($this->language->get('error_xml'));
+					}
+
+					$this->saveFeedPassword($settings['wiz_feed_password']);
+				}
+
+				$this->saveSettings($settings);
+				$this->session->data['success'] = $this->language->get('text_settings_success');
+			} catch (Exception $e) {
+				$this->session->data['warning'] = $e->getMessage();
+			}
 			}
 
 			$return_route = isset($this->request->post['return_route']) ? $this->request->post['return_route'] : 'settings';
@@ -671,34 +697,40 @@ class ControllerExtensionModuleColbyImport extends Controller {
 			$this->response->redirect($this->url->link($this->route . '/categories', 'user_token=' . $this->session->data['user_token'], true));
 		}
 
-		private function fetchXml($cache_key, $settings, $force_refresh) {
-			$cache_file = DIR_CACHE . 'colby_import_' . $cache_key . '.xml';
-			$cache_lifetime = 1800;
+	private function fetchXml($cache_key, $settings, $force_refresh) {
+		$password = $settings['wiz_feed_password'];
+		$use_wiz_feed = $password !== '';
+		$cache_file = DIR_CACHE . 'colby_import_' . $cache_key . ($use_wiz_feed ? '_wiz' : '') . '.xml';
+		$cache_lifetime = 1800;
+		$use_cache = !$force_refresh && is_file($cache_file) && (filemtime($cache_file) > (time() - $cache_lifetime));
 
-		if (!$force_refresh && is_file($cache_file) && (filemtime($cache_file) > (time() - $cache_lifetime))) {
+		if ($use_cache) {
 			$content = file_get_contents($cache_file);
 		} else {
-			$content = $this->requestFeed();
-
-			if ($content) {
-				file_put_contents($cache_file, $content);
-			}
+			$endpoint = $use_wiz_feed ? $this->wiz_feed_endpoint . '?password=' . rawurlencode($password) : $this->feed_endpoint;
+			$content = $this->requestFeed($endpoint);
 		}
 
-		libxml_use_internal_errors(true);
-		$xml = simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_PARSEHUGE);
+		$previous_errors = libxml_use_internal_errors(true);
+		$xml = simplexml_load_string((string)$content, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NONET | LIBXML_PARSEHUGE);
+		libxml_clear_errors();
+		libxml_use_internal_errors($previous_errors);
 
-		if (!$xml) {
+		if (!$xml || ($use_wiz_feed && ($xml->getName() !== 'company' || !isset($xml->item)))) {
 			throw new Exception($this->language->get('error_xml'));
+		}
+
+		if (!$use_cache) {
+			file_put_contents($cache_file, $content, LOCK_EX);
 		}
 
 		return $xml;
 	}
 
-	private function requestFeed() {
+	private function requestFeed($endpoint) {
 		if (function_exists('curl_init')) {
 			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $this->feed_endpoint);
+			curl_setopt($ch, CURLOPT_URL, $endpoint);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
 			curl_setopt($ch, CURLOPT_TIMEOUT, 90);
@@ -706,7 +738,7 @@ class ControllerExtensionModuleColbyImport extends Controller {
 			curl_setopt($ch, CURLOPT_USERAGENT, 'Wiz Colby Import');
 
 			$content = curl_exec($ch);
-			$error = curl_error($ch);
+			$error = curl_strerror(curl_errno($ch));
 			$status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 			curl_close($ch);
 
@@ -725,7 +757,7 @@ class ControllerExtensionModuleColbyImport extends Controller {
 			)
 		));
 
-		$content = @file_get_contents($this->feed_endpoint, false, $context);
+		$content = @file_get_contents($endpoint, false, $context);
 
 		if ($content === false) {
 			throw new Exception(sprintf($this->language->get('error_feed'), 0, 'file_get_contents'));
@@ -736,25 +768,32 @@ class ControllerExtensionModuleColbyImport extends Controller {
 
 	private function normaliseProducts($xml) {
 		$products = array();
+		$use_wiz_feed = $xml->getName() === 'company';
+		$nodes = $use_wiz_feed ? $xml->item : $xml->product;
 
-		foreach ($xml->product as $node) {
-			$ean = trim((string)$node->productEAN);
-			$product_code = trim((string)$node->productCode);
-			$supplier_id = trim((string)$node->supplierID);
-			$code = $product_code ?: ($ean ?: $supplier_id);
+		foreach ($nodes as $node) {
+			$ean = trim((string)($use_wiz_feed ? $node->EAN : $node->productEAN));
+			$supplier_id = $use_wiz_feed ? null : trim((string)$node->supplierID);
+			$code = $use_wiz_feed ? $ean : (trim((string)$node->productCode) ?: ($ean ?: $supplier_id));
 			$name = trim((string)$node->productName);
-			$main_category_id = isset($node->category['id']) ? trim((string)$node->category['id']) : trim((string)$node->category);
+			$subcategory = $use_wiz_feed ? $node->subCategory : $node->subcategory;
 			$main_category_name = trim((string)$node->category);
-			$subcategory_id = isset($node->subcategory['id']) ? trim((string)$node->subcategory['id']) : trim((string)$node->subcategory);
-			$subcategory_name = trim((string)$node->subcategory);
+			$subcategory_name = trim((string)$subcategory);
+			$main_category_id = isset($node->category['id']) ? trim((string)$node->category['id']) : $main_category_name;
+			$subcategory_id = isset($subcategory['id']) ? trim((string)$subcategory['id']) : $subcategory_name;
 			$supplier_category_id = $main_category_id . ($subcategory_id !== '' ? '|' . $subcategory_id : '');
+			if ($use_wiz_feed && $supplier_category_id !== '') {
+				$supplier_category_id = 'wiz:' . $supplier_category_id;
+			}
 			$supplier_category_name = $main_category_name . ($subcategory_name !== '' ? ' > ' . $subcategory_name : '');
-			$available = strtoupper(trim((string)$node->availableToOrder));
+			$stock = (int)$node->stock;
+			$available = $use_wiz_feed ? ($stock > 0 ? 'YES' : 'NO') : strtoupper(trim((string)$node->availableToOrder));
 
-			if ($code === '' || $name === '') {
+			if ($code === '' || $name === '' || ($use_wiz_feed && trim((string)$node->curCode) !== 'EUR')) {
 				continue;
 			}
 
+			$attributes = $this->normaliseDescriptionAttributes($node);
 			$products[] = array(
 				'id'                     => $supplier_id,
 				'code'                   => $code,
@@ -763,7 +802,7 @@ class ControllerExtensionModuleColbyImport extends Controller {
 				'name_hr'                => $name,
 				'name_en'                => $name,
 				'brand'                  => trim((string)$node->brand) ?: trim((string)$node->publisher),
-				'quantity'               => ($available === 'YES' && isset($node->stock)) ? (int)$node->stock : 0,
+				'quantity'               => $available === 'YES' ? $stock : 0,
 				'availability_display'   => $available,
 				'items_in_package'       => '',
 				'supplier_category_id'   => $supplier_category_id,
@@ -772,10 +811,10 @@ class ControllerExtensionModuleColbyImport extends Controller {
 				'supplier_parent_name'   => $main_category_name,
 				'supplier_leaf_id'       => $subcategory_id,
 				'supplier_leaf_name'     => $subcategory_name,
-				'attributes_hr'          => $this->normaliseDescriptionAttributes($node),
-				'attributes_en'          => $this->normaliseDescriptionAttributes($node),
-				'images'                 => $this->normaliseImages($node),
-				'prices'                 => $this->normalisePrices($node)
+				'attributes_hr'          => $attributes,
+				'attributes_en'          => $attributes,
+				'images'                 => $this->normaliseImages($node, $use_wiz_feed),
+				'prices'                 => $this->normalisePrices($node, $use_wiz_feed)
 			);
 		}
 
@@ -838,15 +877,14 @@ class ControllerExtensionModuleColbyImport extends Controller {
 		return $attributes;
 	}
 
-	private function normaliseImages($node) {
+	private function normaliseImages($node, $use_wiz_feed) {
 		$images = array();
 		$seen = array();
-		$candidates = array(trim((string)$node->picBig), trim((string)$node->boxPic));
+		$candidates = $use_wiz_feed ? array(trim((string)$node->imageBig)) : array(trim((string)$node->picBig), trim((string)$node->boxPic));
+		$extra_images = $use_wiz_feed ? ($node->imagesOther->image ?? array()) : ($node->extraPhotos->extraPhoto ?? array());
 
-		if (!empty($node->extraPhotos->extraPhoto)) {
-			foreach ($node->extraPhotos->extraPhoto as $extra_photo) {
-				$candidates[] = trim((string)$extra_photo);
-			}
+		foreach ($extra_images as $extra_photo) {
+			$candidates[] = trim((string)$extra_photo);
 		}
 
 		foreach ($candidates as $url) {
@@ -875,11 +913,14 @@ class ControllerExtensionModuleColbyImport extends Controller {
 		return in_array($extension, array('jpg', 'jpeg', 'png', 'gif', 'webp'));
 	}
 
-	private function normalisePrices($node) {
+	private function normalisePrices($node, $use_wiz_feed) {
+		$retail_price = $use_wiz_feed ? $node->SRP : $node->PPC;
+		$sale_price = $use_wiz_feed ? $node->priceOnSale : $node->SOAPrice;
+
 		return array(
-			'price'     => isset($node->price) ? (float)str_replace(',', '.', (string)$node->price) : 0,
-			'ppc'       => isset($node->PPC) ? (float)str_replace(',', '.', (string)$node->PPC) : 0,
-			'soa_price' => isset($node->SOAPrice) ? (float)str_replace(',', '.', (string)$node->SOAPrice) : 0
+			'price'     => (float)str_replace(',', '.', (string)$node->price),
+			'ppc'       => (float)str_replace(',', '.', (string)$retail_price),
+			'soa_price' => (float)str_replace(',', '.', (string)$sale_price)
 		);
 	}
 
@@ -946,12 +987,28 @@ class ControllerExtensionModuleColbyImport extends Controller {
 		$setting = $this->model_setting_setting->getSetting('colby_import');
 
 		return array(
-			'price_mode'     => !empty($setting['colby_import_price_mode']) ? $setting['colby_import_price_mode'] : 'ppc',
-			'margin'         => isset($setting['colby_import_margin']) ? (float)$setting['colby_import_margin'] : 0,
-			'tax_class_id'   => isset($setting['colby_import_tax_class_id']) ? (int)$setting['colby_import_tax_class_id'] : 0,
-			'category_map'   => !empty($setting['colby_import_category_map']) && is_array($setting['colby_import_category_map']) ? $setting['colby_import_category_map'] : array(),
-			'cron_token'     => !empty($setting['colby_import_cron_token']) ? $setting['colby_import_cron_token'] : ''
+			'wiz_feed_password' => (string)$this->model_setting_setting->getSettingValue('colby_wiz_feed_password'),
+			'price_mode'        => !empty($setting['colby_import_price_mode']) ? $setting['colby_import_price_mode'] : 'ppc',
+			'margin'            => isset($setting['colby_import_margin']) ? (float)$setting['colby_import_margin'] : 0,
+			'tax_class_id'      => isset($setting['colby_import_tax_class_id']) ? (int)$setting['colby_import_tax_class_id'] : 0,
+			'category_map'      => !empty($setting['colby_import_category_map']) && is_array($setting['colby_import_category_map']) ? $setting['colby_import_category_map'] : array(),
+			'cron_token'        => !empty($setting['colby_import_cron_token']) ? $setting['colby_import_cron_token'] : ''
 		);
+	}
+
+	private function saveFeedPassword($password) {
+		$code = 'colby_wiz_feed';
+		$key = 'colby_wiz_feed_password';
+
+		try {
+			if ($this->model_setting_setting->getSettingValue($key) === null) {
+				$this->model_setting_setting->editSetting($code, array($key => $password));
+			} else {
+				$this->model_setting_setting->editSettingValue($code, $key, $password);
+			}
+		} catch (Exception $e) {
+			throw new Exception($this->language->get('error_feed_settings'));
+		}
 	}
 
 	private function settingsFromPost($current) {
@@ -976,7 +1033,10 @@ class ControllerExtensionModuleColbyImport extends Controller {
 		}
 
 		if (isset($this->request->post['colby_import_category_map']) && is_array($this->request->post['colby_import_category_map'])) {
-			$settings['category_map'] = array();
+			$use_wiz_feed = $settings['wiz_feed_password'] !== '';
+			$settings['category_map'] = array_filter($settings['category_map'], function($category_id) use ($use_wiz_feed) {
+				return (strpos((string)$category_id, 'wiz:') === 0) !== $use_wiz_feed;
+			}, ARRAY_FILTER_USE_KEY);
 
 			foreach ($this->request->post['colby_import_category_map'] as $supplier_category_id => $category_id) {
 				if ((int)$category_id > 0) {
