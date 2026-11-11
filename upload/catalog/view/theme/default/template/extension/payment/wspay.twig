@@ -2,8 +2,9 @@
  <input type="hidden" name="ShopID" value="{{ merchant }}">
 <input type="hidden" name="ShoppingCartID" value="{{ order_id }}">
 <input type="hidden" name="TotalAmount" value="{{ total }}">
-<input type="hidden" name="Signature" value="{{ md5 }}">
-<input type="hidden" name="CustomerFirstname" value="{{ firstname }}">
+<input type="hidden" name="Version" value="2.0">
+<input type="hidden" name="Signature" value="{{ signature }}">
+<input type="hidden" name="CustomerFirstName" value="{{ firstname }}">
 <input type="hidden" name="CustomerLastName" value="{{ lastname }}">
 <input type="hidden" name="CustomerAddress" value="{{ address }}">
 <input type="hidden" name="CustomerCity" value="{{ city }}">

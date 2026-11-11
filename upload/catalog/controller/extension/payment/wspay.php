@@ -1,127 +1,88 @@
 <?php
 class ControllerExtensionPaymentWSPay extends Controller {
-  public function index() {
-      $data['button_confirm'] = $this->language->get('button_confirm');
+	public function index() {
+		$this->load->language('extension/payment/wspay');
+		$this->load->model('checkout/order');
 
-    $this->load->model('checkout/order');
+		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id'] ?? 0);
+		$merchant = (string)$this->config->get('payment_wspay_merchant');
+		$secret = (string)$this->config->get('payment_wspay_password');
 
-        $this->load->language('extension/payment/wspay');
-    
-       $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']); 
+		if (!$order_info || $order_info['payment_code'] !== 'wspay' || $merchant === '' || $secret === '') {
+			return '';
+		}
 
-       $this->load->model('localisation/currency');
-      //$this->data['allcurrencies'] = array();
-      $results = $this->model_localisation_currency->getCurrencies();   
- 
+		$data['button_confirm'] = $this->language->get('button_confirm');
+		$data['action'] = $this->config->get('payment_wspay_test')
+			? 'https://formtest.wspay.biz/Authorization.aspx'
+			: 'https://form.wspay.biz/Authorization.aspx';
+		$data['merchant'] = $merchant;
+		$data['order_id'] = $order_info['order_id'];
+		$data['currency'] = $order_info['currency_code'];
+		$data['tecaj'] = $order_info['currency_value'];
+		$data['total'] = number_format((float)$order_info['total'], 2, ',', '');
 
-   
+		$amount = str_replace(',', '', $data['total']);
+		$data['signature'] = hash('sha512', $merchant . $secret . $data['order_id'] . $secret . $amount . $secret);
 
-    //live url  
-    if (!$this->config->get('payment_wspay_test')){
-      $data['action'] = 'https://form.wspay.biz/Authorization.aspx';   
-    }else{
-    //test url
-      $data['action'] = 'https://formtest.wspay.biz/Authorization.aspx';   
-    }
-    
-    //$data['callback'] = $this->config->get('callback');
+		$data['address'] = $order_info['payment_address_1'];
+		$data['city'] = $order_info['payment_city'];
+		$data['firstname'] = $order_info['payment_firstname'];
+		$data['lastname'] = $order_info['payment_lastname'];
+		$data['postcode'] = $order_info['payment_postcode'];
+		$data['country'] = $order_info['payment_iso_code_2'];
+		$data['telephone'] = $order_info['telephone'];
+		$data['email'] = $order_info['email'];
 
+		$data['cancel_url'] = $this->url->link('checkout/checkout', '', true);
+		$data['return_url'] = $this->url->link('extension/payment/wspay/callback', '', true);
 
+		return $this->load->view('extension/payment/wspay', $data);
+	}
 
+	public function callback() {
+		// Verify the original field values before OpenCart's request escaping.
+		$result = $this->request->server['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
+		$success = $result['Success'] ?? '';
+		$cart_id = $result['ShoppingCartID'] ?? '';
+		$approval_code = $result['ApprovalCode'] ?? '';
+		$signature = $result['Signature'] ?? '';
 
-      $data['merchant'] = $this->config->get('payment_wspay_merchant');
-      $data['password'] = $this->config->get('payment_wspay_password');
-        $data['order_id'] = $order_info['order_id'];
-        $data['currency'] = $order_info['currency_code'];
-         $data['tecaj'] = $order_info['currency_value'];
-        $data['description'] = $this->config->get('config_name') . ' - #' . $order_info['order_id'];      
-        $data['total'] = number_format($order_info['total'],2, ',', '');
+		if ($success !== '1') {
+			$this->response->redirect($this->url->link('checkout/checkout', '', true), 303);
+			return;
+		}
 
-        $data['address'] = $order_info['payment_address_1'];
-        $data['city'] = $order_info['payment_city'];
-        $data['firstname'] = $order_info['payment_firstname'];
-        $data['lastname'] = $order_info['payment_lastname'];      
-        $data['postcode'] = $order_info['payment_postcode'];
-        $data['country'] = $order_info['payment_iso_code_2'];
-        $data['telephone'] = $order_info['telephone'];
-        $data['email'] = $order_info['email'];
+		$merchant = (string)$this->config->get('payment_wspay_merchant');
+		$secret = (string)$this->config->get('payment_wspay_password');
+		$order_status_id = (int)$this->config->get('payment_wspay_order_status_id');
 
-        $data['return_url'] = $this->url->link('checkout/success');
-    $data['cancel_url'] = $this->url->link('checkout/checkout', '', true);
-    $data['return_url'] = $this->url->link('extension/payment/wspay/callback');
-        
-        
-        $a= $data['total'];
-        $b = str_replace( ',', '', $a );
+		if (!is_string($cart_id) || !ctype_digit($cart_id) || (string)(int)$cart_id !== $cart_id || $cart_id === '0'
+			|| !is_string($approval_code) || trim($approval_code) === ''
+			|| !is_string($signature) || !preg_match('/\A[0-9a-f]{128}\z/i', $signature)
+			|| $merchant === '' || $secret === '' || $order_status_id <= 0) {
+			http_response_code(400);
+			return;
+		}
 
-        //readability
+		$expected = hash('sha512', $merchant . $secret . $cart_id . $secret . $success . $secret . $approval_code . $secret);
 
-      $keym = $data['merchant'] ;
-      $wpass = $data['password'];
-            
-      $data['md5']  = md5($keym.$wpass.$data['order_id'].$wpass.$b.$wpass);
+		if (!hash_equals($expected, strtolower($signature))) {
+			http_response_code(400);
+			return;
+		}
 
-     
-      return $this->load->view('extension/payment/wspay', $data);
-     
-        
-        $this->render();
-    }
-    
-    public function callback() {
+		$order_id = (int)$cart_id;
+		$this->load->model('extension/payment/wspay');
 
-       $this->load->model('checkout/order');  
+		if (!$this->model_extension_payment_wspay->confirmOrder($order_id, $order_status_id)) {
+			http_response_code(400);
+			return;
+		}
 
-         $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']); 
-             // Lets get wspay response parameters
-       $posted = $_REQUEST;
-
-    //print_r($posted);
-
-
-      // Variables for readability
-           
-                $ShopID = $data['merchant'] = $this->config->get('payment_wspay_merchant');
-                $SecretKey = $data['password'] = $this->config->get('payment_wspay_password');
-                $ShoppingCartID = $posted['ShoppingCartID'];
-               
-                $Success = $posted['Success'];
-               
-                $ApprovalCode = $posted['ApprovalCode'];
-              
-           
-            
-            $str = $ShopID.$SecretKey.$ShoppingCartID.$SecretKey.$Success.$SecretKey.$ApprovalCode.$SecretKey;
-            $hash = md5($str); 
- 
-        if( ($posted['Success'] == 1) && (!empty($posted['ApprovalCode'])) && ($hash == $posted['Signature']) ) {
-
-             $this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_wspay_order_status_id'), '', true);
-
-             $order_id =$this->session->data['order_id'];
-
-            
-
-               $this->response->redirect($this->url->link('checkout/success', '', 'SSL'));
-
-        } else if( $posted['Success'] == 1 && $hash !== $posted['Signature'] ){
-
-            // Kill futher operations
-            die( 'Illegal access detected!' );
-            /**
-             * Transaction Rejected
-             */
-        } else if( ($posted['ErrorMessage']) == 'ODBIJENO' ) {
-
-            $this->response->redirect($this->url->link('checkout/checkout', '', 'SSL'));
-        }
-    }
-
-
- 
-
-
-
-    
+		// The success page clears the current checkout. Leave a different order's cart intact.
+		$session_order_id = (int)($this->session->data['order_id'] ?? 0);
+		$route = !$session_order_id || $session_order_id === $order_id ? 'checkout/success' : 'checkout/cart';
+		$this->response->redirect($this->url->link($route, '', true), 303);
+	}
 }
-?>
