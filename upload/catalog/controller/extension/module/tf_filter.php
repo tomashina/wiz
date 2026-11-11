@@ -1619,55 +1619,12 @@ class ControllerExtensionModuleTfFilter extends Controller
      */
     public function url($url)
     {
-
-        // Filter Price
-        if (!empty($this->request->get['tf_fp'])) {
-            $url .= '&tf_fp=' . $this->request->get['tf_fp'];
-        }
-
-        // Filter Manufacturer
-        if (!empty($this->request->get['tf_fm'])) {
-            $url .= '&tf_fm=' . $this->request->get['tf_fm'];
-        }
-
-        // Filter sub category
-        if (!empty($this->request->get['tf_fsc'])) {
-            $url .= '&tf_fsc=' . $this->request->get['tf_fsc'];
-        }
-
-        // Filter search
-        if (!empty($this->request->get['tf_fq'])) {
-            $url .= '&tf_fq=' . urlencode(html_entity_decode($this->request->get['tf_fq'], ENT_QUOTES, 'UTF-8'));
-        }
-
-        // Filter availability
-        if (isset($this->request->get['tf_fs']) && $this->request->get['tf_fs'] !== '') {
-            $url .= '&tf_fs=' . $this->request->get['tf_fs'];
-        }
-
-        // Filter stock status
-        if (!empty($this->request->get['tf_fss'])) {
-            $url .= '&tf_fss=' . $this->request->get['tf_fss'];
-        }
-
-        // Filter rating
-        if (!empty($this->request->get['tf_fr'])) {
-            $url .= '&tf_fr=' . $this->request->get['tf_fr'];
-        }
-
-        // Filter discount
-        if (!empty($this->request->get['tf_fd'])) {
-            $url .= '&tf_fd=' . $this->request->get['tf_fd'];
-        }
-
-        // Filter filter
-        if (!empty($this->request->get['tf_ff'])) {
-            $url .= '&tf_ff=' . $this->request->get['tf_ff'];
-        }
-
-        // Filter custom
-        if (!empty($this->request->get['tf_fc'])) {
-            $url .= '&tf_fc=' . $this->request->get['tf_fc'];
+        foreach ($this->request->get as $key => $value) {
+            if (strpos($key, 'tf_') === 0 && is_string($value) && $value !== '') {
+                $filter_key = html_entity_decode($key, ENT_QUOTES, 'UTF-8');
+                $filter_value = html_entity_decode($value, ENT_QUOTES, 'UTF-8');
+                $url .= '&' . urlencode($filter_key) . '=' . urlencode($filter_value);
+            }
         }
 
         return $url;

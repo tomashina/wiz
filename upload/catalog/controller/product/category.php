@@ -356,6 +356,8 @@ class ControllerProductCategory extends Controller {
 				$url .= '&limit=' . $this->request->get['limit'];
 			}
 
+			$url = $this->load->controller('extension/module/tf_filter/url', $url);
+
 			$pagination = new Pagination();
 			$pagination->total = $product_total;
 			$pagination->page = $page;
