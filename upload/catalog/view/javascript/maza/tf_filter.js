@@ -73,6 +73,19 @@ $.fn.tf_filter = function(setting){
 
     this.hideInactiveValues();
     
+    function scrollToFilterResults() {
+        if (!window.matchMedia('(min-width: 768px)').matches) return;
+
+        var results = document.querySelector('#content #product-view');
+        if (!results) return;
+
+        var header = document.querySelector('.sticky-header');
+        var headerBottom = header && window.getComputedStyle(header).position === 'fixed'
+            ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+        var distance = results.getBoundingClientRect().top - headerBottom - 12;
+        if (distance < 0) window.scrollBy(0, distance);
+    }
+
     // Start filter
     var pendingRequest;
     this.start = function(param){
@@ -103,6 +116,11 @@ $.fn.tf_filter = function(setting){
                 
                 if (json && json['filter']) {
                     tf_filter.updateFilter(json['filter']); // Update filter
+                }
+                var appliedParams = JSON.stringify(param);
+                if (json && json.content && displayedParams !== appliedParams) {
+                    displayedParams = appliedParams;
+                    scrollToFilterResults();
                 }
             },
             error: function(xhr, status){
@@ -437,6 +455,8 @@ $.fn.tf_filter = function(setting){
         }, param);
     };
     
+    var displayedParams = JSON.stringify(tf_filter.getParam());
+
     // Run task after user change filter
     tf_filter.on('change', function(){
         // Clear past timeout
