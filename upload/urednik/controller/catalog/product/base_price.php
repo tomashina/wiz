@@ -13,7 +13,10 @@ class ControllerCatalogProductBasePrice extends Controller {
         $data = ['url'=>$url, 'record'=>[], 'error'=>'', 'success'=>$this->session->data['wiz_price_success'] ?? ''];
         unset($this->session->data['wiz_price_success']);
         if (isset($this->request->get['download'])) {
-            if ($this->request->get['download'] === 'estimates') {
+            if ($this->request->get['download'] === 'confirmation') {
+                $filename = 'wiz-skupna-potvrda.csv';
+                $csv = $prices->confirmationCsv((int)$this->config->get('config_language_id'), $estimates);
+            } elseif ($this->request->get['download'] === 'estimates') {
                 $filename = 'wiz-procjene-povijesnih-cijena.csv';
                 $csv = $estimates->csv();
             } else {
@@ -31,6 +34,7 @@ class ControllerCatalogProductBasePrice extends Controller {
         if ($this->request->server['REQUEST_METHOD'] === 'POST') {
             try {
                 if (!$this->user->hasPermission('modify','catalog/product')) { throw new InvalidArgumentException('Nemate ovlast za izmjenu proizvoda.'); }
+                $batch = ($this->request->post['import'] ?? '') === 'confirm';
                 if (isset($this->request->post['import'])) {
                     $upload = $this->request->files['csv'] ?? [];
                     if (($upload['error'] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file($upload['tmp_name'])) { throw new InvalidArgumentException('Odaberite CSV datoteku.'); }
@@ -41,8 +45,11 @@ class ControllerCatalogProductBasePrice extends Controller {
                     $data['record'] = $row;
                     $id = (int)($row['product_id'] ?? 0);
                 }
-                $prices->saveRows($rows);
-                $this->session->data['wiz_price_success'] = 'Spremljeno artikala: ' . count($rows) . '.';
+                $commonEvidence = trim(html_entity_decode((string)($this->request->post['common_evidence'] ?? ''), ENT_QUOTES, 'UTF-8'));
+                $saved = $prices->saveRows($rows, $batch, $commonEvidence);
+                $this->session->data['wiz_price_success'] = $batch
+                    ? 'Potvrđeno ' . $saved . ' artikala. Već potvrđenih i preskočenih ' . (count($rows) - $saved) . '.'
+                    : 'Spremljeno artikala: ' . $saved . '.';
                 $this->response->redirect($url . ($id ? '&product_id=' . $id : ''));
                 return;
             } catch (InvalidArgumentException $e) { $data['error'] = $e->getMessage(); }

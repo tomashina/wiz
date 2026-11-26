@@ -104,17 +104,34 @@ class WizBasePrices {
         return $r;
     }
 
-    public function saveRows(array $rows) {
+    public function saveRows(array $rows, $pendingOnly = false, $commonEvidence = '') {
         $this->ensureTable();
         $seen = [];
+        $saved = 0;
         $this->db->query('START TRANSACTION');
         try {
             foreach ($rows as $index => $row) {
                 try {
                     $id = (int)($row['product_id'] ?? 0);
-                    $product = $this->db->query("SELECT model,date_added FROM " . DB_PREFIX . "product WHERE product_id = " . $id)->row;
+                    $product = $this->db->query("SELECT model,date_added FROM " . DB_PREFIX . "product WHERE product_id = " . $id . " FOR UPDATE")->row;
                     if (!$product || $product['model'] !== trim((string)($row['model'] ?? '')) || isset($seen[$id])) {
                         throw new InvalidArgumentException('Provjerite podudaranje ID-a i modela te ponovljene retke.');
+                    }
+                    $seen[$id] = true;
+                    if ($pendingOnly) {
+                        $existing = $this->db->query("SELECT base_price FROM " . $this->table . " WHERE product_id=" . $id . " FOR UPDATE")->row;
+                        if (isset($existing['base_price'])) { continue; }
+                        if (trim((string)($row['base_price'] ?? '')) === '') {
+                            throw new InvalidArgumentException('Unesite potvrđeni iznos ili izostavite ovaj redak.');
+                        }
+                        if (trim((string)($row['evidence'] ?? '')) === '') { $row['evidence'] = $commonEvidence; }
+                        if (empty($row['reference_date']) && in_array($row['regime'] ?? '', ['ostalo','skupina2025'], true)) {
+                            $first = ($row['first_offer'] ?? '') ?: substr($product['date_added'], 0, 10);
+                            if (self::dateValid($first)) {
+                                $row['first_offer'] = $first;
+                                $row['reference_date'] = max(self::baseline($row['regime']), $first);
+                            }
+                        }
                     }
                     $defaults = self::withCatalogueDate(['date_added' => $product['date_added'], 'regime' => $row['regime'] ?? '']);
                     if (isset($defaults['reference_date'])) {
@@ -127,7 +144,6 @@ class WizBasePrices {
                         }
                     }
                     $r = self::validate($row);
-                    $seen[$id] = true;
                     $assignments = [];
                     foreach (array_slice(self::COLUMNS, 2) as $field) {
                         $assignments[$field] = "`" . $field . "` = " . (in_array($field, ['first_offer','reference_date','base_price','net_quantity'], true) && $r[$field] === '' ? 'NULL' : "'" . $this->db->escape($r[$field]) . "'");
@@ -137,11 +153,13 @@ class WizBasePrices {
                     if ($r['base_price'] === '') { $updates = array_intersect_key($updates, array_flip(['unit','net_quantity'])); }
                     elseif ($r['net_quantity'] === '') { unset($updates['unit'],$updates['net_quantity']); }
                     $this->db->query("INSERT INTO " . $this->table . " SET product_id = " . $id . ", " . $set . " ON DUPLICATE KEY UPDATE " . implode(', ', $updates));
+                    $saved++;
                 } catch (InvalidArgumentException $e) {
                     throw new InvalidArgumentException('Redak ' . ($index + 2) . ' (' . ($row['model'] ?? '') . '): ' . $e->getMessage());
                 }
             }
             $this->db->query('COMMIT');
+            return $saved;
         } catch (Throwable $e) {
             $this->db->query('ROLLBACK');
             throw $e;
@@ -180,35 +198,73 @@ class WizBasePrices {
         return $csv;
     }
 
-    public function catalogue($audit, $language_id) {
+    private function catalogueRecords($pendingOnly, $language_id) {
         $this->ensureTable();
         $p = DB_PREFIX;
-        $data = $this->db->query("SELECT p.product_id,p.model,d.name,p.date_added,p.date_available,
+        return $this->db->query("SELECT p.product_id,p.model,d.name,p.date_added,p.date_available,
             a.regime,a.first_offer,a.reference_date,a.base_price,a.promotion,a.evidence,a.net_quantity,a.unit,
             (SELECT GROUP_CONCAT(DISTINCT cd.name ORDER BY cd.name SEPARATOR ' | ') FROM " . $p . "product_to_category pc JOIN " . $p . "category_description cd ON cd.category_id=pc.category_id AND cd.language_id=d.language_id WHERE pc.product_id=p.product_id) categories,
-            (SELECT GROUP_CONCAT(DISTINCT CONCAT(s.date_start,' / ',s.date_end) SEPARATOR ' | ') FROM " . $p . "product_special s WHERE s.product_id=p.product_id) specials
+            CONCAT_WS(' | ',
+                (SELECT GROUP_CONCAT(DISTINCT CONCAT(s.date_start,' / ',s.date_end) SEPARATOR ' | ') FROM " . $p . "product_special s WHERE s.product_id=p.product_id),
+                (SELECT GROUP_CONCAT(DISTINCT CONCAT(q.date_start,' / ',q.date_end) SEPARATOR ' | ') FROM " . $p . "product_discount q WHERE q.product_id=p.product_id AND q.quantity=1)
+            ) specials
             FROM " . $p . "product p JOIN " . $p . "product_to_store ps ON ps.product_id=p.product_id AND ps.store_id=0
             JOIN " . $p . "product_description d ON d.product_id=p.product_id AND d.language_id=" . (int)$language_id .
             " LEFT JOIN " . $p . "wiz_base_price a ON a.product_id=p.product_id WHERE p.status=1 AND p.date_available<=NOW()" .
-            ($audit ? " AND a.base_price IS NULL" : '') . " ORDER BY p.product_id")->rows;
+            ($pendingOnly ? " AND a.base_price IS NULL" : '') . " ORDER BY p.product_id")->rows;
+    }
+
+    private static function reviewCategory($categories) {
+        return !$categories || preg_match('/šalice|lampe|rasvjeta|stolice|stolovi|kućanstvo|čišćenje|kozmetika|hrana|piće/iu', $categories);
+    }
+
+    private static function saleOnDate($ranges, $date) {
+        foreach (explode(' | ', (string)$ranges) as $range) {
+            $dates = explode(' / ', $range);
+            if (count($dates) === 2 && ($dates[0] === '0000-00-00' || $dates[0] <= $date) &&
+                ($dates[1] === '0000-00-00' || $dates[1] >= $date)) { return true; }
+        }
+        return false;
+    }
+
+    /** Private editable proposals. The separate reviewed import supplies the merchant's evidence. */
+    public function confirmationCsv($language_id, WizPriceEstimates $estimates) {
+        $catalogue = $this->catalogueRecords(true, $language_id);
+        $drafts = $estimates->getMany(array_column($catalogue, 'product_id'));
+        $rows = [];
+        foreach ($catalogue as $r) {
+            $r = self::withCatalogueDate($r);
+            $draft = $drafts[$r['product_id']] ?? null;
+            $r['base_price'] = $draft && $draft['model'] === $r['model'] ? $draft['estimated_price'] : '';
+            if (!$r['regime'] && !self::reviewCategory($r['categories'])) { $r['regime'] = 'ostalo'; }
+            $added = substr((string)$r['date_added'], 0, 10);
+            if (!$r['first_offer'] && self::dateValid($added)) { $r['first_offer'] = $added; }
+            if (!$r['reference_date'] && $r['regime'] && $r['first_offer']) {
+                $r['reference_date'] = max(self::baseline($r['regime']), $r['first_offer']);
+            }
+            if (!$r['promotion'] && $r['reference_date']) {
+                $r['promotion'] = self::saleOnDate($r['specials'], $r['reference_date'])
+                    ? ($r['regime'] === 'skupina2025' ? 'najniza30' : ($r['regime'] === 'ostalo' ? 'prethodna' : ''))
+                    : 'redovna';
+            }
+            $rows[] = array_map(static fn($key) => $r[$key] ?? '', self::COLUMNS);
+        }
+        return self::csv(self::COLUMNS, $rows);
+    }
+
+    public function catalogue($audit, $language_id) {
+        $data = $this->catalogueRecords($audit, $language_id);
         $rows = [];
         foreach ($data as $r) {
             $r = self::withCatalogueDate($r);
             if ($audit) {
-                $household = !$r['categories'] || preg_match('/šalice|lampe|rasvjeta|stolice|stolovi|kućanstvo|čišćenje|kozmetika|hrana|piće/iu', $r['categories']);
+                $household = self::reviewCategory($r['categories']);
                 $added = substr($r['date_added'], 0, 10);
                 $available = $r['date_available'];
                 $reference = $r['reference_date'] ?: (!$household && $added === $available && self::dateValid($available) ? max(self::baseline('ostalo'), $available) : '');
                 $on_sale = '';
                 if ($reference) {
-                    $on_sale = 'Nema zapisa za taj datum';
-                    foreach (explode(' | ', (string)$r['specials']) as $range) {
-                        $dates = explode(' / ', $range);
-                        if (count($dates) === 2 && ($dates[0] === '0000-00-00' || $dates[0] <= $reference) && ($dates[1] === '0000-00-00' || $dates[1] >= $reference)) {
-                            $on_sale = 'Provjeriti primjenu evidentirane akcije';
-                            break;
-                        }
-                    }
+                    $on_sale = self::saleOnDate($r['specials'], $reference) ? 'Provjeriti primjenu evidentirane akcije' : 'Nema zapisa za taj datum';
                 }
                 $rows[] = [$r['product_id'],$r['model'],html_entity_decode($r['name'], ENT_QUOTES, 'UTF-8'),$r['categories'],$r['date_added'],$available,$r['specials'],
                     $household ? 'Provjeriti razvrstavanje robe i datum 02.05.2025. ili 10.09.2026.' : 'Ostala roba prema kategoriji, za potvrdu',

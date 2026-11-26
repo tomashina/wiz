@@ -41,6 +41,14 @@ namespace {
         public function getLastId() { return $this->last; }
         public function query($sql) {
             if (str_starts_with($sql,'SHOW ') || str_starts_with($sql,'SELECT GET_LOCK') || str_starts_with($sql,'SELECT RELEASE_LOCK')) { $sql = 'SELECT 1 AS ok'; }
+            if (str_ends_with($sql, ' FOR UPDATE')) { $sql = substr($sql, 0, -11); }
+            if (str_starts_with($sql, 'SELECT p.product_id,p.model,d.name,p.date_added')) {
+                $sql = str_replace("GROUP_CONCAT(DISTINCT cd.name ORDER BY cd.name SEPARATOR ' | ')", "GROUP_CONCAT(cd.name,' | ')", $sql);
+                foreach (['s','q'] as $alias) {
+                    $sql = str_replace("GROUP_CONCAT(DISTINCT CONCAT($alias.date_start,' / ',$alias.date_end) SEPARATOR ' | ')",
+                        "GROUP_CONCAT($alias.date_start || ' / ' || $alias.date_end,' | ')", $sql);
+                }
+            }
             if ($sql === 'START TRANSACTION') { $sql = 'BEGIN'; }
             if (preg_match('/^INSERT INTO (oc_wiz_base_price|oc_wiz_withdrawal) SET (.+) ON DUPLICATE KEY UPDATE /s', $sql, $m)) {
                 $update = substr($sql, strpos($sql, ' ON DUPLICATE KEY UPDATE ') + strlen(' ON DUPLICATE KEY UPDATE '));
@@ -81,10 +89,11 @@ namespace {
         $registry = new \Registry(); $registry->set('db',$db);
         $event = new \ControllerEventWizPrices($registry);
         $route='product/product'; $data=['product_id'=>1,'products'=>[['product_id'=>2]]]; $event->index($route,$data);
-        check(strpos($data['wiz_base_prices'][1],'34,90 €')!==false && strpos($data['wiz_base_prices'][1],'10.09.2026.')!==false && $data['wiz_base_prices'][2]==='Bazna cijena u provjeri','product and card distinguish confirmed prices and missing history');
+        check($data['wiz_base_prices'][1] === 'Bazna cijena na 10.09.2026. · 34,90 €' &&
+            $data['wiz_base_prices'][2] === 'Bazna cijena', 'product and card retain the base price label when only one product has a verified amount');
         $route = 'product/search'; $cards = ['products' => [['product_id' => 3]]];
         $event->index($route, $cards);
-        check($cards['wiz_base_prices'][3] === 'Bazna cijena na 20.10.2026. · iznos u provjeri', 'search cards show the later addition date while the amount is pending');
+        check($cards['wiz_base_prices'][3] === 'Bazna cijena na 20.10.2026.', 'search cards retain the later addition date without an amount or status text');
         define('WIZ_PREVIEW_PRICE_ESTIMATES', true); define('HTTP_SERVER', 'https://wiz.test/');
         $db->pdo->exec("CREATE TABLE oc_product_to_store(product_id INTEGER, store_id INTEGER);
             CREATE TABLE oc_wiz_price_estimate(product_id INTEGER, model TEXT, name TEXT, estimated_price TEXT, retail_at_snapshot TEXT, basis TEXT, estimated_at TEXT);
@@ -94,6 +103,32 @@ namespace {
         $event->index($route, $detail);
         check($detail['wiz_base_prices'][3] === 'Bazna cijena na 20.10.2026. · 12,50 €' &&
             $detail['wiz_base_prices'][1] === 'Bazna cijena na 10.09.2026. · 34,90 €', 'local preview uses the product addition date and preserves verified dates and amounts');
+        $db->pdo->sqliteCreateFunction('CONCAT_WS', static fn($separator, ...$values) => implode($separator, array_filter($values, static fn($v) => $v !== null)), -1);
+        $db->pdo->exec("CREATE TABLE oc_product_to_category(product_id INTEGER,category_id INTEGER);
+            CREATE TABLE oc_category_description(category_id INTEGER,language_id INTEGER,name TEXT);
+            CREATE TABLE oc_product_description(product_id INTEGER,language_id INTEGER,name TEXT);
+            CREATE TABLE oc_product_special(product_id INTEGER,date_start TEXT,date_end TEXT);
+            CREATE TABLE oc_product_discount(product_id INTEGER,quantity INTEGER,date_start TEXT,date_end TEXT);
+            INSERT INTO oc_product_to_store VALUES(2,0);
+            INSERT INTO oc_product_description VALUES(1,1,'Prvi'),(2,1,'Šalica'),(3,1,'Nosač');
+            INSERT INTO oc_category_description VALUES(2,1,'Šalice'),(3,1,'Nosači');
+            INSERT INTO oc_product_to_category VALUES(2,2),(3,3);
+            INSERT INTO oc_product_discount VALUES(3,1,'2026-10-01','2026-10-31');
+            UPDATE oc_wiz_price_estimate SET model='TEST-3' WHERE product_id=3");
+        $estimateService = new \WizPriceEstimates($db);
+        file_put_contents($tmp.'/batch.csv', $service->confirmationCsv(1, $estimateService));
+        $proposals = \WizBasePrices::readCsv($tmp.'/batch.csv');
+        check(count($proposals) === 2 && $proposals[0]['model'] === 'TEST-2' && $proposals[0]['regime'] === '' &&
+            $proposals[1]['base_price'] === '12.50' && $proposals[1]['reference_date'] === '2026-10-20' &&
+            $proposals[1]['promotion'] === 'prethodna' && $proposals[1]['evidence'] === '',
+            'pending confirmation CSV round-trips, proposes stored prices, and exposes unresolved fields');
+        try { $service->saveRows([$proposals[1]], true); throw new \LogicException('Missing evidence accepted'); }
+        catch (\InvalidArgumentException $e) {}
+        $reviewed = [$proposals[1], $change];
+        check($service->saveRows($reviewed, true, 'WIZ arhivska evidencija') === 1 &&
+            $service->getMany([3])[3]['evidence'] === 'WIZ arhivska evidencija' && $service->getMany([1])[1]['base_price'] === '34.90' &&
+            $service->saveRows($reviewed, true, 'WIZ arhivska evidencija') === 0,
+            'reviewed batch records its source, preserves previously confirmed rows and is repeatable');
         $pub = new \WizPricePublication($tmp);
         $rows = [['naziv'=>'Proba','sifra'=>'0123','marka'=>'WIZ','neto_kolicina'=>'2','jedinica_mjere'=>'m','maloprodajna_cijena'=>'20.00','posebni_oblik_prodaje'=>'da','cijena_za_jedinicu_mjere'=>'10.00','barkod'=>'0123','ean'=>'','bazna_cijena'=>'34.90','dostupnost'=>'Na zalihi','referentni_datum'=>'2026-09-10']];
         $fetch = function() use (&$rows) { return $rows; };

@@ -19,7 +19,7 @@ class ControllerEventWizPrices extends Controller {
         if ($route === 'product/product' && !empty($data['product_id'])) { $ids[] = $data['product_id']; }
         if (!$ids) { return; }
         $records = (new WizBasePrices($this->db))->getDisplayRecords($ids);
-        $labels = array_fill_keys($ids, 'Bazna cijena u provjeri');
+        $labels = array_fill_keys($ids, 'Bazna cijena');
         $estimates = [];
         if ($preview) {
             require_once DIR_SYSTEM . 'library/wiz_price_estimates.php';
@@ -41,7 +41,7 @@ class ControllerEventWizPrices extends Controller {
 
     private function priceLabel($date, $price) {
         $formattedDate = DateTimeImmutable::createFromFormat('!Y-m-d', $date)->format('d.m.Y.');
-        $amount = $price === null ? 'iznos u provjeri' : number_format($price, 2, ',', '.') . ' €';
-        return 'Bazna cijena na ' . $formattedDate . ' · ' . $amount;
+        $label = 'Bazna cijena na ' . $formattedDate;
+        return $price === null ? $label : $label . ' · ' . number_format($price, 2, ',', '.') . ' €';
     }
 }

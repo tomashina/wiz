@@ -23,7 +23,16 @@
     {% else %}<input class="form-control" id="wiz-{{ key }}" name="{{ key }}" value="{{ record[key]|e('html_attr') }}" type="{{ key in ['first_offer','reference_date'] ? 'date' : 'text' }}" {{ key in ['product_id','model'] ? 'required' }}>{% endif %}
   </div>{% endfor %}<button class="btn btn-primary">Spremi potvrđenu cijenu</button>
 </form></section>
-<section class="col-md-6"><h2>Masovni unos</h2><p>Preuzmite predložak s WIZ šiframa. Učitajte samo retke za koje imate potvrđene podatke. Za noviju robu referentni datum je dan prve ponude.</p>
+<section class="col-md-6"><h2>Skupna potvrda</h2>
+<p><a class="btn btn-default" href="{{ url }}&amp;download=confirmation">Preuzmi prijedloge za potvrdu</a></p>
+<p>CSV sadrži šifre bez potvrđene bazne cijene. Usporedite predložene iznose s povijesnim WIZ cjenicima i ispravite skupinu robe, datum i cijenu u akciji gdje je potrebno. Prazna polja za skupinu ili cijenu treba popuniti. Retke koje ne možete potvrditi izostavite.</p>
+<p>U stupac <code>regime</code> upišite <code>ostalo</code> ili <code>skupina2025</code>. Za <code>promotion</code> koristite <code>redovna</code>, odnosno kod akcije <code>prethodna</code> za ostalu robu ili <code>najniza30</code> za skupinu 2025. Datumi su u obliku GGGG-MM-DD. Ako promijenite skupinu, uskladite referentni datum ili ga ostavite praznim za izračun iz prve ponude.</p>
+<form action="{{ url }}" method="post" enctype="multipart/form-data">
+  <div class="form-group"><label for="wiz-reviewed-csv">Pregledani CSV</label><input id="wiz-reviewed-csv" type="file" name="csv" accept=".csv" required></div>
+  <div class="form-group"><label for="wiz-common-source">Zajednički izvor potvrde</label><input class="form-control" id="wiz-common-source" name="common_evidence" maxlength="500" placeholder="Oznaka ili naziv povijesne evidencije"><p class="help-block">Vrijedi za retke s praznim stupcem <code>evidence</code>. Za ostale retke upišite njihov izvor u CSV.</p></div>
+  <button name="import" value="confirm" class="btn btn-primary">Potvrdi cijene iz CSV-a</button>
+</form>
+<h2>Masovni unos</h2><p>Preuzmite predložak s WIZ šiframa. Učitajte samo retke za koje imate potvrđene podatke. Za noviju robu referentni datum je dan prve ponude.</p>
 <p><a href="{{ url }}&amp;download=template">Preuzmi CSV predložak</a></p>
 <form action="{{ url }}" method="post" enctype="multipart/form-data"><div class="form-group"><label for="wiz-csv">CSV datoteka (UTF-8, točka zarez)</label><input id="wiz-csv" type="file" name="csv" accept=".csv" required></div><button name="import" value="1" class="btn btn-primary">Uvezi CSV</button></form>
 <h2>Provjera povijesnih cijena</h2><a href="{{ url }}&amp;download=audit">Preuzmi šifre bez potvrde, kategorije i razdoblja akcija</a></section></div>

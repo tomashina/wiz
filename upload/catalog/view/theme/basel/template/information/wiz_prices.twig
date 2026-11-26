@@ -4,7 +4,7 @@
   <p>{{ store|e }} · {{ address|e }} · OIB {{ oib|e }}</p>
   <p>Maloprodajne cijene internetske trgovine u eurima s PDV-om.</p>
   <p><a class="btn btn-primary" href="index.php?route=extension/feed/wiz_prices&amp;format=csv">Preuzmi aktualni CSV</a> <a class="btn btn-default" href="index.php?route=extension/feed/wiz_prices&amp;format=xml">Otvori aktualni XML</a></p>
-  {% if versions[0].missing_base %}<p>Potvrda povijesne bazne cijene još se provjerava za {{ versions[0].missing_base }} artikala. Ta su polja u cjeniku prazna.</p>{% endif %}
+  {% if versions[0].missing_base %}<p>Prazno polje „Bazna cijena (EUR)” označava da povijesni iznos nije unesen.</p>{% endif %}
   <h2>Objavljeni cjenici</h2>
   <ul>{% for v in versions %}<li>{{ v.published|date('d.m.Y. H:i', 'Europe/Zagreb') }} · {{ v.products }} artikala · <a href="index.php?route=extension/feed/wiz_prices&amp;format=csv&amp;version={{ v.sequence }}">CSV</a> · <a href="index.php?route=extension/feed/wiz_prices&amp;format=xml&amp;version={{ v.sequence }}">XML</a></li>{% endfor %}</ul>
 </section>
