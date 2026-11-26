@@ -48,8 +48,7 @@ class ControllerCatalogProductBasePrice extends Controller {
             } catch (InvalidArgumentException $e) { $data['error'] = $e->getMessage(); }
         }
         if ($id && !$data['record']) {
-            $info = $this->db->query('SELECT product_id,model FROM ' . DB_PREFIX . 'product WHERE product_id=' . $id)->row;
-            if ($info) { $data['record'] = $info + ($prices->getMany([$id])[$id] ?? []); }
+            $data['record'] = $prices->getDisplayRecords([$id])[$id] ?? [];
         }
         $data['estimate'] = $id ? $estimates->get($id) : null;
         if ($data['estimate']) {

@@ -37,6 +37,35 @@ class WizBasePrices {
             implode(',', array_unique(array_map('intval', $ids))) . ")")->rows, null, 'product_id');
     }
 
+    public function getDisplayRecords(array $ids) {
+        if (!$ids) { return []; }
+        $this->ensureTable();
+        $rows = $this->db->query("SELECT a.*,p.product_id,p.model,p.date_added FROM " . DB_PREFIX . "product p
+            LEFT JOIN " . $this->table . " a ON a.product_id=p.product_id WHERE p.product_id IN (" .
+            implode(',', array_unique(array_map('intval', $ids))) . ")")->rows;
+        return array_column(array_map([self::class, 'withCatalogueDate'], $rows), null, 'product_id');
+    }
+
+    private static function baseline($regime) {
+        return $regime === 'skupina2025' ? '2025-05-02' : '2026-09-10';
+    }
+
+    /** WIZ uses the day of catalogue entry as the first offer for later additions. */
+    public static function withCatalogueDate(array $row) {
+        if (!empty($row['reference_date'])) { return $row; }
+        $regime = $row['regime'] ?? '';
+        $first = $row['first_offer'] ?? '';
+        $added = substr((string)($row['date_added'] ?? ''), 0, 10);
+        if ($first === '') { $first = $added; }
+        $baseline = self::baseline($regime);
+        // Once both base dates have passed, the first offer applies in either group.
+        if (self::dateValid($first) && $first >= $baseline) {
+            $row['first_offer'] = $first;
+            $row['reference_date'] = $first;
+        }
+        return $row;
+    }
+
     public static function dateValid($date) {
         $d = DateTime::createFromFormat('!Y-m-d', $date);
         return $d && $d->format('Y-m-d') === $date && $date <= (new DateTime('now', new DateTimeZone('Europe/Zagreb')))->format('Y-m-d');
@@ -60,7 +89,7 @@ class WizBasePrices {
         if (!in_array($r['regime'], ['ostalo', 'skupina2025'], true) || ($r['first_offer'] !== '' && !self::dateValid($r['first_offer'])) || !self::dateValid($r['reference_date'])) {
             throw new InvalidArgumentException('Provjerite skupinu robe i oba datuma u obliku GGGG-MM-DD.');
         }
-        $baseline = $r['regime'] === 'skupina2025' ? '2025-05-02' : '2026-09-10';
+        $baseline = self::baseline($r['regime']);
         if ($r['reference_date'] !== max($baseline, $r['first_offer'])) {
             throw new InvalidArgumentException('Referentni datum za tu skupinu i prvu ponudu je ' . max($baseline, $r['first_offer']) . '.');
         }
@@ -82,12 +111,22 @@ class WizBasePrices {
         try {
             foreach ($rows as $index => $row) {
                 try {
-                    $r = self::validate($row);
-                    $id = (int)$r['product_id'];
-                    $product = $this->db->query("SELECT model FROM " . DB_PREFIX . "product WHERE product_id = " . $id)->row;
-                    if (!$product || $product['model'] !== $r['model'] || isset($seen[$id])) {
+                    $id = (int)($row['product_id'] ?? 0);
+                    $product = $this->db->query("SELECT model,date_added FROM " . DB_PREFIX . "product WHERE product_id = " . $id)->row;
+                    if (!$product || $product['model'] !== trim((string)($row['model'] ?? '')) || isset($seen[$id])) {
                         throw new InvalidArgumentException('Provjerite podudaranje ID-a i modela te ponovljene retke.');
                     }
+                    $defaults = self::withCatalogueDate(['date_added' => $product['date_added'], 'regime' => $row['regime'] ?? '']);
+                    if (isset($defaults['reference_date'])) {
+                        if (trim((string)($row['base_price'] ?? '')) !== '') {
+                            if (empty($row['first_offer'])) { $row['first_offer'] = $defaults['first_offer']; }
+                            if (empty($row['reference_date'])) { $row = self::withCatalogueDate($row); }
+                        } elseif (($row['first_offer'] ?? '') === $defaults['first_offer'] && ($row['reference_date'] ?? '') === $defaults['reference_date']) {
+                            // A quantity-only update can come from a prefilled form or CSV.
+                            unset($row['first_offer'], $row['reference_date']);
+                        }
+                    }
+                    $r = self::validate($row);
                     $seen[$id] = true;
                     $assignments = [];
                     foreach (array_slice(self::COLUMNS, 2) as $field) {
@@ -154,12 +193,12 @@ class WizBasePrices {
             ($audit ? " AND a.base_price IS NULL" : '') . " ORDER BY p.product_id")->rows;
         $rows = [];
         foreach ($data as $r) {
+            $r = self::withCatalogueDate($r);
             if ($audit) {
                 $household = !$r['categories'] || preg_match('/šalice|lampe|rasvjeta|stolice|stolovi|kućanstvo|čišćenje|kozmetika|hrana|piće/iu', $r['categories']);
                 $added = substr($r['date_added'], 0, 10);
                 $available = $r['date_available'];
-                // Catalogue dates are leads for the merchant, never proof of a historical public offer.
-                $reference = !$household && $added === $available && self::dateValid($available) ? max('2026-09-10', $available) : '';
+                $reference = $r['reference_date'] ?: (!$household && $added === $available && self::dateValid($available) ? max(self::baseline('ostalo'), $available) : '');
                 $on_sale = '';
                 if ($reference) {
                     $on_sale = 'Nema zapisa za taj datum';
@@ -173,7 +212,7 @@ class WizBasePrices {
                 }
                 $rows[] = [$r['product_id'],$r['model'],html_entity_decode($r['name'], ENT_QUOTES, 'UTF-8'),$r['categories'],$r['date_added'],$available,$r['specials'],
                     $household ? 'Provjeriti razvrstavanje robe i datum 02.05.2025. ili 10.09.2026.' : 'Ostala roba prema kategoriji, za potvrdu',
-                    $reference,$on_sale,'Potvrditi prvu javnu ponudu i WIZ maloprodajnu cijenu s PDV-om na primjenjivi datum. Za akciju potvrditi prethodno primijenjenu cijenu (ostala roba) ili najnižu u 30 dana prije početka akcije (skupina 2025).'];
+                    $reference,$on_sale,($r['reference_date'] ? '' : 'Potvrditi datum prve javne ponude. ') . 'Potvrditi WIZ maloprodajnu cijenu s PDV-om na primjenjivi datum. Za akciju potvrditi prethodno primijenjenu cijenu (ostala roba) ili najnižu u 30 dana prije početka akcije (skupina 2025).'];
             } else {
                 $rows[] = array_map(static function ($key) use ($r) { return $r[$key] ?? ''; }, WizBasePrices::COLUMNS);
             }

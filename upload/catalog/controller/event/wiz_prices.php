@@ -18,24 +18,30 @@ class ControllerEventWizPrices extends Controller {
         }
         if ($route === 'product/product' && !empty($data['product_id'])) { $ids[] = $data['product_id']; }
         if (!$ids) { return; }
-        $records = (new WizBasePrices($this->db))->getMany($ids);
+        $records = (new WizBasePrices($this->db))->getDisplayRecords($ids);
         $labels = array_fill_keys($ids, 'Bazna cijena u provjeri');
+        $estimates = [];
         if ($preview) {
             require_once DIR_SYSTEM . 'library/wiz_price_estimates.php';
             $estimates = (new WizPriceEstimates($this->db))->getMany($ids);
-            foreach ($estimates as $id => $estimate) {
-                $labels[$id] = $this->priceLabel('10.09.2026.', $estimate['estimated_price']);
-            }
         }
         foreach ($records as $id => $record) {
-            if ($record['base_price'] === null) { continue; }
-            $date = DateTime::createFromFormat('!Y-m-d', $record['reference_date']);
-            $labels[$id] = $this->priceLabel($date->format('d.m.Y.'), $record['base_price']);
+            $date = $record['reference_date'];
+            $price = $record['base_price'];
+            if ($price === null && isset($estimates[$id])) {
+                $price = $estimates[$id]['estimated_price'];
+                $date = $date ?: '2026-09-10';
+            }
+            if ($date) {
+                $labels[$id] = $this->priceLabel($date, $price);
+            }
         }
         $data['wiz_base_prices'] = $labels;
     }
 
     private function priceLabel($date, $price) {
-        return 'Bazna cijena na ' . $date . ' · ' . number_format($price, 2, ',', '.') . ' €';
+        $formattedDate = DateTimeImmutable::createFromFormat('!Y-m-d', $date)->format('d.m.Y.');
+        $amount = $price === null ? 'iznos u provjeri' : number_format($price, 2, ',', '.') . ' €';
+        return 'Bazna cijena na ' . $formattedDate . ' · ' . $amount;
     }
 }

@@ -13,7 +13,7 @@
   <button class="btn btn-default" type="button" id="use-wiz-estimate" data-price="{{ estimate.estimated_price|e('html_attr') }}" data-product="{{ estimate.product_id|e('html_attr') }}" data-model="{{ estimate.model|e('html_attr') }}">Prenesi iznos u obrazac</button>
 </div>
 {% endif %}
-<p>Za artikl koji je već bio u ponudi na polazni datum kao dokaz unesite oznaku tadašnjeg cjenika. Neto količinu i jedinicu možete spremiti i samostalno, dok provjeravate baznu cijenu.</p>
+<p>Za artikl dodan nakon polaznog datuma kao datum prve ponude preuzima se datum dodavanja u OpenCart. Iznos potvrdite prema tadašnjem WIZ cjeniku. Neto količinu i jedinicu možete spremiti i samostalno, dok provjeravate baznu cijenu.</p>
 <form action="{{ url }}" method="post">
   {% set labels = {'product_id':'ID proizvoda','model':'Šifra / model','regime':'Skupina robe','first_offer':'Prva javna ponuda (obvezno za robu ponuđenu nakon polaznog datuma)','reference_date':'Referentni datum','base_price':'Bazna maloprodajna cijena s PDV-om (EUR)','promotion':'Cijena na referentni dan','evidence':'Izvor potvrde (npr. oznaka povijesnog cjenika)','net_quantity':'Neto količina pakiranja, ako je primjenjivo','unit':'Jedinica mjere'} %}
   {% for key in fields %}<div class="form-group"><label for="wiz-{{ key }}">{{ labels[key] }}</label>

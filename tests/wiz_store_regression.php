@@ -30,7 +30,10 @@ namespace {
         public function __construct() {
             $this->pdo = new \PDO('sqlite::memory:');
             $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-            $this->pdo->exec("CREATE TABLE oc_product(product_id INTEGER PRIMARY KEY, model TEXT); INSERT INTO oc_product VALUES(1,'TEST-1'),(2,'TEST-2')");
+            $this->pdo->sqliteCreateFunction('NOW', static fn() => '2026-11-26 10:00:00');
+            $this->pdo->exec("CREATE TABLE oc_product(product_id INTEGER PRIMARY KEY, model TEXT, date_added TEXT, status INTEGER DEFAULT 1, date_available TEXT DEFAULT '2026-01-01');
+                INSERT INTO oc_product(product_id,model,date_added) VALUES
+                (1,'TEST-1','2026-10-12 10:20:00'),(2,'TEST-2','0000-00-00 00:00:00'),(3,'TEST-3','2026-10-20 19:15:12')");
             $this->pdo->exec("CREATE TABLE oc_wiz_base_price(product_id INTEGER PRIMARY KEY,regime TEXT,first_offer TEXT,reference_date TEXT,base_price TEXT,promotion TEXT,evidence TEXT,net_quantity REAL,unit TEXT)");
             $this->pdo->exec("CREATE TABLE oc_wiz_withdrawal(withdrawal_id INTEGER PRIMARY KEY,submission TEXT UNIQUE,full_name TEXT,email TEXT,order_ref TEXT,items TEXT,submitted_at TEXT,customer_sent INTEGER DEFAULT 0,admin_sent INTEGER DEFAULT 0)");
         }
@@ -79,6 +82,18 @@ namespace {
         $event = new \ControllerEventWizPrices($registry);
         $route='product/product'; $data=['product_id'=>1,'products'=>[['product_id'=>2]]]; $event->index($route,$data);
         check(strpos($data['wiz_base_prices'][1],'34,90 €')!==false && strpos($data['wiz_base_prices'][1],'10.09.2026.')!==false && $data['wiz_base_prices'][2]==='Bazna cijena u provjeri','product and card distinguish confirmed prices and missing history');
+        $route = 'product/search'; $cards = ['products' => [['product_id' => 3]]];
+        $event->index($route, $cards);
+        check($cards['wiz_base_prices'][3] === 'Bazna cijena na 20.10.2026. · iznos u provjeri', 'search cards show the later addition date while the amount is pending');
+        define('WIZ_PREVIEW_PRICE_ESTIMATES', true); define('HTTP_SERVER', 'https://wiz.test/');
+        $db->pdo->exec("CREATE TABLE oc_product_to_store(product_id INTEGER, store_id INTEGER);
+            CREATE TABLE oc_wiz_price_estimate(product_id INTEGER, model TEXT, name TEXT, estimated_price TEXT, retail_at_snapshot TEXT, basis TEXT, estimated_at TEXT);
+            INSERT INTO oc_product_to_store VALUES(1,0),(3,0);
+            INSERT INTO oc_wiz_price_estimate(product_id,estimated_price) VALUES(1,'50.00'),(3,'12.50')");
+        $route = 'product/product'; $detail = ['product_id' => 3, 'products' => [['product_id' => 1]]];
+        $event->index($route, $detail);
+        check($detail['wiz_base_prices'][3] === 'Bazna cijena na 20.10.2026. · 12,50 €' &&
+            $detail['wiz_base_prices'][1] === 'Bazna cijena na 10.09.2026. · 34,90 €', 'local preview uses the product addition date and preserves verified dates and amounts');
         $pub = new \WizPricePublication($tmp);
         $rows = [['naziv'=>'Proba','sifra'=>'0123','marka'=>'WIZ','neto_kolicina'=>'2','jedinica_mjere'=>'m','maloprodajna_cijena'=>'20.00','posebni_oblik_prodaje'=>'da','cijena_za_jedinicu_mjere'=>'10.00','barkod'=>'0123','ean'=>'','bazna_cijena'=>'34.90','dostupnost'=>'Na zalihi','referentni_datum'=>'2026-09-10']];
         $fetch = function() use (&$rows) { return $rows; };
