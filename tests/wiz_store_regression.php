@@ -31,6 +31,11 @@ namespace {
             $this->pdo = new \PDO('sqlite::memory:');
             $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
             $this->pdo->sqliteCreateFunction('NOW', static fn() => '2026-11-26 10:00:00');
+            $this->pdo->sqliteCreateFunction('REGEXP', static fn($pattern,$value) => preg_match('/' . $pattern . '/iu',$value), 2);
+            $this->pdo->exec("CREATE TABLE oc_product_to_category(product_id INTEGER,category_id INTEGER);
+                CREATE TABLE oc_category_description(category_id INTEGER,language_id INTEGER,name TEXT);
+                CREATE TABLE oc_language(language_id INTEGER,code TEXT);
+                INSERT INTO oc_language VALUES(1,'hr-hr'),(2,'en-gb')");
             $this->pdo->exec("CREATE TABLE oc_product(product_id INTEGER PRIMARY KEY, model TEXT, date_added TEXT, status INTEGER DEFAULT 1, date_available TEXT DEFAULT '2026-01-01');
                 INSERT INTO oc_product(product_id,model,date_added) VALUES
                 (1,'TEST-1','2026-10-12 10:20:00'),(2,'TEST-2','0000-00-00 00:00:00'),(3,'TEST-3','2026-10-20 19:15:12')");
@@ -94,6 +99,19 @@ namespace {
         $route = 'product/search'; $cards = ['products' => [['product_id' => 3]]];
         $event->index($route, $cards);
         check($cards['wiz_base_prices'][3] === 'Bazna cijena na 20.10.2026.', 'search cards retain the later addition date without an amount or status text');
+        $db->pdo->exec("INSERT INTO oc_product(product_id,model,date_added) VALUES(4,'MA3040','2016-12-10'),(5,'MIXED','2017-01-01'),(6,'OTHER','2017-01-01'),(7,'KEYBOARD','2020-05-12');
+            INSERT INTO oc_category_description VALUES(40,1,'Zidni nosači za TV'),(50,1,'Rasvjeta'),(60,2,'Zidni nosači za TV'),(70,1,'Gaming tipkovnice');
+            INSERT INTO oc_product_to_category VALUES(4,40),(5,40),(5,50),(6,60),(7,70)");
+        $route = 'extension/module/basel_products';
+        $home = ['tabs'=>[['products'=>[['product_id'=>4],['product_id'=>5]]],['products'=>[['product_id'=>6],['product_id'=>7]]]]];
+        $event->index($route, $home);
+        check($home['wiz_base_prices'] === [4=>'Bazna cijena na 10.09.2026.',5=>'Bazna cijena',6=>'Bazna cijena',7=>'Bazna cijena na 10.09.2026.'],
+            'home tabs derive reference dates for old TV mounts and computer goods from unambiguous Croatian categories');
+        $mount = $service->getDisplayRecords([4])[4];
+        $service->saveRows([array_replace($mount,['net_quantity'=>'2','unit'=>'kom'])]);
+        $savedMount = $service->getMany([4])[4];
+        check($savedMount['base_price'] === null && $savedMount['reference_date'] === null && (float)$savedMount['net_quantity'] === 2.0,
+            'saving a measure from the dated mount form does not confirm a date or amount');
         define('WIZ_PREVIEW_PRICE_ESTIMATES', true); define('HTTP_SERVER', 'https://wiz.test/');
         $db->pdo->exec("CREATE TABLE oc_product_to_store(product_id INTEGER, store_id INTEGER);
             CREATE TABLE oc_wiz_price_estimate(product_id INTEGER, model TEXT, name TEXT, estimated_price TEXT, retail_at_snapshot TEXT, basis TEXT, estimated_at TEXT);
@@ -104,9 +122,7 @@ namespace {
         check($detail['wiz_base_prices'][3] === 'Bazna cijena na 20.10.2026. · 12,50 €' &&
             $detail['wiz_base_prices'][1] === 'Bazna cijena na 10.09.2026. · 34,90 €', 'local preview uses the product addition date and preserves verified dates and amounts');
         $db->pdo->sqliteCreateFunction('CONCAT_WS', static fn($separator, ...$values) => implode($separator, array_filter($values, static fn($v) => $v !== null)), -1);
-        $db->pdo->exec("CREATE TABLE oc_product_to_category(product_id INTEGER,category_id INTEGER);
-            CREATE TABLE oc_category_description(category_id INTEGER,language_id INTEGER,name TEXT);
-            CREATE TABLE oc_product_description(product_id INTEGER,language_id INTEGER,name TEXT);
+        $db->pdo->exec("CREATE TABLE oc_product_description(product_id INTEGER,language_id INTEGER,name TEXT);
             CREATE TABLE oc_product_special(product_id INTEGER,date_start TEXT,date_end TEXT);
             CREATE TABLE oc_product_discount(product_id INTEGER,quantity INTEGER,date_start TEXT,date_end TEXT);
             INSERT INTO oc_product_to_store VALUES(2,0);

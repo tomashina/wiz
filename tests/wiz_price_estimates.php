@@ -22,12 +22,15 @@ class PriceEstimateDatabase {
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         $this->pdo->sqliteCreateFunction('NOW', fn() => '2026-11-26 08:45:00');
+        $this->pdo->sqliteCreateFunction('REGEXP', static fn($pattern,$value) => preg_match('/' . $pattern . '/iu',$value), 2);
         $this->pdo->exec(<<<'SQL'
 CREATE TABLE oc_product(product_id INTEGER PRIMARY KEY,model TEXT,price TEXT,status INTEGER DEFAULT 1,
     quantity INTEGER DEFAULT 1,date_added TEXT,date_available TEXT DEFAULT '2026-01-01',tax_class_id INTEGER DEFAULT 1,
     sku TEXT,upc TEXT,ean TEXT,jan TEXT,isbn TEXT,manufacturer_id INTEGER,stock_status_id INTEGER);
 CREATE TABLE oc_product_to_store(product_id INTEGER,store_id INTEGER DEFAULT 0);
 CREATE TABLE oc_product_description(product_id INTEGER,name TEXT,language_id INTEGER DEFAULT 1);
+CREATE TABLE oc_product_to_category(product_id INTEGER,category_id INTEGER);
+CREATE TABLE oc_category_description(category_id INTEGER,language_id INTEGER,name TEXT);
 CREATE TABLE oc_language(language_id INTEGER,code TEXT);
 CREATE TABLE oc_product_special(product_id INTEGER,customer_group_id INTEGER,price TEXT,priority INTEGER,date_start TEXT,date_end TEXT);
 CREATE TABLE oc_product_discount(product_id INTEGER,customer_group_id INTEGER,price TEXT,priority INTEGER,date_start TEXT,date_end TEXT,quantity INTEGER);
@@ -39,6 +42,8 @@ CREATE TABLE oc_wiz_base_price(product_id INTEGER PRIMARY KEY,base_price TEXT,re
 INSERT INTO oc_product(product_id,model,price,date_added) VALUES(1,'REG','10.00','2026-09-09 11:00:00'),(2,'SALE','40.00','2026-10-14 17:45:00'),(3,'VERIFIED','100.00','2026-10-22 12:00:00');
 INSERT INTO oc_product_to_store(product_id) SELECT product_id FROM oc_product;
 INSERT INTO oc_language VALUES(1,'hr-hr');
+INSERT INTO oc_product_to_category VALUES(1,10);
+INSERT INTO oc_category_description VALUES(10,1,'Zidni nosači za TV');
 INSERT INTO oc_product_description(product_id,name) SELECT product_id,model FROM oc_product;
 INSERT INTO oc_setting VALUES (0,'config_customer_group_id','1'),(0,'config_country_id','53'),(0,'config_zone_id','1'),(0,'config_currency','EUR');
 INSERT INTO oc_product_special VALUES(2,1,'24.00',1,'2026-11-01','2026-12-01');
@@ -94,13 +99,16 @@ try {
     verify($drafts[2]['estimated_price'] === '50.00' && $drafts[2]['retail_at_snapshot'] === '30.00' && $drafts[2]['basis'] === 'regular_during_promotion', 'sale records regular gross price and actual promotional gross price');
     $public = simplexml_load_string($archive->read($versions, 'xml', null)['data']);
     $publicRows = $public->xpath('//roba');
-    verify((string)$publicRows[0]->referentni_datum === '' && (string)$publicRows[1]->bazna_cijena === '' && (string)$publicRows[1]->referentni_datum === '2026-10-14' &&
+    verify((string)$publicRows[0]->referentni_datum === '2026-09-10' && (string)$publicRows[0]->bazna_cijena === '' && (string)$publicRows[1]->bazna_cijena === '' && (string)$publicRows[1]->referentni_datum === '2026-10-14' &&
         (string)$publicRows[2]->bazna_cijena === '109.00' && (string)$publicRows[2]->referentni_datum === '2026-09-10', 'XML uses the addition date for later products and preserves the documented date and amount');
     $csv = $archive->read($versions, 'csv', null)['data'];
     $saleCsv = str_getcsv(explode("\n", $csv)[2], ';', '"', '');
-    verify($saleCsv[1] === 'SALE' && $saleCsv[10] === '' && $saleCsv[12] === '2026-10-14', 'CSV exports the same catalogue date independently of a missing historical price');
+    $mountCsv = str_getcsv(explode("\n", $csv)[1], ';', '"', '');
+    verify($mountCsv[10] === '' && $mountCsv[12] === '2026-09-10' && $saleCsv[1] === 'SALE' && $saleCsv[10] === '' && $saleCsv[12] === '2026-10-14', 'CSV exports the same catalogue dates independently of a missing historical price');
     $early = ['date_added' => '2025-06-04 03:20:00','regime' => 'skupina2025'];
     verify(WizBasePrices::withCatalogueDate($early)['reference_date'] === '2025-06-04' &&
+        WizBasePrices::withCatalogueDate(['date_added'=>'2016-12-10','regime'=>'skupina2025','standard_category'=>1])['reference_date'] === '2025-05-02' &&
+        WizBasePrices::withCatalogueDate(['date_added'=>'2016-12-10','regime'=>'ostalo'])['reference_date'] === '2026-09-10' &&
         empty(WizBasePrices::withCatalogueDate(['date_added' => '2099-01-01'])['reference_date']) &&
         empty(WizBasePrices::withCatalogueDate(['date_added' => '0000-00-00'])['reference_date']), 'known 2025 regime uses its own cutoff and invalid or future creation dates stay pending');
     $report = file_get_contents(DIR_DOWNLOAD . 'wiz-procjene-baznih-cijena.csv');

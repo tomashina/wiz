@@ -35,7 +35,7 @@ class ModelExtensionFeedWizPrices extends Model {
         $active = " AND (x.date_start='0000-00-00' OR x.date_start<NOW()) AND (x.date_end='0000-00-00' OR x.date_end>NOW()) ORDER BY x.priority,x.price LIMIT 1";
         if ($estimates) { $estimates->ensureTable(); }
         $sql = "SELECT " . ($estimates ? "e.product_id AS existing_estimate," : "") . "p.product_id,p.model,p.sku,p.upc,p.ean,p.jan,p.isbn,p.tax_class_id,p.price,p.quantity,d.name,m.name AS brand,s.name AS stock,
-            p.date_added,a.regime,a.first_offer,a.base_price,a.reference_date,a.net_quantity,a.unit,
+            p.date_added,a.regime,a.first_offer,a.base_price,a.reference_date,a.net_quantity,a.unit," . WizBasePrices::standardGoodsCategorySql() . " AS standard_category,
             (SELECT x.price FROM " . $p . "product_special x WHERE x.product_id=p.product_id AND x.customer_group_id=" . $group . $active . ") AS special,
             (SELECT x.price FROM " . $p . "product_discount x WHERE x.product_id=p.product_id AND x.customer_group_id=" . $group . " AND x.quantity=1" . $active . ") AS discount
             FROM " . $p . "product p JOIN " . $p . "product_to_store ps ON ps.product_id=p.product_id AND ps.store_id=0

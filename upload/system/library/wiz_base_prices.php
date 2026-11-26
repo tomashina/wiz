@@ -4,6 +4,7 @@ class WizBasePrices {
     const COLUMNS = ['product_id', 'model', 'regime', 'first_offer', 'reference_date', 'base_price', 'promotion', 'evidence', 'net_quantity', 'unit'];
     const AUDIT_COLUMNS = ['product_id','model','Naziv','Kategorije','Datum dodavanja u OpenCart','Podešena dostupnost','Akcije u evidenciji','Skupina za provjeru','Mogući referentni datum','Akcija na mogući datum','Potrebno potvrditi'];
     const UNITS = ['kg', 'l', 'm', 'm2', 'm3', 'kom'];
+    private const REVIEW_CATEGORIES = 'šalice|lampe|rasvjeta|stolice|stolovi|kućanstvo|čišćenje|kozmetika|hrana|piće';
     private $db;
     private $table;
     private $ready = false;
@@ -40,10 +41,27 @@ class WizBasePrices {
     public function getDisplayRecords(array $ids) {
         if (!$ids) { return []; }
         $this->ensureTable();
-        $rows = $this->db->query("SELECT a.*,p.product_id,p.model,p.date_added FROM " . DB_PREFIX . "product p
+        $rows = $this->db->query("SELECT a.*,p.product_id,p.model,p.date_added," . self::standardGoodsCategorySql() . " AS standard_category FROM " . DB_PREFIX . "product p
             LEFT JOIN " . $this->table . " a ON a.product_id=p.product_id WHERE p.product_id IN (" .
             implode(',', array_unique(array_map('intval', $ids))) . ")")->rows;
         return array_column(array_map([self::class, 'withCatalogueDate'], $rows), null, 'product_id');
+    }
+
+    /** Croatian leaf categories used by WIZ. A mixed household classification still needs review. */
+    public static function standardGoodsCategorySql() {
+        $p = DB_PREFIX;
+        return "(SELECT MAX(cd.name IN (
+                    'Zidni nosači za TV','Stropni nosači za TV','Nosači za TV po veličini ekrana','Zidni TV nosači Vogels',
+                    'Stolni stalci za TV i monitore','Mobilni podni stalci za TV','Fiksni podni stalci za TV',
+                    'Stropni nosači za projektore','Platna za projektore','Podni stalci za zvučnike','Zidni nosači za zvučnike',
+                    'Stalci i držači za mobitele i tablete','Rashladni stalci i stalci za laptop',
+                    'Gaming tipkovnice','Gaming miševi','Kontroleri i gamepadi','Podloge za miš','Web kamere',
+                    'Kabeli i adapteri','Punjači','Mikrofoni','Bluetooth zvučnici','Gaming zvučnici',
+                    'Slušalice','Gaming slušalice','Licencirane slušalice'))
+                AND NOT MAX(LOWER(cd.name) REGEXP '" . self::REVIEW_CATEGORIES . "')
+            FROM " . $p . "product_to_category pc JOIN " . $p . "category_description cd ON cd.category_id=pc.category_id
+            JOIN " . $p . "language cl ON cl.language_id=cd.language_id AND cl.code='hr-hr'
+            WHERE pc.product_id=p.product_id)";
     }
 
     private static function baseline($regime) {
@@ -54,14 +72,15 @@ class WizBasePrices {
     public static function withCatalogueDate(array $row) {
         if (!empty($row['reference_date'])) { return $row; }
         $regime = $row['regime'] ?? '';
+        if ($regime === '' && !empty($row['standard_category'])) { $regime = 'ostalo'; }
         $first = $row['first_offer'] ?? '';
         $added = substr((string)($row['date_added'] ?? ''), 0, 10);
         if ($first === '') { $first = $added; }
         $baseline = self::baseline($regime);
-        // Once both base dates have passed, the first offer applies in either group.
-        if (self::dateValid($first) && $first >= $baseline) {
+        // For an unknown group only dates after both statutory cutoffs are unambiguous.
+        if (self::dateValid($first) && (in_array($regime, ['ostalo','skupina2025'], true) || $first >= $baseline)) {
             $row['first_offer'] = $first;
-            $row['reference_date'] = $first;
+            $row['reference_date'] = max($baseline, $first);
         }
         return $row;
     }
@@ -113,7 +132,7 @@ class WizBasePrices {
             foreach ($rows as $index => $row) {
                 try {
                     $id = (int)($row['product_id'] ?? 0);
-                    $product = $this->db->query("SELECT model,date_added FROM " . DB_PREFIX . "product WHERE product_id = " . $id . " FOR UPDATE")->row;
+                    $product = $this->db->query("SELECT p.model,p.date_added," . self::standardGoodsCategorySql() . " AS standard_category FROM " . DB_PREFIX . "product p WHERE p.product_id = " . $id . " FOR UPDATE")->row;
                     if (!$product || $product['model'] !== trim((string)($row['model'] ?? '')) || isset($seen[$id])) {
                         throw new InvalidArgumentException('Provjerite podudaranje ID-a i modela te ponovljene retke.');
                     }
@@ -133,7 +152,7 @@ class WizBasePrices {
                             }
                         }
                     }
-                    $defaults = self::withCatalogueDate(['date_added' => $product['date_added'], 'regime' => $row['regime'] ?? '']);
+                    $defaults = self::withCatalogueDate($product + ['regime' => $row['regime'] ?? '']);
                     if (isset($defaults['reference_date'])) {
                         if (trim((string)($row['base_price'] ?? '')) !== '') {
                             if (empty($row['first_offer'])) { $row['first_offer'] = $defaults['first_offer']; }
@@ -201,7 +220,7 @@ class WizBasePrices {
     private function catalogueRecords($pendingOnly, $language_id) {
         $this->ensureTable();
         $p = DB_PREFIX;
-        return $this->db->query("SELECT p.product_id,p.model,d.name,p.date_added,p.date_available,
+        return $this->db->query("SELECT p.product_id,p.model,d.name,p.date_added,p.date_available," . self::standardGoodsCategorySql() . " AS standard_category,
             a.regime,a.first_offer,a.reference_date,a.base_price,a.promotion,a.evidence,a.net_quantity,a.unit,
             (SELECT GROUP_CONCAT(DISTINCT cd.name ORDER BY cd.name SEPARATOR ' | ') FROM " . $p . "product_to_category pc JOIN " . $p . "category_description cd ON cd.category_id=pc.category_id AND cd.language_id=d.language_id WHERE pc.product_id=p.product_id) categories,
             CONCAT_WS(' | ',
@@ -215,7 +234,7 @@ class WizBasePrices {
     }
 
     private static function reviewCategory($categories) {
-        return !$categories || preg_match('/šalice|lampe|rasvjeta|stolice|stolovi|kućanstvo|čišćenje|kozmetika|hrana|piće/iu', $categories);
+        return !$categories || preg_match('/' . self::REVIEW_CATEGORIES . '/iu', $categories);
     }
 
     private static function saleOnDate($ranges, $date) {

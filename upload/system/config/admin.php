@@ -39,6 +39,9 @@ $_['action_event'] = array(
 	'controller/*/after' => array(
 		'event/language/after'
 	),
+	'view/common/column_left/before' => array(
+		900 => 'event/wiz_price_menu'
+	),
 	'view/*/before' => array(
 		999  => 'event/language',
 		1000 => 'event/theme'
