@@ -1,0 +1,49 @@
+{{ header }}{{ column_left }}
+<div id="content"><div class="container-fluid">
+<h1>Skupna potvrda baznih cijena</h1>
+<p><a href="{{ url }}">Natrag na bazne cijene</a></p>
+{% if error %}<div class="alert alert-danger">{{ error|e }}</div>{% endif %}
+{% if success %}<div class="alert alert-success">{{ success|e }}</div>{% endif %}
+{% set groups = {'ostalo':'Ostala roba','skupina2025':'Skupina 2025.'} %}
+{% set bases = {'redovna':'Redovna cijena','prethodna':'Prethodna cijena prije akcije','najniza30':'Najniža cijena u 30 dana prije akcije'} %}
+<p>Za potvrdu je spremno <strong>{{ review.ready|length }}</strong> od {{ review.rows|length }} artikala.
+{% if review.rows|length > review.ready|length %}Dopunu treba {{ review.rows|length - review.ready|length }}.{% endif %}</p>
+{% if review.groups %}
+<details><summary><strong>Odaberi skupinu robe za artikle prema WIZ kategoriji</strong></summary>
+<p>Za svaku navedenu kategoriju odaberi primjenjivu skupinu. U skupinu 2025. ulaze hrana, piće, kozmetika, sredstva za čišćenje, toaletne potrepštine i proizvodi za kućanstvo. Ako se proizvodi unutar kategorije razlikuju, otvori pojedinačnu šifru u tablici ispod.</p>
+<form id="wiz-categories" action="{{ url }}&amp;review=1" method="post">
+{% for key, category in review.groups %}
+<div class="form-group"><label for="group-{{ key }}">{{ category.name|e }} ({{ category.count }})</label>
+<select class="form-control" id="group-{{ key }}" name="groups[{{ key }}]"><option value="">Odaberi skupinu</option>
+{% for value, name in groups %}<option value="{{ value }}" {{ category.choice == value ? 'selected' }}>{{ name }}</option>{% endfor %}</select></div>
+{% endfor %}
+<button class="btn btn-default">Prikaži preračunane datume i cijene</button>
+</form></details>
+{% endif %}
+{% if review.rows %}
+<h2>Pregled prijedloga</h2>
+<p>Usporedi iznose i osnovu cijene s WIZ evidencijom za prikazane datume. Klik na šifru otvara pojedinačni unos.</p>
+<div class="table-responsive" style="max-height: 32em; overflow: auto">
+<table class="table table-striped"><thead><tr><th>Šifra i artikl</th><th>Skupina robe</th><th>Prva ponuda</th><th>Referentni datum</th><th>Osnova cijene</th><th>Bazna cijena s PDV-om</th><th>Stanje</th></tr></thead>
+<tbody>{% for item in review.rows %}<tr><td><a href="{{ url }}&amp;product_id={{ item.product_id }}">{{ item.model|e }}</a><br>{{ item.name|e }}</td>
+<td>{{ groups[item.regime] }}<br><small>{{ item.categories|e }}</small></td><td>{{ item.first_offer|e }}</td><td>{{ item.reference_date|e }}</td>
+<td>{{ bases[item.promotion] }}</td><td>{% if item.base_price is not same as('') %}{{ item.base_price|number_format(2, ',', '.') }} €{% endif %}</td>
+<td>{{ (item.issue ?: 'Za potvrdu')|e }}</td></tr>{% endfor %}</tbody></table></div>
+{% if can_modify and review.ready %}
+<h2>Potvrdi pregledane iznose</h2>
+<form action="{{ url }}&amp;review=1" method="post">
+{% for key, category in review.groups %}{% if category.choice %}<input type="hidden" name="groups[{{ key }}]" value="{{ category.choice|e('html_attr') }}">{% endif %}{% endfor %}
+<input type="hidden" name="digest" value="{{ review.digest }}">
+<div class="form-group"><label for="review-source">Izvor potvrde za ove artikle</label>
+<input type="text" class="form-control" id="review-source" name="source" value="{{ source|e('html_attr') }}" maxlength="500" placeholder="Naziv ili oznaka WIZ povijesnog cjenika ili evidencije" required></div>
+<div class="checkbox"><label><input type="checkbox" name="reviewed" value="1" required>Provjerio/la sam datume, skupine, akcije i iznose svih {{ review.ready|length }} artikala označenih „Za potvrdu” prema navedenoj evidenciji.</label></div>
+<button id="wiz-confirm-reviewed" class="btn btn-primary" name="confirm_catalogue" value="1">Potvrdi {{ review.ready|length }} baznih cijena</button>
+</form>
+{% endif %}
+{% endif %}
+</div></div>
+{% if review.groups and can_modify and review.ready %}<script>
+document.getElementById('wiz-categories').addEventListener('change', function () {
+  document.getElementById('wiz-confirm-reviewed').disabled = true;
+});
+</script>{% endif %}{{ footer }}

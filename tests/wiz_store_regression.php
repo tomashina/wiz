@@ -99,6 +99,17 @@ namespace {
         $route = 'product/search'; $cards = ['products' => [['product_id' => 3]]];
         $event->index($route, $cards);
         check($cards['wiz_base_prices'][3] === 'Bazna cijena na 20.10.2026.', 'search cards retain the later addition date without an amount or status text');
+        $basel = new \Twig\Environment(new \Twig\Loader\FilesystemLoader(DIR_APPLICATION . 'view/theme/basel/template'));
+        foreach (['product/quickview', 'product/compare', 'account/wishlist'] as $route) {
+            foreach (['40,00 €', false] as $currentPrice) {
+                $item = ['product_id' => 1, 'price' => $currentPrice];
+                $view = $route === 'product/quickview' ? $item : ['products' => [$item]];
+                $event->index($route, $view);
+                $html = $basel->render($route . '.twig', $view);
+                check(str_contains($html, 'Bazna cijena na 10.09.2026. · 34,90 €') === (bool)$currentPrice,
+                    $route . ($currentPrice ? ' shows the confirmed base price' : ' hides the base price when retail prices are hidden'));
+            }
+        }
         $db->pdo->exec("INSERT INTO oc_product(product_id,model,date_added) VALUES(4,'MA3040','2016-12-10'),(5,'MIXED','2017-01-01'),(6,'OTHER','2017-01-01'),(7,'KEYBOARD','2020-05-12');
             INSERT INTO oc_category_description VALUES(40,1,'Zidni nosači za TV'),(50,1,'Rasvjeta'),(60,2,'Zidni nosači za TV'),(70,1,'Gaming tipkovnice');
             INSERT INTO oc_product_to_category VALUES(4,40),(5,40),(5,50),(6,60),(7,70)");
@@ -145,6 +156,15 @@ namespace {
             $service->getMany([3])[3]['evidence'] === 'WIZ arhivska evidencija' && $service->getMany([1])[1]['base_price'] === '34.90' &&
             $service->saveRows($reviewed, true, 'WIZ arhivska evidencija') === 0,
             'reviewed batch records its source, preserves previously confirmed rows and is repeatable');
+        $db->pdo->exec("INSERT INTO oc_category_description VALUES(81,1,'Slušalice'),(82,1,'Gaming slušalice'),(83,1,'Licencirane šalice');
+            INSERT INTO oc_product_to_category VALUES(7,81),(7,82),(2,83),(2,82);
+            INSERT INTO oc_product_to_store VALUES(7,0);
+            INSERT INTO oc_product_description VALUES(7,1,'Gaming headset')");
+        $record = $service->getDisplayRecords([7,2]);
+        $review = array_column($service->confirmationReview(1, $estimateService)['rows'], null, 'product_id');
+        check($record[7]['standard_category'] == 1 && $review[7]['regime'] === 'ostalo' &&
+            $record[2]['standard_category'] == 0 && $review[2]['regime'] === '',
+            'Croatian headphone categories resolve to other goods while real cup categories still require review');
         $pub = new \WizPricePublication($tmp);
         $rows = [['naziv'=>'Proba','sifra'=>'0123','marka'=>'WIZ','neto_kolicina'=>'2','jedinica_mjere'=>'m','maloprodajna_cijena'=>'20.00','posebni_oblik_prodaje'=>'da','cijena_za_jedinicu_mjere'=>'10.00','barkod'=>'0123','ean'=>'','bazna_cijena'=>'34.90','dostupnost'=>'Na zalihi','referentni_datum'=>'2026-09-10']];
         $fetch = function() use (&$rows) { return $rows; };

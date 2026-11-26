@@ -9,14 +9,14 @@ class ControllerEventWizPrices extends Controller {
                 ['common/home','product/product','product/category','product/search','product/special','product/manufacturer/info','extension/blog/blog'], true);
             return;
         }
-        if (!in_array($route, ['product/product','product/category','product/search','product/special','product/manufacturer_info','blog/blog','extension/module/basel_products'], true)) { return; }
+        if (!in_array($route, ['product/product','product/category','product/search','product/special','product/manufacturer_info','product/quickview','product/compare','account/wishlist','blog/blog','extension/module/basel_products'], true)) { return; }
         $ids = array_column($data['products'] ?? [], 'product_id');
         if ($route === 'extension/module/basel_products') {
             foreach ($data['tabs'] ?? [] as $tab) {
                 $ids = array_merge($ids, array_column($tab['products'], 'product_id'));
             }
         }
-        if ($route === 'product/product' && !empty($data['product_id'])) { $ids[] = $data['product_id']; }
+        if (in_array($route, ['product/product','product/quickview'], true) && !empty($data['product_id'])) { $ids[] = $data['product_id']; }
         if (!$ids) { return; }
         $records = (new WizBasePrices($this->db))->getDisplayRecords($ids);
         $labels = array_fill_keys($ids, 'Bazna cijena');

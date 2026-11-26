@@ -4,7 +4,7 @@ class WizBasePrices {
     const COLUMNS = ['product_id', 'model', 'regime', 'first_offer', 'reference_date', 'base_price', 'promotion', 'evidence', 'net_quantity', 'unit'];
     const AUDIT_COLUMNS = ['product_id','model','Naziv','Kategorije','Datum dodavanja u OpenCart','Podešena dostupnost','Akcije u evidenciji','Skupina za provjeru','Mogući referentni datum','Akcija na mogući datum','Potrebno potvrditi'];
     const UNITS = ['kg', 'l', 'm', 'm2', 'm3', 'kom'];
-    private const REVIEW_CATEGORIES = 'šalice|lampe|rasvjeta|stolice|stolovi|kućanstvo|čišćenje|kozmetika|hrana|piće';
+    private const REVIEW_CATEGORIES = '(^|[^[:alpha:]])šalice([^[:alpha:]]|$)|lampe|rasvjeta|stolice|stolovi|kućanstvo|čišćenje|kozmetika|hrana|piće';
     private $db;
     private $table;
     private $ready = false;
@@ -189,11 +189,31 @@ class WizBasePrices {
         $fp = fopen($file, 'rb');
         try {
             if (fread($fp, 3) !== "\xEF\xBB\xBF") { rewind($fp); }
-            if (fgetcsv($fp, 0, ';', '"', '') !== self::COLUMNS) { throw new InvalidArgumentException('Koristite zaglavlje iz CSV predloška.'); }
+            $start = ftell($fp);
+            $delimiter = null;
+            foreach ([';', ',', "\t"] as $candidate) {
+                fseek($fp, $start);
+                $record = 0;
+                $hasTitle = false;
+                while (($line = fgetcsv($fp, 0, $candidate, '"', '')) !== false) {
+                    $record++;
+                    if ($line === self::COLUMNS) {
+                        $delimiter = $candidate;
+                        break 2;
+                    }
+                    if (trim(implode('', $line)) === '') { continue; }
+                    // Numbers can export a table name on its own line above the column names.
+                    if ($hasTitle || trim(implode('', array_slice($line, 1))) !== '') { break; }
+                    $hasTitle = true;
+                }
+            }
+            if ($delimiter === null) { throw new InvalidArgumentException('Koristite zaglavlje iz CSV predloška.'); }
             $rows = [];
-            while (($line = fgetcsv($fp, 0, ';', '"', '')) !== false) {
-                if ($line === [null]) { continue; }
-                if (count($line) !== count(self::COLUMNS)) { throw new InvalidArgumentException('Pogrešan broj stupaca u retku ' . (count($rows) + 2)); }
+            while (($line = fgetcsv($fp, 0, $delimiter, '"', '')) !== false) {
+                $record++;
+                if (trim(implode('', $line)) === '') { continue; }
+                if (count($line) !== count(self::COLUMNS)) { throw new InvalidArgumentException('Pogrešan broj stupaca u retku ' . $record . '.'); }
+                if ($line === self::COLUMNS) { throw new InvalidArgumentException('Učitajte jednu tablicu s jednim zaglavljem.'); }
                 $rows[] = array_combine(self::COLUMNS, $line);
             }
             if (!$rows) { throw new InvalidArgumentException('CSV nema podataka.'); }
@@ -246,29 +266,78 @@ class WizBasePrices {
         return false;
     }
 
-    /** Private editable proposals. The separate reviewed import supplies the merchant's evidence. */
-    public function confirmationCsv($language_id, WizPriceEstimates $estimates) {
+    /** Private proposals shared by the CSV and the in-browser review. */
+    public function confirmationReview($language_id, WizPriceEstimates $estimates, array $choices = [], $requireKnownCategory = true) {
         $catalogue = $this->catalogueRecords(true, $language_id);
         $drafts = $estimates->getMany(array_column($catalogue, 'product_id'));
         $rows = [];
+        $ready = [];
+        $groups = [];
         foreach ($catalogue as $r) {
-            $r = self::withCatalogueDate($r);
             $draft = $drafts[$r['product_id']] ?? null;
             $r['base_price'] = $draft && $draft['model'] === $r['model'] ? $draft['estimated_price'] : '';
-            if (!$r['regime'] && !self::reviewCategory($r['categories'])) { $r['regime'] = 'ostalo'; }
+            if (!$r['regime']) {
+                if (self::reviewCategory($r['categories']) || ($requireKnownCategory && empty($r['standard_category']))) {
+                    $category = (string)$r['categories'];
+                    $key = hash('sha256', $category);
+                    $choice = $choices[$key] ?? '';
+                    if (!in_array($choice, ['', 'ostalo', 'skupina2025'], true)) {
+                        throw new InvalidArgumentException('Odaberite ponuđenu skupinu za ' . $category . '.');
+                    }
+                    if (!isset($groups[$key])) {
+                        $groups[$key] = ['name' => $category ?: 'Bez kategorije', 'choice' => $choice, 'count' => 0];
+                    }
+                    $groups[$key]['count']++;
+                    $r['regime'] = $choice;
+                } else {
+                    $r['regime'] = 'ostalo';
+                }
+            }
+            $r = self::withCatalogueDate($r);
             $added = substr((string)$r['date_added'], 0, 10);
             if (!$r['first_offer'] && self::dateValid($added)) { $r['first_offer'] = $added; }
-            if (!$r['reference_date'] && $r['regime'] && $r['first_offer']) {
-                $r['reference_date'] = max(self::baseline($r['regime']), $r['first_offer']);
-            }
             if (!$r['promotion'] && $r['reference_date']) {
                 $r['promotion'] = self::saleOnDate($r['specials'], $r['reference_date'])
                     ? ($r['regime'] === 'skupina2025' ? 'najniza30' : ($r['regime'] === 'ostalo' ? 'prethodna' : ''))
                     : 'redovna';
             }
-            $rows[] = array_map(static fn($key) => $r[$key] ?? '', self::COLUMNS);
+            $row = [];
+            foreach (self::COLUMNS as $field) { $row[$field] = $r[$field] ?? ''; }
+            $missing = [];
+            foreach (['regime' => 'skupina robe', 'first_offer' => 'prva ponuda', 'reference_date' => 'referentni datum',
+                'base_price' => 'iznos', 'promotion' => 'osnova cijene'] as $field => $label) {
+                if ($row[$field] === '') { $missing[] = $label; }
+            }
+            $issue = $missing ? 'Dopunite: ' . implode(', ', $missing) : '';
+            if (!$issue) {
+                try {
+                    // The source is entered when submitting. Never store this validation placeholder.
+                    self::validate(array_replace($row, ['evidence' => 'Pregled']));
+                    $ready[] = $row;
+                } catch (InvalidArgumentException $e) { $issue = $e->getMessage(); }
+            }
+            $rows[] = $row + ['name' => html_entity_decode($r['name'], ENT_QUOTES, 'UTF-8'),
+                'categories' => (string)$r['categories'], 'issue' => $issue];
         }
+        return ['rows' => $rows, 'ready' => $ready, 'groups' => $groups, 'digest' => hash('sha256', serialize($rows))];
+    }
+
+    public function confirmationCsv($language_id, WizPriceEstimates $estimates) {
+        $review = $this->confirmationReview($language_id, $estimates, [], false);
+        $columns = array_flip(self::COLUMNS);
+        $rows = array_map(static fn($r) => array_intersect_key($r, $columns), $review['rows']);
         return self::csv(self::COLUMNS, $rows);
+    }
+
+    public function saveReviewedBatch(array $review, $digest, $source, $acknowledged) {
+        if (!is_string($digest) || !hash_equals($review['digest'], $digest)) {
+            throw new InvalidArgumentException('Katalog se promijenio. Pregledajte osvježene podatke i ponovno potvrdite odabrane cijene.');
+        }
+        if (!$acknowledged || !is_string($source) || trim($source) === '' || mb_strlen(trim($source)) > 500) {
+            throw new InvalidArgumentException('Upišite naziv WIZ evidencije i potvrdite da ste usporedili predložene podatke.');
+        }
+        if (!$review['ready']) { throw new InvalidArgumentException('Nema potpunih prijedloga za potvrdu.'); }
+        return $this->saveRows($review['ready'], true, trim($source));
     }
 
     public function catalogue($audit, $language_id) {

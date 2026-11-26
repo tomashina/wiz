@@ -12,6 +12,10 @@ class ControllerCatalogProductBasePrice extends Controller {
         $url = $this->url->link('catalog/product/base_price', 'user_token=' . $this->session->data['user_token'], true);
         $data = ['url'=>$url, 'record'=>[], 'error'=>'', 'success'=>$this->session->data['wiz_price_success'] ?? ''];
         unset($this->session->data['wiz_price_success']);
+        if (isset($this->request->get['review'])) {
+            $this->review($prices, $estimates, $data);
+            return;
+        }
         if (isset($this->request->get['download'])) {
             if ($this->request->get['download'] === 'confirmation') {
                 $filename = 'wiz-skupna-potvrda.csv';
@@ -78,6 +82,35 @@ class ControllerCatalogProductBasePrice extends Controller {
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
         $this->response->setOutput($this->load->view('catalog/base_price', $data));
+    }
+
+    private function review(WizBasePrices $prices, WizPriceEstimates $estimates, array $data) {
+        $post = $this->request->server['REQUEST_METHOD'] === 'POST' ? $this->request->post : [];
+        $choices = isset($post['groups']) && is_array($post['groups']) ? $post['groups'] : [];
+        $language = (int)$this->config->get('config_language_id');
+        try {
+            $data['review'] = $prices->confirmationReview($language, $estimates, $choices);
+        } catch (InvalidArgumentException $e) {
+            $data['error'] = $e->getMessage();
+            $data['review'] = $prices->confirmationReview($language, $estimates);
+        }
+        $data['source'] = isset($post['source']) && is_string($post['source']) ? html_entity_decode($post['source'], ENT_QUOTES, 'UTF-8') : '';
+        if (isset($post['confirm_catalogue']) && !$data['error']) {
+            try {
+                if (!$this->user->hasPermission('modify','catalog/product')) { throw new InvalidArgumentException('Nemate ovlast za izmjenu proizvoda.'); }
+                $review = $data['review'];
+                $saved = $prices->saveReviewedBatch($review, $post['digest'] ?? '', $data['source'], ($post['reviewed'] ?? '') === '1');
+                $this->session->data['wiz_price_success'] = 'Potvrđeno ' . $saved . ' artikala. Već potvrđeno ' .
+                    (count($review['ready']) - $saved) . '. Za dopunu ' . (count($review['rows']) - count($review['ready'])) . '.';
+                $this->response->redirect($data['url'] . '&review=1');
+                return;
+            } catch (InvalidArgumentException $e) { $data['error'] = $e->getMessage(); }
+        }
+        $data['can_modify'] = $this->user->hasPermission('modify','catalog/product');
+        $data['header'] = $this->load->controller('common/header');
+        $data['column_left'] = $this->load->controller('common/column_left');
+        $data['footer'] = $this->load->controller('common/footer');
+        $this->response->setOutput($this->load->view('catalog/base_price_review', $data));
     }
 
 }

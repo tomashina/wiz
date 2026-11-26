@@ -47,6 +47,7 @@
         <li><span class="price-old">{{ price }}</span><span class="live-price-new">{{ special }}<span></li>
         {% endif %}
       </ul>
+      {% if wiz_base_prices[product_id] %}<p class="wiz-base-price">{{ wiz_base_prices[product_id]|e }}</p>{% endif %}
         
         {% if discounts %}
         <p class="discount">

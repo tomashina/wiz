@@ -2,6 +2,10 @@
 .wiz-consumer-nav a{color:inherit;text-decoration:underline;text-underline-offset:.15em}
 .wiz-consumer-link,.wiz-guarantee p a{color:#242424;text-decoration:underline;text-underline-offset:.15em}
 .wiz-consumer-nav a:focus-visible,.wiz-consumer-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+#product .quantity.buy + .wiz-guarantee-action {
+    clear: both;
+    padding-top: 12px;
+}
 .wiz-base-price{display:block;clear:both;margin:.3rem 0;color:#3a3a3a;font-size:14px;line-height:1.45;font-weight:400;white-space:normal}
 .grid .single-product .wiz-card-price,
 .product-style1 .grid .single-product .wiz-card-actions{height:auto}
