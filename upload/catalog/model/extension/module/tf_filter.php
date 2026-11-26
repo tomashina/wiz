@@ -54,7 +54,7 @@ class ModelExtensionModuleTfFilter extends model {
                     reset($data['filter_custom']);
                     
                     foreach($data['filter_custom'] as $key => $custom_group){
-                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                     }
                 }
                 
@@ -100,7 +100,7 @@ class ModelExtensionModuleTfFilter extends model {
                     $sql .= " AND pf.filter_id IN (" . implode(',', array_map('intval', $filters)) . ")";
                 }
                 
-                $sql .= " GROUP BY c.category_id";
+                $sql .= " AND p.product_id IS NOT NULL GROUP BY c.category_id";
                 
                 /*if(!empty($data['field_total'])){
                     $sql .= " ORDER BY total DESC, c.sort_order ASC";
@@ -147,7 +147,7 @@ class ModelExtensionModuleTfFilter extends model {
                     reset($data['filter_custom']);
                     
                     foreach($data['filter_custom'] as $key => $custom_group){
-                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                     }
                 }
                 
@@ -245,7 +245,7 @@ class ModelExtensionModuleTfFilter extends model {
                 reset($data['filter_custom']);
                 
                 foreach($data['filter_custom'] as $key => $custom_group){
-                    $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                    $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                 }
             }
             
@@ -327,7 +327,7 @@ class ModelExtensionModuleTfFilter extends model {
                     reset($data['filter_custom']);
                     
                     foreach($data['filter_custom'] as $key => $custom_group){
-                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                     }
                 }
                 
@@ -411,7 +411,7 @@ class ModelExtensionModuleTfFilter extends model {
                     reset($data['filter_custom']);
                     
                     foreach($data['filter_custom'] as $key => $custom_group){
-                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                     }
                 }
                 
@@ -544,11 +544,11 @@ class ModelExtensionModuleTfFilter extends model {
                     reset($data['filter_custom']);
                     
                     foreach($data['filter_custom'] as $key => $custom_group){
-                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                     }
                 }
                 
-                $sql .= " LEFT JOIN " . DB_PREFIX . "tf_filter_value_to_product fv2p ON (p.product_id = fv2p.product_id) LEFT JOIN " . DB_PREFIX . "tf_filter_value fv ON (fv.value_id = fv2p.value_id) LEFT JOIN " . DB_PREFIX . "tf_filter f ON (f.filter_id = fv.filter_id) LEFT JOIN " . DB_PREFIX . "tf_filter_value_description fvd ON (fvd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND fv.value_id = fvd.value_id)";
+                $sql .= " LEFT JOIN " . DB_PREFIX . "tf_filter_value_to_product fv2p ON (p.product_id = fv2p.product_id AND fv2p.trash = 0) LEFT JOIN " . DB_PREFIX . "tf_filter_value fv ON (fv.value_id = fv2p.value_id) LEFT JOIN " . DB_PREFIX . "tf_filter f ON (f.filter_id = fv.filter_id) LEFT JOIN " . DB_PREFIX . "tf_filter_value_description fvd ON (fvd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND fv.value_id = fvd.value_id)";
                 
                 if($category_id){
                     if(!empty($data['filter_sub_category'])){
@@ -662,7 +662,7 @@ class ModelExtensionModuleTfFilter extends model {
                         $sql .= " LEFT JOIN " . DB_PREFIX . "product_filter pf ON (p.product_id = pf.product_id)";
                 }
                 
-                $sql .= " LEFT JOIN " . DB_PREFIX . "tf_filter_value_to_product fv2p ON (p.product_id = fv2p.product_id) LEFT JOIN " . DB_PREFIX . "tf_filter_value fv ON (fv.value_id = fv2p.value_id) LEFT JOIN " . DB_PREFIX . "tf_filter f ON (f.filter_id = fv.filter_id)";
+                $sql .= " LEFT JOIN " . DB_PREFIX . "tf_filter_value_to_product fv2p ON (p.product_id = fv2p.product_id AND fv2p.trash = 0) LEFT JOIN " . DB_PREFIX . "tf_filter_value fv ON (fv.value_id = fv2p.value_id) LEFT JOIN " . DB_PREFIX . "tf_filter f ON (f.filter_id = fv.filter_id)";
                 
                 if($category_id){
                     if(!empty($data['filter_sub_category'])){
@@ -808,7 +808,7 @@ class ModelExtensionModuleTfFilter extends model {
                     reset($data['filter_custom']);
                     
                     foreach($data['filter_custom'] as $key => $custom_group){
-                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                     }
                 }
                 
@@ -918,7 +918,7 @@ class ModelExtensionModuleTfFilter extends model {
                     reset($data['filter_custom']);
                     
                     foreach($data['filter_custom'] as $key => $custom_group){
-                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                     }
                 }
                 

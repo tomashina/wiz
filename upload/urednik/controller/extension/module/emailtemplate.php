@@ -3741,12 +3741,12 @@ class ControllerExtensionModuleEmailTemplate extends Controller {
 			);
 
 			$mail = new Mail(isset($store_info['config_mail_engine']) ? $store_info['config_mail_engine'] : $this->config->get('config_mail_engine'));
-			$mail->parameter = isset($store_info['config_mail_parameter']) ? $store_info['config_mail_parameter'] : $this->config_>get('config_mail_parameter');
-			$mail->smtp_hostname = isset($store_info['config_mail_smtp_hostname']) ? $store_info['config_mail_smtp_hostname'] : $this->config_>get('config_mail_smtp_hostname');
-			$mail->smtp_username = isset($store_info['config_mail_smtp_username']) ? $store_info['config_mail_smtp_username'] : $this->config_>get('config_mail_smtp_username');
-			$mail->smtp_password = html_entity_decode((isset($store_info['config_mail_smtp_password']) ? $store_info['config_mail_smtp_password'] : $this->config_>get('config_mail_smtp_password')), ENT_QUOTES, 'UTF-8');
-			$mail->smtp_port = isset($store_info['config_mail_smtp_port']) ? $store_info['config_mail_smtp_port'] : $this->config_>get('config_mail_smtp_port');
-			$mail->smtp_timeout = isset($store_info['config_mail_smtp_timeout']) ? $store_info['config_mail_smtp_timeout'] : $this->config_>get('config_mail_smtp_timeout');
+			$mail->parameter = isset($store_info['config_mail_parameter']) ? $store_info['config_mail_parameter'] : $this->config->get('config_mail_parameter');
+			$mail->smtp_hostname = isset($store_info['config_mail_smtp_hostname']) ? $store_info['config_mail_smtp_hostname'] : $this->config->get('config_mail_smtp_hostname');
+			$mail->smtp_username = isset($store_info['config_mail_smtp_username']) ? $store_info['config_mail_smtp_username'] : $this->config->get('config_mail_smtp_username');
+			$mail->smtp_password = html_entity_decode((isset($store_info['config_mail_smtp_password']) ? $store_info['config_mail_smtp_password'] : $this->config->get('config_mail_smtp_password')), ENT_QUOTES, 'UTF-8');
+			$mail->smtp_port = isset($store_info['config_mail_smtp_port']) ? $store_info['config_mail_smtp_port'] : $this->config->get('config_mail_smtp_port');
+			$mail->smtp_timeout = isset($store_info['config_mail_smtp_timeout']) ? $store_info['config_mail_smtp_timeout'] : $this->config->get('config_mail_smtp_timeout');
 
 			$mail->setTo($log['emailtemplate_log_to']);
 			$mail->setFrom($log['emailtemplate_log_from']);
@@ -3754,13 +3754,7 @@ class ControllerExtensionModuleEmailTemplate extends Controller {
 			$file = DIR_CACHE . 'mail_queue/' . $log['emailtemplate_log_enc'];
 
 			if (file_exists($file)) {
-				$mail->setHtml(file_get_contents($file));
-
-				@unlink($file);
-
-				if (file_exists($file)) {
-					trigger_error('Warning: Unable to delete ' . $file);
-				}
+				$html = file_get_contents($file);
 			} else {
 				// Load template if html not found
 				$template_load = array(
@@ -3791,8 +3785,10 @@ class ControllerExtensionModuleEmailTemplate extends Controller {
 
 				$template->build();
 
-				$mail->setHtml($template->fetch(null, $log['emailtemplate_log_content']));
+				$html = $template->fetch(null, $log['emailtemplate_log_content']);
 			}
+
+			$mail->setHtml($html);
 
 			if ($log['emailtemplate_log_sender']) {
 				$mail->setSender(html_entity_decode($log['emailtemplate_log_sender'], ENT_QUOTES, 'UTF-8'));
@@ -3814,7 +3810,13 @@ class ControllerExtensionModuleEmailTemplate extends Controller {
                 $mail->setMailQueue(false);
             }
 
+            if (($log['emailtemplate_key'] ?? '') === 'order.customer') {
+                require_once DIR_SYSTEM . 'library/wiz_guarantee.php';
+                $storeUrl = ($store_info['ssl'] ?? '') ?: (($store_info['config_ssl'] ?? '') ?: (($store_info['url'] ?? '') ?: HTTPS_CATALOG));
+                WizGuarantee::restoreOrderMail($mail, $html, $storeUrl);
+            }
             $mail->send();
+            if (is_file($file)) { unlink($file); }
 
 			$this->db->query("UPDATE " . DB_PREFIX . "emailtemplate_logs SET emailtemplate_log_sent = NOW(), emailtemplate_log_is_sent = 1 WHERE emailtemplate_log_id = " . (int)$log['emailtemplate_log_id']);
 		}

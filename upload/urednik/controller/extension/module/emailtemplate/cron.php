@@ -55,8 +55,7 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 				$file = DIR_CACHE . 'mail_queue/' . $log['emailtemplate_log_enc'];
 
 				if (file_exists($file)) {
-					$mail->setHtml(file_get_contents($file));
-					unlink($file);
+					$html = file_get_contents($file);
 				} else {
 					// Load template if html not found
 					$template_load = array(
@@ -90,8 +89,10 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 
 					$template->fetch(null, $log['emailtemplate_log_content']);
 
-					$mail->setHtml($template->getHtml());
+					$html = $template->getHtml();
 				}
+
+				$mail->setHtml($html);
 
 				if ($log['emailtemplate_log_sender']) {
 					$mail->setSender(html_entity_decode($log['emailtemplate_log_sender'], ENT_QUOTES, 'UTF-8'));
@@ -117,7 +118,13 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 					$mail->setMailQueue(false);
 				}
 
+				if (($log['emailtemplate_key'] ?? '') === 'order.customer') {
+					require_once DIR_SYSTEM . 'library/wiz_guarantee.php';
+					$storeUrl = ($store_info['ssl'] ?? '') ?: (($store_info['config_ssl'] ?? '') ?: (($store_info['url'] ?? '') ?: HTTPS_CATALOG));
+					WizGuarantee::restoreOrderMail($mail, $html, $storeUrl);
+				}
 				$mail->send();
+				if (is_file($file)) { unlink($file); }
 
 				$this->db->query("UPDATE " . DB_PREFIX . "emailtemplate_logs SET emailtemplate_log_sent = NOW(), emailtemplate_log_is_sent = 1 WHERE emailtemplate_log_id = " . (int)$log['emailtemplate_log_id']);
 			}

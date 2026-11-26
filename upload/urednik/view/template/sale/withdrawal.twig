@@ -1,0 +1,6 @@
+{{ header }}{{ column_left }}<div id="content"><div class="container-fluid"><h1>Jednostrani raskidi ugovora</h1>
+<p><a class="btn btn-primary" href="{{ url }}&amp;export=csv">Izvezi zahtjeve u CSV</a></p>
+<div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Zahtjev</th><th>Zaprimljeno</th><th>Kupac</th><th>Narudžba</th><th>Artikli</th><th>Potvrde e-poštom</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>WIZ-{{ r.withdrawal_id }}</td><td>{{ r.submitted_at|e }}</td><td>{{ r.full_name|e }}<br>{{ r.email|e }}</td><td>{{ r.order_ref|e }}</td><td style="white-space:pre-wrap">{{ (r.items ?: 'Cijela narudžba')|e }}</td><td>Kupac {{ r.customer_sent ? '✓' : 'čeka' }} · Administrator {{ r.admin_sent ? '✓' : 'čeka' }}
+{% if not r.customer_sent or not r.admin_sent %}<form method="post" action="{{ url }}"><button class="btn btn-default" name="retry" value="{{ r.withdrawal_id }}">Ponovi slanje</button></form>{% endif %}</td></tr>{% else %}<tr><td colspan="6">Nema zaprimljenih izjava.</td></tr>{% endfor %}</tbody></table></div>
+{% if page > 1 %}<a href="{{ url }}&amp;page={{ page-1 }}">Prethodna</a>{% endif %} {% if more %}<a href="{{ url }}&amp;page={{ page+1 }}">Sljedeća</a>{% endif %}</div></div>{{ footer }}

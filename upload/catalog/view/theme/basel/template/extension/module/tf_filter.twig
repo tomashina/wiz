@@ -2,7 +2,7 @@
   <div class="panel-heading">
     <h2 class="panel-title">{{ heading_title }}</h2>
     {% if reset_all %}
-      <span data-tf-reset="all" data-toggle="tooltip" title="{{ text_reset_all }}" class="tf-filter-reset hide text-danger"><i class="fa fa-times"></i></span>
+      <button type="button" aria-label="Očisti sve filtre" data-tf-reset="all" data-toggle="tooltip" title="{{ text_reset_all }}" class="tf-filter-reset hide text-danger"><i class="fa fa-times" aria-hidden="true"></i></button>
     {% endif %}
     <button type="button" class="tf-filter-mobile-close" aria-label="Zatvori filter"><i class="fa fa-times"></i></button>
   </div>
@@ -454,7 +454,7 @@
     $('#tf-filter-{{ module_class_id }}').tf_filter({
       requestURL: "{{ requestURL }}",
       searchEl: $('.tf-filter-group-search input'),
-      ajax: {{ ajax?'true':'false' }},
+      ajax: {{ ajax?'true':'false' }} && productContainer.length > 0,
       delay: {{ delay|default(0) }},
       hideZeroFilter: {{ hide_zero_filter?'true':'false' }},
       search_in_description: {{ search_in_description?'true':'false' }},

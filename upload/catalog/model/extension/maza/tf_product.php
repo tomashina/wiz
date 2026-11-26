@@ -1,5 +1,15 @@
 <?php
 class ModelExtensionMazaTfProduct extends Model {
+	private function searchProductCondition($data) {
+		if (!isset($data['filter_product_ids'])) {
+			return '';
+		}
+
+		return $data['filter_product_ids']
+			? ' AND p.product_id IN (' . implode(',', array_map('intval', $data['filter_product_ids'])) . ')'
+			: ' AND 0';
+	}
+
 	public function getProducts($data = array()) {
                 // Get sort order list
                 $sort = array();
@@ -56,7 +66,7 @@ class ModelExtensionMazaTfProduct extends Model {
                         
                         $temp_table = true;
                         
-                        $sql = 'SELECT product_id FROM ' . DB_PREFIX . 'tf_product_result';
+                        $sql = 'SELECT p.product_id FROM ' . DB_PREFIX . 'tf_product_result p';
                 } else {
                         $sql = "SELECT p.product_id";
 
@@ -104,11 +114,12 @@ class ModelExtensionMazaTfProduct extends Model {
                         if(!empty($data['filter_custom'])){
                             reset($data['filter_custom']);
                             foreach($data['filter_custom'] as $key => $custom_group){
-                                $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                                $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                             }
                         }
 
                         $sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'";
+                        $sql .= $this->searchProductCondition($data);
 
                         if (!empty($data['filter_category_id'])) {
                             if(is_array($data['filter_category_id'])){
@@ -285,10 +296,11 @@ class ModelExtensionMazaTfProduct extends Model {
 
 				$sql_order_by = FALSE;
 			}
-		} elseif (isset($data['sort'])) {
-			if (isset($sort_data[$data['sort']])) {
-				$sql .= ' ORDER BY ' . $sort_data[$data['sort']];
-			}
+		} elseif (!empty($data['filter_product_ids']) && $data['sort'] === 'p.sort_order') {
+			// Smart Search supplies IDs in relevance order, including its tie breakers.
+			$sql .= ' ORDER BY FIELD(p.product_id,' . implode(',', array_map('intval', $data['filter_product_ids'])) . ')';
+		} elseif (isset($data['sort'], $sort_data[$data['sort']])) {
+			$sql .= ' ORDER BY ' . $sort_data[$data['sort']];
 			
 			if (isset($data['order']) && ($data['order'] == 'DESC')) {
                                 $sql .= ' DESC, product_id DESC';
@@ -371,11 +383,12 @@ class ModelExtensionMazaTfProduct extends Model {
                         if(!empty($data['filter_custom'])){
                             reset($data['filter_custom']);
                             foreach($data['filter_custom'] as $key => $custom_group){
-                                $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                                $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                             }
                         }
 
                         $sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'";
+                        $sql .= $this->searchProductCondition($data);
 
                         if (!empty($data['filter_category_id'])) {
                             if(is_array($data['filter_category_id'])){
@@ -644,11 +657,12 @@ class ModelExtensionMazaTfProduct extends Model {
                 if(!empty($data['filter_custom'])){
                     reset($data['filter_custom']);
                     foreach($data['filter_custom'] as $key => $custom_group){
-                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id)";
+                        $sql .= " INNER JOIN " . DB_PREFIX . "tf_filter_value_to_product f2p$key ON (f2p$key.value_id IN (" . implode(',',array_map('intval', $custom_group)) . ") AND f2p$key.product_id = p.product_id AND f2p$key.trash = 0)";
                     }
                 }
 
 		$sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p.status = '1' AND p.quantity > 0 AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'";
+		$sql .= $this->searchProductCondition($data);
                 
 		if (!empty($data['filter_category_id'])) {
                     if(is_array($data['filter_category_id'])){

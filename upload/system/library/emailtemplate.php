@@ -310,12 +310,19 @@ class EmailTemplate {
 			$this->html = $this->fetch();
 		}
 
+		if ($this->html && ($this->data['emailtemplate']['key'] ?? '') === 'order.customer' && !empty($this->data['store_url'])) {
+			require_once DIR_SYSTEM . 'library/wiz_guarantee.php';
+			$this->text = $this->getPlainText();
+			WizGuarantee::append($this->data['store_url'], $this->html, $this->text);
+			if ($this->html_content) { $this->html_content .= WizGuarantee::html($this->data['store_url']); }
+		}
+
 		if ($this->html) {
 			if ($this->data['emailtemplate']['mail_html']){
 				$mail->setHtml($this->html);
 			}
 
-			if ($this->data['emailtemplate']['mail_plain_text']) {
+			if ($this->data['emailtemplate']['mail_plain_text'] || ($this->data['emailtemplate']['key'] ?? '') === 'order.customer') {
 				$mail->setText($this->getPlainText());
 			}
 		}

@@ -7,6 +7,31 @@
  */
 class Msmart_Search_Singularisation
 {
+    // Whole catalogue terms only. A brand or model ending in "i" is not a plural rule.
+    public static function croatianForms($word)
+    {
+        static $lookup;
+        $ascii = array('č' => 'c', 'ć' => 'c', 'š' => 's', 'ž' => 'z', 'đ' => 'd');
+        if ($lookup === null) {
+            $lookup = array();
+            $nouns = array(
+                array('nosač', 'nosači'), array('stalak', 'stalci'), array('držač', 'držači'),
+                array('monitor', 'monitori'), array('zvučnik', 'zvučnici'), array('projektor', 'projektori'),
+                array('kabel', 'kabeli', 'kablovi'), array('adapter', 'adapteri'), array('punjač', 'punjači'),
+                array('miš', 'miševi'), array('tipkovnica', 'tipkovnice'), array('slušalica', 'slušalice'),
+                array('mikrofon', 'mikrofoni'), array('kontroler', 'kontroleri'), array('kamera', 'kamere'),
+                array('podloga', 'podloge'), array('ruksak', 'ruksaci'), array('stolica', 'stolice')
+            );
+            foreach ($nouns as $forms) {
+                foreach ($forms as $form) {
+                    $lookup[strtr($form, $ascii)] = $forms;
+                }
+            }
+        }
+
+        return $lookup[strtr(mb_strtolower($word, 'UTF-8'), $ascii)] ?? array($word);
+    }
+
     private static $plural = array(
         'rules' => array(
             '/(s)tatus$/i' => '\1\2tatuses',

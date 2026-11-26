@@ -59,6 +59,8 @@ class ControllerStartupSeoUrl extends Controller {
                     if ($query->row['query'] && $url[0] != 'information_id' && $url[0] != 'manufacturer_id' && $url[0] != 'category_id' && $url[0] != 'blog_category_id' && $url[0] != 'blog_id' && $url[0] != 'product_id') {
                         $this->request->get['route'] = $query->row['query'];
                     }
+                } elseif (count($parts) === 1 && $part === 'akcije') {
+                    $this->request->get['route'] = 'product/special';
                 } else {
                     $this->request->get['route'] = 'error/not_found';
 

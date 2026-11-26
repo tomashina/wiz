@@ -159,3 +159,23 @@ Brza provjera nakon deploya:
 ```bash
 curl --fail --silent --show-error https://www.wiz.hr/googlebase.xml | xmllint --noout -
 ```
+
+## Pretraga, bazne cijene, cjenik i prava kupca
+
+Nakon objave izvornog koda osvježiti **Proširenja → Modifikacije** i cache teme. Mega Smart Search i Total Filter trebaju biti uključeni. Izmjene su u izvorima i OCMOD-u. Lokalni generirani cache ostaje izvan Gita.
+
+U **Katalog → Proizvodi → Bazne cijene** dostupan je pojedinačni unos, CSV predložak za uvoz i izvoz šifri bez potvrde. Isti gumb na uređivanju proizvoda otvara odgovarajući artikl. Iznosi su WIZ maloprodajne cijene s PDV-om u eurima. Prije produkcijske objave popuniti potvrđene iznose i referentne datume iz povijesnih cjenika trgovca. Roba iz prve skupine pravilnika ima polazni datum 2. 5. 2025., ostala roba 10. 9. 2026. Kod kasnije prve ponude primjenjuje se njezin datum. Za akcije potvrditi odgovarajuću osnovu u obrascu. Za robu za koju se iskazuje cijena po jedinici unijeti neto količinu u naznačenoj jedinici. Datum unosa artikla i njegova današnja cijena nisu dokaz povijesne ponude.
+
+Kod prvog izračuna modul sprema radnu procjenu bazne cijene po artiklu, datum izračuna i cijenu koju kupac tada plaća. Za procjenu koristi redovnu maloprodajnu cijenu s PDV-om kada je dostupna. Administracija nudi pregled i zaseban CSV izvoz procjena. Za prikaz tih iznosa na lokalnim stranicama proizvoda i popisima uključiti `define('WIZ_PREVIEW_PRICE_ESTIMATES', true);` u lokalnom `upload/config.php`. Na wiz.test ogledni iznosi imaju oznaku „Bazna cijena na 10.09.2026.” i napomenu o lokalnom pregledu. Potvrđene cijene prikazuju vlastiti referentni datum. Produkcijski cjenik koristi potvrđene povijesne iznose.
+
+Javni, stalni URL-ovi za WIZ internet trgovinu su:
+
+- `/index.php?route=extension/feed/wiz_prices` — aktualni cjenik i arhiva
+- `/index.php?route=extension/feed/wiz_prices&format=csv`
+- `/index.php?route=extension/feed/wiz_prices&format=xml`
+
+Na hostingu jednom pokrenuti `php bin/wiz-cjenik.php` i u cPanel Cron Jobs dodati redak iz `deploy/wiz-cjenik.crontab` s putanjama tog hostinga. Provjera svakih pet minuta radi i kad nema posjetitelja. Prva provjera novog dana objavljuje dnevno izdanje po zagrebačkom vremenu. Izmjena podataka objavljuje novo izdanje i istog dana. Svaki javni dohvat također provjerava aktualnost. Arhiva CSV-a i XML-a čuva se barem 30 dana od zamjene. Po izdanju se u privatnom `DIR_DOWNLOAD/wiz-cjenik` pohranjuje i CSV šifri za provjeru. Uključiti taj direktorij i nove tablice s prefiksom instalacije u redovni backup. OpenCartov korisnik baze treba moći prvi put kreirati tablice `wiz_base_price`, `wiz_price_estimate` i `wiz_withdrawal`.
+
+Poveznice za jamstvo, raskid i cjenik nalaze se u podnožju webshopa. Na artiklu je poveznica za jamstvo uz gumb za kupnju, a na blagajni uz potvrdu narudžbe. Klik otvara službenu hrvatsku obavijest u skočnom prozoru. Bez JavaScripta poveznica otvara istu obavijest na zasebnoj stranici.
+
+Izjave kupaca dostupne su kroz **Prodaja → Povrati → Jednostrani raskidi i CSV**. U pregledu su stanje slanja kupcu i administratoru te ponovni pokušaj dostave. Obavijesti koriste postavke e-pošte trgovine. Potvrda narudžbe sadrži izravnu poveznicu na obavijest o jamstvu u HTML i tekstualnoj verziji poruke te službenu hrvatsku obavijest u boji kao privitak. Nakon deploya s testnim sandučićima provjeriti isporuku prema stvarnoj SMTP konfiguraciji hostinga.

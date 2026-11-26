@@ -148,9 +148,13 @@ class ControllerProductManufacturer extends Controller {
 				'limit'                  => $limit
 			);
 
-			$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
-
-			$results = $this->model_catalog_product->getProducts($filter_data);
+			$listing_filters = $this->load->controller('extension/module/tf_filter/url', '');
+			if ($listing_filters) {
+				list($product_total, $results) = $this->load->controller('extension/module/tf_filter/listing', $filter_data);
+			} else {
+				$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
+				$results = $this->model_catalog_product->getProducts($filter_data);
+			}
 
 			foreach ($results as $result) {
 				if ($result['image']) {
@@ -228,7 +232,7 @@ class ControllerProductManufacturer extends Controller {
 				);
 			}
 
-			$url = '';
+			$url = $listing_filters;
 
 			if (isset($this->request->get['limit'])) {
 				$url .= '&limit=' . $this->request->get['limit'];
@@ -292,7 +296,7 @@ class ControllerProductManufacturer extends Controller {
 				'href'  => $this->url->link('product/manufacturer/info', 'manufacturer_id=' . $this->request->get['manufacturer_id'] . '&sort=p.model&order=DESC' . $url)
 			);
 
-			$url = '';
+			$url = $listing_filters;
 
 			if (isset($this->request->get['sort'])) {
 				$url .= '&sort=' . $this->request->get['sort'];
@@ -316,7 +320,7 @@ class ControllerProductManufacturer extends Controller {
 				);
 			}
 
-			$url = '';
+			$url = $listing_filters;
 
 			if (isset($this->request->get['sort'])) {
 				$url .= '&sort=' . $this->request->get['sort'];
@@ -368,7 +372,8 @@ class ControllerProductManufacturer extends Controller {
 			$data['footer'] = $this->load->controller('common/footer');
 			$data['header'] = $this->load->controller('common/header');
 
-			$this->response->setOutput($this->load->view('product/manufacturer_info', $data));
+			$content = $this->load->view('product/manufacturer_info', $data);
+			$this->response->setOutput($this->load->controller('extension/module/tf_filter/listingOutput', $content));
 		} else {
 			$url = '';
 

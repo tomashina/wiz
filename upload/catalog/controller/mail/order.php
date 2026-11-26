@@ -271,6 +271,11 @@ class ControllerMailOrder extends Controller {
 		$mail->smtp_port = $this->config->get('config_mail_smtp_port');
 		$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
 
+		require_once DIR_SYSTEM . 'library/wiz_guarantee.php';
+		$mail->addAttachment(dirname(DIR_SYSTEM) . '/' . WizGuarantee::IMAGE);
+		$data['wiz_guarantee'] = WizGuarantee::html($order_info['store_url']);
+		$mail->setText(html_entity_decode($data['text_greeting'], ENT_QUOTES, 'UTF-8') . "\n" .
+			$data['text_order_id'] . ' ' . $order_info['order_id'] . "\n\n" . WizGuarantee::text($order_info['store_url']));
 		$mail->setTo($order_info['email']);
 		$mail->setFrom($from);
 		$mail->setSender(html_entity_decode($order_info['store_name'], ENT_QUOTES, 'UTF-8'));

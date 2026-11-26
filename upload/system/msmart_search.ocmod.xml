@@ -10,7 +10,7 @@
 	
 	<file path="catalog/controller/product/search.php">
 		<operation>
-			<search><![CDATA[$product_total = $this->model_catalog_product->getTotalProducts(]]></search>
+			<search><![CDATA[list($product_total, $results) = $this->getSearchResults(]]></search>
 			<add position="before"><![CDATA[
 				if( ! class_exists( 'Msmart_Search' ) ) {
 					if( class_exists( '\VQMod' ) ) {
@@ -20,16 +20,15 @@
 					}
 				}
 				
-				if( ! $this->config->get( 'msmart_search_enabled' ) || ! class_exists( 'Msmart_Search' ) || ! $this->config->get( 'msmart_search_version' ) ) {
+				if( $this->config->get( 'msmart_search_enabled' ) && class_exists( 'Msmart_Search' ) && $this->config->get( 'msmart_search_version' ) ) {
+					$filter_data['filter_product_ids'] = Msmart_Search::getMatchingProductIds( $this, $filter_data );
+				}
 			]]></add>
 		</operation>
 		<operation>
-			<search><![CDATA[$results = $this->model_catalog_product->getProducts(]]></search>
+			<search><![CDATA[list($product_total, $results) = $this->getSearchResults(]]></search>
 			<add position="after"><![CDATA[
-				} else {
-					$product_total = Msmart_Search::make( $this )->filterData( $filter_data )->getTotalProducts();
-					$results = Msmart_Search::make( $this )->getProducts();
-				
+				if( isset( $filter_data['filter_product_ids'] ) && !$filter_url ) {
 					$recommended_data = $this->config->get( 'msmart_search_recommended' );
 					if ($product_total == 0 && !empty($recommended_data['recommended_in_search_page'])) {
 						
@@ -44,7 +43,7 @@
 						$data['text_search'] = $recommended_data['description'][$this->config->get('config_language_id')]['content'];
 					}
 				
-					if( empty( $this->request->get['mfp'] ) && $product_total == 1 ) {
+					if( !isset( $this->request->get['_tf_ajax'] ) && empty( $this->request->get['mfp'] ) && $product_total == 1 ) {
 						$mssConfig = $this->config->get( 'msmart_search_s' );
 				
 						if( ! empty( $mssConfig['redirect_if_1_result'] ) ) {
@@ -63,10 +62,12 @@
 			<search><![CDATA[function index() {]]></search>
 			<add position="after"><![CDATA[
 				$mssConfig = $this->config->get( 'msmart_search_s' );
-				$mssConfigLf = (array) $this->config->get( 'msmart_search_lf' );
+				require_once DIR_SYSTEM . 'library/msmart_search_live_config.php';
+				$mssConfigLf = MsmartSearchLiveConfig::get($this->config);
+				$data['mss_live_config'] = json_encode(['lf' => $mssConfigLf], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 				$mssVer = ! empty( $mssConfig['minify_support'] ) ? '' : '?v' .$this->config->get( 'msmart_search_version' ) . '-wiz12';
 				$mssFiles = array(
-					'js' => array( 'js_params.js', 'bloodhound.min.js', 'typeahead.jquery.min.js', 'live_search.js' ),
+					'js' => array( 'bloodhound.min.js', 'typeahead.jquery.min.js', 'live_search.js' ),
 					'css' => array( 'style.css', 'style-2.css' ),
 				);
 				
@@ -93,7 +94,7 @@
 	<file path="catalog/view/theme/*/template/common/header.twig">
 		<operation>
 			<search><![CDATA[</head>]]></search>
-			<add position="before"><![CDATA[<script>{% if mss_lang_direction and mss_lang_direction != 'ltr' %}var MSS_LANG_DIRECTION = '{{ mss_lang_direction }}';{% endif %}{% if mss_mode %}var MSS_MODE = '{{ mss_mode }}';{% endif %}</script>]]></add>
+			<add position="before"><![CDATA[<script>{% if mss_live_config %}var msmartSearchParams = {{ mss_live_config|raw }};{% endif %}{% if mss_lang_direction and mss_lang_direction != 'ltr' %}var MSS_LANG_DIRECTION = '{{ mss_lang_direction }}';{% endif %}{% if mss_mode %}var MSS_MODE = '{{ mss_mode }}';{% endif %}</script>]]></add>
 		</operation>
 	</file>
 	

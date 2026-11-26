@@ -1752,6 +1752,14 @@ class ModelExtensionModuleEmailTemplate extends Model {
         $this->db->query($query);
     }
 
+    public function getQueuedLogs() {
+        return $this->db->query("SELECT log.*, store.ssl AS store_ssl, store.url AS store_url
+            FROM `" . DB_PREFIX . "emailtemplate_logs` log LEFT JOIN `" . DB_PREFIX . "store` store ON store.store_id=log.store_id
+            WHERE (log.emailtemplate_log_is_sent IS NULL OR log.emailtemplate_log_is_sent=0)
+            AND log.emailtemplate_log_sent IS NULL AND log.emailtemplate_log_to <> '' AND log.emailtemplate_key <> ''
+            ORDER BY log.emailtemplate_log_id LIMIT 100")->rows;
+    }
+
     public function getTotalTemplateLogs($data = array()) {
         $query = "SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "emailtemplate_logs` el";
 

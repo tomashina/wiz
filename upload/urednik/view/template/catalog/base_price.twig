@@ -1,0 +1,56 @@
+{{ header }}{{ column_left }}
+<div id="content"><div class="container-fluid">
+<h1>Bazne cijene</h1>
+{% if error %}<div class="alert alert-danger">{{ error|e }}</div>{% endif %}
+{% if success %}<div class="alert alert-success">{{ success|e }}</div>{% endif %}
+<div class="row"><section class="col-md-6"><h2>Cijena artikla</h2>
+{% if estimate %}
+<div class="well">
+  <h3>Procjena za {{ estimate.model|e }}</h3>
+  <p><strong>{{ estimate.estimated_price|number_format(2, ',', '.') }} €</strong> &middot; {{ estimate.basis_label|e }}</p>
+  <p>Maloprodajna cijena pri izračunu iznosila je {{ estimate.retail_at_snapshot|number_format(2, ',', '.') }} €. Izračunano {{ estimate.estimated_at|date('d.m.Y. H:i', false) }} (Zagreb).</p>
+  <p>Za potvrdu usporedite iznos s povijesnim WIZ cjenikom i unesite izvor u obrazac.</p>
+  <button class="btn btn-default" type="button" id="use-wiz-estimate" data-price="{{ estimate.estimated_price|e('html_attr') }}" data-product="{{ estimate.product_id|e('html_attr') }}" data-model="{{ estimate.model|e('html_attr') }}">Prenesi iznos u obrazac</button>
+</div>
+{% endif %}
+<p>Za artikl koji je već bio u ponudi na polazni datum kao dokaz unesite oznaku tadašnjeg cjenika. Neto količinu i jedinicu možete spremiti i samostalno, dok provjeravate baznu cijenu.</p>
+<form action="{{ url }}" method="post">
+  {% set labels = {'product_id':'ID proizvoda','model':'Šifra / model','regime':'Skupina robe','first_offer':'Prva javna ponuda (obvezno za robu ponuđenu nakon polaznog datuma)','reference_date':'Referentni datum','base_price':'Bazna maloprodajna cijena s PDV-om (EUR)','promotion':'Cijena na referentni dan','evidence':'Izvor potvrde (npr. oznaka povijesnog cjenika)','net_quantity':'Neto količina pakiranja, ako je primjenjivo','unit':'Jedinica mjere'} %}
+  {% for key in fields %}<div class="form-group"><label for="wiz-{{ key }}">{{ labels[key] }}</label>
+    {% if key == 'regime' %}<select class="form-control" name="{{ key }}" id="wiz-{{ key }}"><option value="">Odaberite skupinu</option>{% for val,text in {'ostalo':'Ostala roba (10. 9. 2026.)','skupina2025':'Hrana, piće, kozmetika, čišćenje, toaletne potrepštine i proizvodi za kućanstvo (2. 5. 2025.)'} %}<option value="{{ val }}" {{ record[key] == val ? 'selected' }}>{{ text }}</option>{% endfor %}</select>
+    {% elseif key == 'promotion' %}<select class="form-control" name="{{ key }}" id="wiz-{{ key }}"><option value="">Odaberite osnovu</option>{% for val,text in {'redovna':'Redovna cijena na referentni datum','prethodna':'Akcija – prethodno primijenjena maloprodajna cijena','najniza30':'Akcija – najniža cijena u 30 dana prije početka akcije'} %}<option value="{{ val }}" {{ record[key] == val ? 'selected' }}>{{ text }}</option>{% endfor %}</select>
+    {% elseif key == 'unit' %}<select class="form-control" name="{{ key }}" id="wiz-{{ key }}"><option value="">Nije primjenjivo</option>{% for val in units %}<option {{ record[key] == val ? 'selected' }}>{{ val }}</option>{% endfor %}</select>
+    {% else %}<input class="form-control" id="wiz-{{ key }}" name="{{ key }}" value="{{ record[key]|e('html_attr') }}" type="{{ key in ['first_offer','reference_date'] ? 'date' : 'text' }}" {{ key in ['product_id','model'] ? 'required' }}>{% endif %}
+  </div>{% endfor %}<button class="btn btn-primary">Spremi potvrđenu cijenu</button>
+</form></section>
+<section class="col-md-6"><h2>Masovni unos</h2><p>Preuzmite predložak s WIZ šiframa. Učitajte samo retke za koje imate potvrđene podatke. Za noviju robu referentni datum je dan prve ponude.</p>
+<p><a href="{{ url }}&amp;download=template">Preuzmi CSV predložak</a></p>
+<form action="{{ url }}" method="post" enctype="multipart/form-data"><div class="form-group"><label for="wiz-csv">CSV datoteka (UTF-8, točka zarez)</label><input id="wiz-csv" type="file" name="csv" accept=".csv" required></div><button name="import" value="1" class="btn btn-primary">Uvezi CSV</button></form>
+<h2>Provjera povijesnih cijena</h2><a href="{{ url }}&amp;download=audit">Preuzmi šifre bez potvrde, kategorije i razdoblja akcija</a></section></div>
+<section id="procjene"><h2>Procjene povijesnih cijena</h2>
+<p><a class="btn btn-default" href="{{ url }}&amp;download=estimates">Preuzmi CSV s procjenama</a></p>
+{% if estimates %}
+<div class="table-responsive"><table class="table table-striped">
+  <thead><tr><th>Šifra i naziv</th><th>Procjena s PDV-om</th><th>Maloprodajna cijena pri izračunu</th><th>Osnova procjene</th><th>Izračunano (Zagreb)</th></tr></thead>
+  <tbody>{% for item in estimates %}<tr>
+    <td><a href="{{ url }}&amp;product_id={{ item.product_id }}">{{ item.model|e }}</a><br>{{ item.name|e }}</td>
+    <td>{{ item.estimated_price|number_format(2, ',', '.') }} €</td><td>{{ item.retail_at_snapshot|number_format(2, ',', '.') }} €</td><td>{{ item.basis_label|e }}</td><td>{{ item.estimated_at|date('d.m.Y. H:i', false) }}</td>
+  </tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p>Na ovoj stranici nema procjena za provjeru.</p>{% endif %}
+<nav aria-label="Stranice procjena">
+{% if estimate_page > 1 %}<a class="btn btn-default" href="{{ url }}&amp;estimate_page={{ estimate_page - 1 }}#procjene">Prethodna</a>{% endif %}
+{% if more_estimates %}<a class="btn btn-default" href="{{ url }}&amp;estimate_page={{ estimate_page + 1 }}#procjene">Sljedeća</a>{% endif %}
+</nav></section></div></div>
+{% if estimate %}<script>
+document.getElementById('use-wiz-estimate').addEventListener('click', function () {
+  var price = document.getElementById('wiz-base_price');
+  if (document.getElementById('wiz-product_id').value !== this.dataset.product ||
+      document.getElementById('wiz-model').value !== this.dataset.model) {
+    document.getElementById('wiz-model').focus();
+    return;
+  }
+  price.value = this.dataset.price;
+  price.focus();
+});
+</script>{% endif %}{{ footer }}

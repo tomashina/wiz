@@ -51,6 +51,12 @@ class ControllerExtensionModuleTfFilter extends Controller
 
         // Setting
         $this->info = $setting;
+        // Attributes describe only the products in the current listing, including cross-category listings.
+        $this->info['filter']['custom']['status'] = true;
+        if (!$this->category_id) {
+            $this->info['filter']['custom']['require_category'] = false;
+            $this->info['filter']['filter']['require_category'] = false;
+        }
         $this->info['search_on_limit'] = 10;
         $this->info['filter_sort_by'] = 'sort_order'; // product/sort_order
 
@@ -166,16 +172,20 @@ class ControllerExtensionModuleTfFilter extends Controller
             $url .= '&category_id=' . $this->request->get['category_id'];
         }
 
-        if (isset($this->request->get['sub_category'])) {
-            $url .= '&sub_category=' . $this->request->get['sub_category'];
-        }
-
         if (isset($this->request->get['manufacturer_id'])) {
             $url .= '&manufacturer_id=' . (int)$this->request->get['manufacturer_id'];
         }
 
         if (isset($this->request->get['limit'])) {
             $url .= '&limit=' . $this->request->get['limit'];
+        }
+
+        if (in_array($this->route, ['product/search','product/category','product/special','product/manufacturer/info'], true)) {
+            foreach (array('sort', 'order') as $key) {
+                if (isset($this->request->get[$key])) {
+                    $url .= '&' . $key . '=' . urlencode($this->request->get[$key]);
+                }
+            }
         }
 
         // Module setting
@@ -1011,25 +1021,9 @@ class ControllerExtensionModuleTfFilter extends Controller
             $selected = array();
         }
 
-        $filter_values = $this->common_cache_key ? $this->cache->get($this->common_cache_key . '.custom') : array();
-
-        if (empty($filter_values)) {
-            $filter_data = array();
-            $filter_data['field_total'] = $this->info['count_product'];
-            $filter_data['filter_sub_category'] = $this->sub_category;
-
-            if ($this->info['filter']['custom']['require_category']) {
-                $filter_category_id = $this->category_id;
-            } else {
-                $filter_category_id = 0;
-            }
-
-            $filter_values = $this->model_extension_module_tf_filter->getCustomFilterValues($this->common_product_table, $filter_category_id, $filter_data);
-
-            if ($this->common_cache_key) {
-                $this->cache->set($this->common_cache_key . '.custom', $filter_values);
-            }
-        }
+        $filter_data = array('field_total' => $this->info['count_product'], 'filter_sub_category' => $this->sub_category);
+        $filter_category_id = $this->info['filter']['custom']['require_category'] ? $this->category_id : 0;
+        $filter_values = $this->model_extension_module_tf_filter->getCustomFilterValues($this->common_product_table, $filter_category_id, $filter_data);
 
         // Organise filter values by filter
         $filters = array();
@@ -1176,7 +1170,7 @@ class ControllerExtensionModuleTfFilter extends Controller
         $this->filter_param = $this->param();
 
         // Create cache key
-        if ($this->info && $this->info['cache'] && empty($this->common_param['search']) && empty($this->common_param['tag'])) {
+        if ($this->info && $this->info['cache'] && $this->route !== 'product/search' && empty($this->common_param['filter_name']) && empty($this->common_param['filter_tag'])) {
             $this->common_cache_key = md5(serialize($this->common_param));
         }
 
@@ -1267,6 +1261,7 @@ class ControllerExtensionModuleTfFilter extends Controller
 
     public function getPostFilterValues()
     {
+        $this->load->model('extension/maza/tf_product');
         $this->load->model('extension/module/tf_filter');
 
         $this->loadData();
@@ -1492,6 +1487,13 @@ class ControllerExtensionModuleTfFilter extends Controller
 
         if (isset($this->request->get['tag'])) {
             $filter_data['filter_tag'] = $this->request->get['tag'];
+        } elseif ($this->route === 'product/search' && isset($filter_data['filter_name'])) {
+            $filter_data['filter_tag'] = $filter_data['filter_name'];
+        }
+
+        if ($this->route === 'product/search' && $this->registry->has('tf_search_product_ids')) {
+            $filter_data['filter_product_ids'] = $this->registry->get('tf_search_product_ids');
+            unset($filter_data['filter_name'], $filter_data['filter_tag']);
         }
 
         if (isset($this->request->get['description'])) {
@@ -1590,6 +1592,23 @@ class ControllerExtensionModuleTfFilter extends Controller
         }
 
         return $filter_data;
+    }
+
+    public function listing($data) {
+        $this->bootstrapTfFilter();
+        $this->load->model('extension/maza/tf_product');
+        $data = $this->filter_data($data);
+        if ($this->route === 'product/manufacturer/info') {
+            $data['filter_manufacturer_id'] = (int)$this->request->get['manufacturer_id'];
+        }
+        $total = $this->model_extension_maza_tf_product->getTotalProducts($data);
+        return [$total, $total ? $this->model_extension_maza_tf_product->getProducts($data) : []];
+    }
+
+    public function listingOutput($content) {
+        if (!isset($this->request->get['_tf_ajax'])) { return $content; }
+        $this->response->addHeader('Content-Type: application/json');
+        return json_encode(['content' => $content, 'filter' => $this->getPostFilterValues()]);
     }
 
     public function filter_data($filter_data = array())

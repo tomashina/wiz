@@ -1,44 +1,14 @@
-function getURLQuery(url){
-        var value = {};
-
-        var query = String(url).split('?');
-
-        if (query[1]) {
-            var part = query[1].split('&');
-
-            for (i = 0; i < part.length; i++) {
-                var data = part[i].split('=');
-
-                if (data[0] && data[1]) {
-                    value[data[0]] = data[1];
-                }
-            }
-        }
-        
-        return value;
-}
-
-function modifyURLQuery(url, param){
-        var value = getURLQuery(url);
-        
-        $.extend(value, param);
-        
-        // Generate query parameter string
-        var query_param = '';
-        for (i in value){
-            if(value[i]){
-                query_param += '&' + i + '=' + value[i];
-            }
-        }
-        
-        var query = String(url).split('?');
-        
-        // Return url with modified parameter
-        if(query_param){
-            return query[0] + '?' + query_param.substring(1);
+function modifyURLQuery(url, param) {
+    if (!url) return url;
+    var target = new URL(url, document.baseURI);
+    Object.keys(param).forEach(function(key) {
+        if (param[key] == null || param[key] === '') {
+            target.searchParams.delete(key);
         } else {
-            return query[0];
+            target.searchParams.set(key, param[key]);
         }
+    });
+    return target.href;
 }
 
 $.fn.tf_filter = function(setting){
@@ -75,6 +45,12 @@ $.fn.tf_filter = function(setting){
     setting = $.extend({}, default_setting, setting);
     
     var tf_filter = this;
+    var currentQuery = window.location.search;
+    if (setting.ajax) {
+        $(window).off('popstate.tfFilter').on('popstate.tfFilter', function() {
+            if (window.location.search !== currentQuery) window.location.reload();
+        });
+    }
     
     // Filter inputs
     this.inputs = $(this).find('input:not([type="search"])');
@@ -98,6 +74,7 @@ $.fn.tf_filter = function(setting){
     this.hideInactiveValues();
     
     // Start filter
+    var pendingRequest;
     this.start = function(param){
         if(!setting.ajax){
             // Reload page with filter parameter
@@ -106,18 +83,21 @@ $.fn.tf_filter = function(setting){
         }
         
         // Send request to filter products
-        $.ajax({
+        var active = {};
+        Object.keys(param).forEach(function(key) {
+            if (param[key] != null && param[key] !== '') active[key] = param[key];
+        });
+        if (pendingRequest) pendingRequest.abort();
+        pendingRequest = $.ajax({
             url: setting.requestURL,
-            data: param,
+            data: active,
             dataType: 'json',
             beforeSend: function(){
                 $('body').addClass('tf-filter-loading');
-                tf_filter.inputs.prop('disabled', 1);
                 
                 setting.onBeforeSend(); // Trigger event
             },
             success: function(json){
-                tf_filter.inputs.prop('disabled', 0);
                 
                 setting.onResult(json); // Trigger event
                 
@@ -125,15 +105,15 @@ $.fn.tf_filter = function(setting){
                     tf_filter.updateFilter(json['filter']); // Update filter
                 }
             },
-            error: function(){
-                tf_filter.inputs.prop('disabled', 0);
+            error: function(xhr, status){
+                if (status === 'abort') return;
 
                 if (setting.ajax) {
                     window.location.href = modifyURLQuery(window.location.href, $.extend({}, param, {page: null}));
                 }
             },
             complete: function(){
-                tf_filter.inputs.prop('disabled', 0);
+                pendingRequest = null;
                 $('body').removeClass('tf-filter-loading');
                 $(setting.loaderEl).hide();
                 
@@ -473,7 +453,11 @@ $.fn.tf_filter = function(setting){
         }, setting.delay * 1000);
         
         // Update page URL
-        history.pushState(null, null, modifyURLQuery(window.location.href, $.extend({}, param, {page: null})));
+        var target = modifyURLQuery(window.location.href, $.extend({}, param, {page: null}));
+        if (setting.ajax && target !== window.location.href) {
+            history.pushState(null, '', target);
+            currentQuery = window.location.search;
+        }
         
         // Trigger param change event
         setting.onParamChange(param);

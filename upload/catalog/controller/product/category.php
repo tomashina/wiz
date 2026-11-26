@@ -151,6 +151,7 @@ class ControllerProductCategory extends Controller {
 
 			$filter_data = array(
 				'filter_category_id' => $category_id,
+				'filter_sub_category' => (bool)$this->config->get('module_tf_filter_sub_category'),
 				'filter_filter'      => $filter,
 				'sort'               => $sort,
 				'order'              => $order,
@@ -158,9 +159,13 @@ class ControllerProductCategory extends Controller {
 				'limit'              => $limit
 			);
 
-			$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
-
-			$results = $this->model_catalog_product->getProducts($filter_data);
+			$listing_filters = $this->load->controller('extension/module/tf_filter/url', '');
+			if ($listing_filters) {
+				list($product_total, $results) = $this->load->controller('extension/module/tf_filter/listing', $filter_data);
+			} else {
+				$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
+				$results = $this->model_catalog_product->getProducts($filter_data);
+			}
 
 			foreach ($results as $result) {
 				if ($result['image']) {
@@ -242,7 +247,7 @@ class ControllerProductCategory extends Controller {
 				);
 			}
 
-			$url = '';
+			$url = $listing_filters;
 
 			if (isset($this->request->get['filter'])) {
 				$url .= '&filter=' . $this->request->get['filter'];
@@ -310,7 +315,7 @@ class ControllerProductCategory extends Controller {
 				'href'  => $this->url->link('product/category', 'path=' . $this->request->get['path'] . '&sort=p.model&order=DESC' . $url)
 			);
 
-			$url = '';
+			$url = $listing_filters;
 
 			if (isset($this->request->get['filter'])) {
 				$url .= '&filter=' . $this->request->get['filter'];
@@ -338,7 +343,7 @@ class ControllerProductCategory extends Controller {
 				);
 			}
 
-			$url = '';
+			$url = $listing_filters;
 
 			if (isset($this->request->get['filter'])) {
 				$url .= '&filter=' . $this->request->get['filter'];
@@ -355,8 +360,6 @@ class ControllerProductCategory extends Controller {
 			if (isset($this->request->get['limit'])) {
 				$url .= '&limit=' . $this->request->get['limit'];
 			}
-
-			$url = $this->load->controller('extension/module/tf_filter/url', $url);
 
 			$pagination = new Pagination();
 			$pagination->total = $product_total;
@@ -396,7 +399,8 @@ class ControllerProductCategory extends Controller {
 			$data['footer'] = $this->load->controller('common/footer');
 			$data['header'] = $this->load->controller('common/header');
 
-			$this->response->setOutput($this->load->view('product/category', $data));
+			$content = $this->load->view('product/category', $data);
+			$this->response->setOutput($this->load->controller('extension/module/tf_filter/listingOutput', $content));
 		} else {
 			$url = '';
 

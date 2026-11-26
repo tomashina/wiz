@@ -1,5 +1,6 @@
 <div id="payment" class="text-left" style="display:none;"></div>
 <div class="terms">
+  {% include 'basel/template/information/legal_guarantee_link.twig' %}
   <label>{% if text_agree %}
     {{ text_agree }}
     <input type="checkbox" name="agree" value="1" />

@@ -48,6 +48,7 @@ $_['action_event'] = array(
 		'event/language/after'
 	),	
 	'view/*/before' => array(
+		450  => 'event/wiz_prices',
 		500  => 'event/theme',
 		998  => 'event/language',
 	),

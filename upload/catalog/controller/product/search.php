@@ -80,6 +80,7 @@ class ControllerProductSearch extends Controller {
 			'href' => $this->url->link('common/home')
 		);
 
+		$filter_url = $this->load->controller('extension/module/tf_filter/url', '');
 		$url = '';
 
 		if (isset($this->request->get['search'])) {
@@ -120,7 +121,7 @@ class ControllerProductSearch extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('product/search', $url)
+			'href' => $this->url->link('product/search', $url . $filter_url)
 		);
 
 		if (isset($this->request->get['search'])) {
@@ -184,9 +185,7 @@ class ControllerProductSearch extends Controller {
 				'limit'               => $limit
 			);
 
-			$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
-
-			$results = $this->model_catalog_product->getProducts($filter_data);
+			list($product_total, $results) = $this->getSearchResults($filter_data, $filter_url);
 
 			foreach ($results as $result) {
 				if ($result['image']) {
@@ -265,7 +264,7 @@ class ControllerProductSearch extends Controller {
 				);
 			}
 
-			$url = '';
+			$url = $filter_url;
 
 			if (isset($this->request->get['search'])) {
 				$url .= '&search=' . urlencode(html_entity_decode($this->request->get['search'], ENT_QUOTES, 'UTF-8'));
@@ -349,7 +348,7 @@ class ControllerProductSearch extends Controller {
 				'href'  => $this->url->link('product/search', 'sort=p.model&order=DESC' . $url)
 			);
 
-			$url = '';
+			$url = $filter_url;
 
 			if (isset($this->request->get['search'])) {
 				$url .= '&search=' . urlencode(html_entity_decode($this->request->get['search'], ENT_QUOTES, 'UTF-8'));
@@ -393,7 +392,7 @@ class ControllerProductSearch extends Controller {
 				);
 			}
 
-			$url = '';
+			$url = $filter_url;
 
 			if (isset($this->request->get['search'])) {
 				$url .= '&search=' . urlencode(html_entity_decode($this->request->get['search'], ENT_QUOTES, 'UTF-8'));
@@ -482,6 +481,43 @@ class ControllerProductSearch extends Controller {
 		$data['footer'] = $this->load->controller('common/footer');
 		$data['header'] = $this->load->controller('common/header');
 
-		$this->response->setOutput($this->load->view('product/search', $data));
+		$content = $this->load->view('product/search', $data);
+
+		if (isset($this->request->get['_tf_ajax'])) {
+			$this->response->addHeader('Content-Type: application/json');
+			$content = json_encode(array(
+				'content' => $content,
+				'filter'  => $this->load->controller('extension/module/tf_filter/getPostFilterValues')
+			));
+		}
+
+		$this->response->setOutput($content);
+	}
+
+	private function getSearchResults($filter_data, $filter_url) {
+		if (isset($filter_data['filter_product_ids'])) {
+			// The sidebar and the listing must start from the same Smart Search matches.
+			$this->registry->set('tf_search_product_ids', $filter_data['filter_product_ids']);
+			unset($filter_data['filter_name'], $filter_data['filter_tag']);
+
+			if (!$filter_data['filter_product_ids']) {
+				return array(0, array());
+			}
+		}
+
+		if ($filter_url || isset($filter_data['filter_product_ids'])) {
+			$this->load->controller('extension/maza/startup/tf_filter');
+			$this->load->model('extension/maza/tf_product');
+			$model = $this->model_extension_maza_tf_product;
+			$filter_data = $this->load->controller('extension/module/tf_filter/filter_data', $filter_data);
+		} else {
+			$model = $this->model_catalog_product;
+		}
+
+		$total = isset($filter_data['filter_product_ids']) && !$filter_url
+			? count($filter_data['filter_product_ids'])
+			: $model->getTotalProducts($filter_data);
+
+		return array($total, $total ? $model->getProducts($filter_data) : array());
 	}
 }

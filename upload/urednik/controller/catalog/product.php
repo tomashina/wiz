@@ -376,6 +376,7 @@ class ControllerCatalogProduct extends Controller {
 		}
 
 		$data['user_token'] = $this->session->data['user_token'];
+		$data['wiz_base_price'] = $this->url->link('catalog/product/base_price', 'user_token=' . $data['user_token'] . (isset($this->request->get['product_id']) ? '&product_id=' . (int)$this->request->get['product_id'] : ''), true);
 
 		if (isset($this->error['warning'])) {
 			$data['error_warning'] = $this->error['warning'];
@@ -596,6 +597,7 @@ class ControllerCatalogProduct extends Controller {
 		}
 
 		$data['user_token'] = $this->session->data['user_token'];
+		$data['wiz_base_price'] = $this->url->link('catalog/product/base_price', 'user_token=' . $data['user_token'] . (isset($this->request->get['product_id']) ? '&product_id=' . (int)$this->request->get['product_id'] : ''), true);
 		$data['smit_update_images'] = '';
 
 		if (isset($this->request->get['product_id'])) {

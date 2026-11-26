@@ -58,6 +58,15 @@ class Msmart_Search {
 		
 		return self::$_instance;
 	}
+
+	public static function getMatchingProductIds( & $ctrl, $data ) {
+		// Facets apply to the complete search, before the requested page is selected.
+		unset( $data['start'], $data['limit'] );
+		$search = new self( $ctrl );
+		$search->filterData( $data )->prepare();
+
+		return array_keys( $search->_results ?: array() );
+	}
 	
 	public function reset() {
 		$this->_results = null;
@@ -135,7 +144,7 @@ class Msmart_Search {
 		/* @var $settings array */
 		$settings = (array) $this->_ctrl->config->get( $this->_name . '_s' );
 
-		if( ! empty( $settings['history_enabled'] ) && ! $is_autocomplete ) {
+		if( ! empty( $settings['history_enabled'] ) && ! $is_autocomplete && empty( $data['not_save_in_search_history'] ) ) {
 			/* @var $phrase string */
 			$phrase = null;
 
@@ -693,24 +702,8 @@ class Msmart_Search {
 			'tag' => '`cd`.`tag`',
 		);
 		
-		/* @var $word_groups array */
-		$word_groups = array( array( array( $phrase ) ) );
-			
-		if( empty( $this->_settings['strict_search'] ) ) {
-			/* @var $words array */
-			$words = explode( ' ', trim( preg_replace( '/\s+/', ' ', $phrase ) ) );
+		$word_groups = $this->wordGroups( $phrase );
 
-			if( count( $words ) > 1 ) {
-				foreach( $words as $k => $v ) {
-					$words[$k] = array( $v );
-				}
-
-				$word_groups[] = $words;
-			}
-
-			$this->addSingularisation( $word_groups );
-		}
-		
 		/* @var $words array */
 		foreach( $word_groups as $words ) {
 			/* @var $conditions2 array */
@@ -812,6 +805,44 @@ class Msmart_Search {
 		return array();
 	}
 	
+	private function wordGroups( $phrase ) {
+		$phrase = trim( preg_replace( '/\s+/u', ' ', $phrase ) );
+		$groups = array( array( array( $phrase ) ) );
+		if( !empty( $this->_settings['strict_search'] ) ) return $groups;
+
+		$words = explode( ' ', $phrase );
+		if( $this->language->get('code') === 'hr' ) {
+			require_once DIR_SYSTEM . 'library/msmart_search_singularisation.php';
+			$terms = array_map( array('Msmart_Search_Singularisation', 'croatianForms'), $words );
+			if( count($terms) === 1 ) return array( $terms );
+
+			$singular = array_column( $terms, 0 );
+			$plural = array_map( function($forms) { return $forms[1] ?? $forms[0]; }, $terms );
+			$phrases = array_values( array_unique(array(implode(' ', $singular), implode(' ', $plural), $phrase)) );
+			return array( array($phrases), $terms );
+		}
+
+		if( count($words) > 1 ) {
+			$groups[] = array_map( function($word) { return array($word); }, $words );
+		}
+		$this->addSingularisation( $groups );
+		return $groups;
+	}
+
+	private function wordConditions( $fields, $words ) {
+		$conditions = array();
+		foreach( $words as $variants ) {
+			$matches = array();
+			foreach( $fields as $column ) {
+				foreach( $variants as $variant ) {
+					$matches[] = $this->prepareQuery( $column, $variant );
+				}
+			}
+			$conditions[] = '(' . implode(' OR ', $matches) . ')';
+		}
+		return $conditions;
+	}
+
 	private function addSingularisation( & $word_groups ) {
 		if( empty( $this->_settings['singularisation'] ) ) {
 			return;
@@ -822,9 +853,8 @@ class Msmart_Search {
 		/* @var $words array */
 		foreach( $word_groups as $key => $word_groups_2 ) {
 			/* @var $new_words array */
-			$new_words = array();
-			
 			foreach( $word_groups_2 as $key2 => $words ) {
+				$new_words = array();
 				/* @var $word string */
 				foreach( $words as $word ) {
 					/* @var $singular string */
@@ -855,52 +885,28 @@ class Msmart_Search {
 		if( $this->_results !== null ) return;
 		
 		if( ! empty( $this->_data['filter_name'] ) ) {
-			/* @var $word_groups array */
-			$word_groups = array( array( array( $this->_data['filter_name'] ) ) );
-			
-			if( empty( $this->_settings['strict_search'] ) ) {
-				/* @var $words array */
-				$words = explode( ' ', trim( preg_replace( '/\s+/', ' ', $this->_data['filter_name'] ) ) );
-				
-				if( count( $words ) > 1 ) {
-					foreach( $words as $k => $v ) {
-						$words[$k] = array( $v );
+			$word_groups = $this->wordGroups( $this->_data['filter_name'] );
+			$terms = end( $word_groups );
+			if( $this->language->get('code') === 'hr' && (count($terms) > 1 || max(array_map('count', $terms)) > 1) ) {
+				// Prefer product names containing every term before consulting tags or descriptions.
+				foreach( $groups as $fields ) {
+					if( isset($fields['name']) ) {
+						$conditions = $this->wordConditions( array($fields['name']), $terms );
+						$this->query($columns, array_merge($originalConditions, $conditions), $sql);
+						if( $this->_results && empty($this->_data['filter_description']) ) return;
+						break;
 					}
-					
-					$word_groups[] = $words;
 				}
-				
-				$this->addSingularisation( $word_groups );
 			}
-			
+
 			foreach( $groups as $fields ) {
-				/* @var $words array */
 				foreach( $word_groups as $words ) {
-					/* @var $conditions array */
-					$conditions = $originalConditions;
-				
-					/* @var $word string */
-					foreach( $words as $word ) {
-						/* @var $query array */
-						$query = array();
-
-						foreach( $fields as $column ) {
-							/* @var $variant string */
-							foreach( $word as $variant ) {
-								$query[] = $this->prepareQuery( $column, $variant );
-							}
-						}
-
-						$conditions[] = "(" . implode( "\n\t OR ", $query ) . ")";
-					}
-					
-					if( $this->query( $columns, $conditions, $sql ) ) {
-						return;
-					}
+					$conditions = $this->wordConditions( $fields, $words );
+					if( $this->query($columns, array_merge($originalConditions, $conditions), $sql) ) return;
 				}
 			}
-			
-			if( empty( $this->_settings['strict_search'] ) && ! empty( $this->_settings['any_keyword'] ) ) {
+
+			if( !$this->_results && empty( $this->_settings['strict_search'] ) && !empty( $this->_settings['any_keyword'] ) ) {
 				foreach( $groups as $fields ) {
 					/* @var $conditions array */
 					$conditions = array();

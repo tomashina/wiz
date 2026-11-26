@@ -13,9 +13,7 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 
 		$this->load->model('extension/module/emailtemplate');
 
-		$logs = $this->model_extension_module_emailtemplate->getTemplateLogs(array(
-			'emailtemplate_log_is_sent' => 0
-		));
+		$logs = $this->model_extension_module_emailtemplate->getQueuedLogs();
 
 		if ($logs) {
 			foreach ($logs as $i => $log) {
@@ -23,7 +21,7 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 				$mail->protocol = !empty($log['emailtemplate_log_protocol']) ? $log['emailtemplate_log_protocol'] : $this->config->get('config_mail_protocol');
 				$mail->parameter = !empty($log['emailtemplate_log_parameter']) ? $log['emailtemplate_log_parameter'] : $this->config->get('config_mail_parameter');
 
-				$smtp = unserialize(base64_decode($log['emailtemplate_log_smtp']));
+				$smtp = empty($log['emailtemplate_log_smtp']) ? [] : unserialize(base64_decode($log['emailtemplate_log_smtp']), ['allowed_classes' => false]);
 				$mail->smtp_hostname = isset($smtp['hostname']) ? $smtp['hostname'] : $this->config->get('config_mail_smtp_hostname');
 				$mail->smtp_username = isset($smtp['username']) ? $smtp['username'] : $this->config->get('config_mail_smtp_username');
 				$mail->smtp_password = isset($smtp['password']) ? $smtp['password'] : $this->config->get('config_mail_smtp_password');
@@ -33,11 +31,10 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 				$mail->setTo($log['emailtemplate_log_to']);
 				$mail->setFrom($log['emailtemplate_log_from']);
 
-				$file = DIR_CACHE . 'mail_queue/' . $log['emailtemplate_log_id'];
+				$file = DIR_CACHE . 'mail_queue/' . $log['emailtemplate_log_enc'];
 
-				if (file_exists($file)) {
-					$mail->setHtml(file_get_contents($file));
-					unlink($file);
+				if (is_file($file)) {
+					$html = file_get_contents($file);
 				} else {
 					// Load template if html not found
 					$template_load = array(
@@ -56,8 +53,10 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 
 					$template->build();
 					$template->fetch(null, $log['emailtemplate_log_content']);
-					$mail->setHtml($template->getHtml());
+					$html = $template->getHtml();
 				}
+
+				$mail->setHtml($html);
 
 				if ($log['emailtemplate_log_sender']) {
 					$mail->setSender(html_entity_decode($log['emailtemplate_log_sender'], ENT_QUOTES, 'UTF-8'));
@@ -67,7 +66,7 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 					$mail->setSubject(html_entity_decode($log['emailtemplate_log_subject'], ENT_QUOTES, 'UTF-8'));
 				}
 
-				if ($log['emailtemplate_log_text']) {
+				if (!empty($log['emailtemplate_log_text'])) {
 					$mail->setText(html_entity_decode($log['emailtemplate_log_text'], ENT_QUOTES, 'UTF-8'));
 				}
 
@@ -79,10 +78,10 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 					$mail->setBcc($log['emailtemplate_log_bcc']);
 				}
 
-				if ($log['emailtemplate_log_attachment']) {
+				if (!empty($log['emailtemplate_log_attachment'])) {
 					$log['emailtemplate_log_attachment'] = unserialize(base64_decode($log['emailtemplate_log_attachment']));
 					foreach ($log['emailtemplate_log_attachment'] as $attachment) {
-						if (file_exists($attachment)) {
+						if (is_file($attachment) && (($log['emailtemplate_key'] ?? '') !== 'order.customer' || basename($attachment) !== 'legal-guarantee-notice-hr.png')) {
 							$mail->addAttachment($attachment);
 						}
 					}
@@ -90,12 +89,18 @@ class ControllerExtensionModuleEmailTemplateCron extends Controller {
 
 				$mail->setMailQueue(false);
 
+				if (($log['emailtemplate_key'] ?? '') === 'order.customer') {
+					require_once DIR_SYSTEM . 'library/wiz_guarantee.php';
+					$storeUrl = $log['store_ssl'] ?: ($log['store_url'] ?: HTTPS_SERVER);
+					WizGuarantee::restoreOrderMail($mail, $html, $storeUrl);
+				}
 				$mail->send();
+				if (is_file($file)) { unlink($file); }
 
 				$this->db->query("UPDATE " . DB_PREFIX . "emailtemplate_logs SET emailtemplate_log_sent = NOW(), emailtemplate_log_is_sent = 1 WHERE emailtemplate_log_id = " . (int)$log['emailtemplate_log_id']);
 			}
 
-			$this->cache->get('emailtemplate_mail_queue', false);
+			$this->cache->delete('emailtemplate_mail_queue');
 		}
 	}
 

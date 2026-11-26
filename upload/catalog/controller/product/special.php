@@ -76,9 +76,13 @@ class ControllerProductSpecial extends Controller {
 			'limit' => $limit
 		);
 
-		$product_total = $this->model_catalog_product->getTotalProductSpecials();
-
-		$results = $this->model_catalog_product->getProductSpecials($filter_data);
+		$listing_filters = $this->load->controller('extension/module/tf_filter/url', '');
+		if ($listing_filters) {
+			list($product_total, $results) = $this->load->controller('extension/module/tf_filter/listing', $filter_data);
+		} else {
+			$product_total = $this->model_catalog_product->getTotalProductSpecials();
+			$results = $this->model_catalog_product->getProductSpecials($filter_data);
+		}
 
 		foreach ($results as $result) {
 			if ($result['image']) {
@@ -158,7 +162,7 @@ class ControllerProductSpecial extends Controller {
 			);
 		}
 
-		$url = '';
+		$url = $listing_filters;
 
 		if (isset($this->request->get['limit'])) {
 			$url .= '&limit=' . $this->request->get['limit'];
@@ -222,7 +226,7 @@ class ControllerProductSpecial extends Controller {
 			'href'  => $this->url->link('product/special', 'sort=p.model&order=DESC' . $url)
 		);
 
-		$url = '';
+		$url = $listing_filters;
 
 		if (isset($this->request->get['sort'])) {
 			$url .= '&sort=' . $this->request->get['sort'];
@@ -246,7 +250,7 @@ class ControllerProductSpecial extends Controller {
 			);
 		}
 
-		$url = '';
+		$url = $listing_filters;
 
 		if (isset($this->request->get['sort'])) {
 			$url .= '&sort=' . $this->request->get['sort'];
@@ -298,6 +302,7 @@ class ControllerProductSpecial extends Controller {
 		$data['footer'] = $this->load->controller('common/footer');
 		$data['header'] = $this->load->controller('common/header');
 
-		$this->response->setOutput($this->load->view('product/special', $data));
+		$content = $this->load->view('product/special', $data);
+		$this->response->setOutput($this->load->controller('extension/module/tf_filter/listingOutput', $content));
 	}
 }

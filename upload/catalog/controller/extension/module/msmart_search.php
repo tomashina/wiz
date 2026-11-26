@@ -4,38 +4,10 @@ class ControllerExtensionModuleMsmartSearch extends Controller {
 	private $_name = 'msmart_search';
 
 	private function getLiveFilterConfig() {
-		$config = (array) $this->config->get( $this->_name . '_lf' );
-
-		$defaults = array(
-			'mode' => 'standard',
-			'limit' => 10,
-			'enabled' => $this->config->get( $this->_name . '_enabled' ) ? '1' : '0',
-			'enabled_categories' => '1',
-			'limit_similar_phrases' => 10,
-			'img_width' => 56,
-			'img_height' => 56,
-			'img_width_tabs' => 122,
-			'img_height_tabs' => 122,
-			'img_width_categories' => 40,
-			'img_height_categories' => 40,
-			'show_image' => '1',
-			'show_price' => '1',
-			'show_manufacturer' => '1',
-			'show_model' => '0',
-			'show_image_categories' => '0',
-			'show_description_categories' => '0',
-			'description_max_length_categories' => 100,
-		);
-
-		foreach( $defaults as $key => $value ) {
-			if( ! isset( $config[$key] ) || $config[$key] === '' ) {
-				$config[$key] = $value;
-			}
-		}
-
-		return $config;
+		require_once DIR_SYSTEM . 'library/msmart_search_live_config.php';
+		return MsmartSearchLiveConfig::get($this->config);
 	}
-	
+
 	public function savephrase(){
 		$this->load->model('extension/module/msmart_search');
 		

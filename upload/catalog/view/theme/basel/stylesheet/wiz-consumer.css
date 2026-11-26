@@ -1,0 +1,15 @@
+.wiz-consumer-nav{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;text-align:center;gap:.25rem 1.5rem;padding:.4rem 0 1.6rem;line-height:1.5}
+.wiz-consumer-nav a{color:inherit;text-decoration:underline;text-underline-offset:.15em}
+.wiz-consumer-link,.wiz-guarantee p a{color:#242424;text-decoration:underline;text-underline-offset:.15em}
+.wiz-consumer-nav a:focus-visible,.wiz-consumer-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.wiz-base-price{display:block;clear:both;margin:.3rem 0;color:#3a3a3a;font-size:14px;line-height:1.45;font-weight:400;white-space:normal}
+.grid .single-product .wiz-card-price,
+.product-style1 .grid .single-product .wiz-card-actions{height:auto}
+.product-style1 .grid .single-product .wiz-card-actions{overflow:visible}
+.grid .grid-holder.product-holder{display:flex;flex-wrap:wrap}
+.wiz-guarantee-notice{display:block;width:100%;max-width:620px;height:auto;margin:1.5rem 0}
+.wiz-withdrawal{max-width:760px;padding-bottom:2rem}
+.wiz-withdrawal label{display:block;margin-top:1rem;font-weight:600}
+.wiz-withdrawal .form-control{max-width:100%;height:auto;min-height:40px}
+.wiz-withdrawal button{margin:.8rem .6rem .8rem 0}
+@media(max-width:600px){.wiz-consumer-nav{gap:.25rem .85rem}.wiz-consumer-nav a{display:inline-block;padding:.3rem 0}.wiz-withdrawal button{white-space:normal}}

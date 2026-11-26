@@ -97,6 +97,8 @@ window.wizTrackEcommerce = function(eventName, payload) {
 {{ jsonld.content }}
 {% endfor %}
 {% endif %}
+<link rel="stylesheet" href="catalog/view/theme/basel/stylesheet/wiz-consumer.css?v=3">
+<link rel="stylesheet" href="catalog/view/theme/basel/stylesheet/wiz-guarantee-dialog.css">
 </head>
 <body class="{{ class }}{{ basel_body_class }}">
 {% include 'basel/template/common/mobile-nav.twig' %}
@@ -129,3 +131,4 @@ window.wizTrackEcommerce = function(eventName, payload) {
 {{ position_top }}
 </div>
 <main id="main-content" role="main">
+{% if wiz_price_preview %}<p class="container"><small>Lokalni pregled koristi ogledne iznose za bazne cijene koje još nisu povijesno potvrđene.</small></p>{% endif %}

@@ -88,6 +88,13 @@
 
 </div>
 </div>
+<div class="container">
+<nav class="wiz-consumer-nav" aria-label="Informacije za kupce">
+  <a href="index.php?route=information/legal_guarantee" data-wiz-guarantee aria-haspopup="dialog" aria-controls="wiz-guarantee-dialog">Zakonsko jamstvo – najmanje 2 godine</a>
+  <a href="index.php?route=information/withdrawal">Raskinuti ugovor ovdje</a>
+  <a href="index.php?route=extension/feed/wiz_prices">Digitalni cjenik</a>
+</nav>
+</div>
 <div class="container-fluid" style="background:rgba(0,0,0,.3)">
 <div class="container" >
 
@@ -158,4 +165,17 @@ BASEL VERSION {{ basel_version }} - OPENCART VERSION 3 ({{ VERSION }})
 </div><!-- .outer-container ends -->
 <a class="scroll-to-top primary-bg-color hidden-sm hidden-xs" href="#" aria-label="Na vrh stranice" onclick="$('html, body').animate({scrollTop:0}); return false;"><i class="icon-arrow-right" aria-hidden="true"></i></a>
 <div id="featherlight-holder"></div>
+<dialog id="wiz-guarantee-dialog" aria-labelledby="wiz-guarantee-dialog-title">
+  <div class="wiz-guarantee-dialog-header">
+    <h2 id="wiz-guarantee-dialog-title">Zakonsko jamstvo – najmanje 2 godine</h2>
+    <form method="dialog"><button type="submit" autofocus>Zatvori</button></form>
+  </div>
+  <div class="wiz-guarantee-dialog-content">
+    <p><a href="https://europa.eu/youreurope/jamstva_hr">Informacije EU-a o zakonskom jamstvu na hrvatskom</a></p>
+    <a href="catalog/view/theme/basel/image/legal-guarantee/legal-guarantee-notice-hr.svg" aria-label="Otvori službenu hrvatsku obavijest u punoj veličini">
+      <img src="catalog/view/theme/basel/image/legal-guarantee/legal-guarantee-notice-hr.svg" loading="lazy" width="794" height="1123" alt="Službena hrvatska obavijest Europske unije o zakonskom jamstvu sukladnosti robe">
+    </a>
+  </div>
+</dialog>
+<script src="catalog/view/theme/basel/js/wiz-guarantee-dialog.js" defer></script>
 </body></html>

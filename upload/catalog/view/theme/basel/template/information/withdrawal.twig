@@ -1,0 +1,24 @@
+{{ header }}
+<section class="container wiz-withdrawal">
+  <h1>Jednostrani raskid ugovora i povrat artikala</h1>
+  {% if stage == 'done' %}
+    <h2>Zaprimili smo vašu izjavu</h2><p>Broj zahtjeva je <strong>WIZ-{{ receipt }}</strong>. Potvrdu s datumom, vremenom i sadržajem izjave šaljemo na navedeni e-mail.</p>
+  {% elseif stage == 'review' %}
+    <h2>Pregled izjave</h2><p>{{ fields.full_name|e }} · {{ fields.email|e }}</p><p>Narudžba ili ugovor <strong>{{ fields.order_ref|e }}</strong></p>
+    <p>Jednostrano raskidam ugovor za {% if fields.items %}sljedeće artikle:</p><p style="white-space:pre-wrap">{{ fields.items|e }}{% else %}cijelu navedenu narudžbu.{% endif %}</p>
+    <form action="{{ url }}" method="post"><input type="hidden" name="nonce" value="{{ nonce }}"><button class="btn btn-primary" name="confirm" value="1">Potvrditi raskid ugovora</button><button class="btn btn-default" name="edit" value="1">Uredi podatke</button></form>
+  {% else %}
+    <p>Za kupnju na daljinu možete podnijeti izjavu o raskidu u roku od 14 dana od primitka robe, uz zakonske iznimke. Zahtjev možete poslati bez prijave.</p>
+    {% if error %}<p role="alert" class="alert alert-danger">{{ error|e }}</p>{% endif %}
+    <form action="{{ url }}" method="post">
+      <input type="hidden" name="nonce" value="{{ nonce }}">
+      <label for="return-name">Ime i prezime</label><input class="form-control" id="return-name" name="full_name" autocomplete="name" maxlength="160" value="{{ fields.full_name|e('html_attr') }}" required>
+      <label for="return-reference">Broj narudžbe ili druga oznaka ugovora</label><input class="form-control" id="return-reference" name="order_ref" maxlength="160" value="{{ fields.order_ref|e('html_attr') }}" required>
+      <label for="return-email">E-mail za potvrdu primitka</label><input class="form-control" id="return-email" name="email" type="email" autocomplete="email" maxlength="254" value="{{ fields.email|e('html_attr') }}" required>
+      <label for="return-items">Artikli i količine za djelomični povrat</label><p id="items-help">Za raskid cijele narudžbe ostavite prazno.</p><textarea class="form-control" id="return-items" aria-describedby="items-help" name="items" rows="3" maxlength="2000">{{ fields.items|e }}</textarea>
+      <button class="btn btn-primary">Pregledaj izjavu</button>
+    </form>
+    <p><a class="wiz-consumer-link" href="{{ return_url }}">Pokreni povrat artikla zbog kvara ili drugog razloga</a></p>
+  {% endif %}
+</section>
+{{ footer }}

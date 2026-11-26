@@ -69,6 +69,18 @@ class ControllerCommonColumnLeft extends Controller {
 			}
 		}
 
+		if (in_array($route, ['product/search','product/category','product/special','product/manufacturer/info'], true)
+			&& !self::hasFilter($modules)
+			&& !self::hasFilter($this->model_design_layout->getLayoutModules($layout_id, 'column_right'))) {
+			$setting = $this->model_setting_module->getListingFilter();
+			if ($setting) { $data['modules'][] = $this->load->controller('extension/module/tf_filter', $setting); }
+		}
 		return $this->load->view('common/column_left', $data);
+	}
+	private static function hasFilter($modules) {
+		foreach ($modules as $module) {
+			if (explode('.', $module['code'])[0] === 'tf_filter') { return true; }
+		}
+		return false;
 	}
 }

@@ -3,6 +3,7 @@
   <div class="page-header">
     <div class="container-fluid">
       <div class="pull-right">
+        <a class="btn btn-default" href="index.php?route=sale/return/withdrawal&amp;user_token={{ user_token }}">Jednostrani raskidi i CSV</a>
         <button type="button" data-toggle="tooltip" title="{{ button_filter }}" onclick="$('#filter-return').toggleClass('hidden-sm hidden-xs');" class="btn btn-default hidden-md hidden-lg"><i class="fa fa-filter"></i></button>
         <a href="{{ add }}" data-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa fa-plus"></i></a>
         <button type="button" data-toggle="tooltip" title="{{ button_delete }}" class="btn btn-danger" onclick="confirm('{{ text_confirm }}') ? $('#form-return').submit() : false;"><i class="fa fa-trash-o"></i></button>

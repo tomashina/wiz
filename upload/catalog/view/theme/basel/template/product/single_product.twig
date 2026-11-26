@@ -38,51 +38,19 @@
     </div>
 {% endif %}
 
-
-
-  {% if product.special %}
-<br>
-
-    {% if ( product.price_last_30  >  product.special and  product.price_last_30  <  product.price  ) %}
-
-          <span class="price-old">NC zadnjih 30:  {{ product.price_last_30 }}</span>
-
-      {%  else %}
-
-          <span class="price-old">NC zadnjih 30: {{ product.price }}</span>
-
-      {% endif %}
-
-
-
-  
-   {% endif %}
-
-
-
-
-<div class="price-wrapper">
 {% if product.price %}
-<div class="price">
-  
-   {% if product.special %}
-   
-
-      <span class="price-new">{{ product.special }} </span>
-   {% else %}
- <span>{{ product.price }} </span>
-      {% endif %}
-
-
-
-
-
-
-    {% if product.tax %}
-    <span class="price-tax">{{ text_tax }} {{ product.tax }}</span>
+    {% if product.special %}
+    <div class="price-old">NC zadnjih 30: {% if product.price_last_30 > product.special and product.price_last_30 < product.price %}{{ product.price_last_30 }}{% else %}{{ product.price }}{% endif %}</div>
     {% endif %}
-</div><!-- .price -->
+    <div class="price wiz-card-price">
+        {% if product.special %}<span class="price-new">{{ product.special }}</span>{% else %}<span>{{ product.price }}</span>{% endif %}
+        {% if product.tax %}<span class="price-tax">{{ text_tax }} {{ product.tax }}</span>{% endif %}
+    </div>
+    {% if wiz_base_prices[product.product_id] %}
+    <small class="wiz-base-price">{{ wiz_base_prices[product.product_id]|e }}</small>
+    {% endif %}
 {% endif %}
+<div class="price-wrapper wiz-card-actions">
 <p class="description">{% if product.description %}{{ product.description }}{% endif %}</p>
 <a class="btn catalog_hide {% if basel_list_style == '6' %}btn-contrast{% else %}btn-outline{% endif %}" href="#" aria-label="{{ button_cart|striptags|e }} {{ product.name|striptags|e }}" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}'); return false;"><span class="global-cart" aria-hidden="true"></span>{{ button_cart }}</a>
 </div><!-- .price-wrapper -->

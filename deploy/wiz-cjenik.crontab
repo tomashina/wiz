@@ -1,0 +1,2 @@
+# Pokrenuti kao korisnik PHP-FPM-a. Prilagoditi apsolutne putanje hostingu.
+*/5 * * * * /usr/bin/php /var/www/wiz/bin/wiz-cjenik.php

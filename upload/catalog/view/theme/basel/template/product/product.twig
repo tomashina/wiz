@@ -163,6 +163,7 @@ window.wizTrackEcommerce && window.wizTrackEcommerce('view_item', {{ ga4_view_it
         {% endif %}
       </ul>
         
+        {% if wiz_base_prices[product_id] %}<p class="wiz-base-price">{{ wiz_base_prices[product_id]|e }}</p>{% endif %}
         {% if discounts %}
         <p class="discount">
         {% for discount in discounts %}
@@ -366,6 +367,7 @@ window.wizTrackEcommerce && window.wizTrackEcommerce('view_item', {{ ga4_view_it
               <input type="hidden" name="product_id" value="{{ product_id }}" />
               <button type="button" id="button-cart" data-loading-text="{{ text_loading }}" class="btn btn-primary">{% if ((qty < 1) and (stock_badge_status)) %}{{ basel_text_out_of_stock }}{% else %}{{ button_cart }}{% endif %}</button>
             </div>
+            {% include 'basel/template/information/legal_guarantee_link.twig' %}
             {% if minimum > 1 %}
             <div class="alert alert-sm alert-info"><i class="fa fa-info-circle"></i> {{ text_minimum }}</div>
             {% endif %}

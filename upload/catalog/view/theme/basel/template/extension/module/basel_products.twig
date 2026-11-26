@@ -69,9 +69,8 @@
                 </span>
                 </div>
             {% endif %}
-            <div class="price-wrapper">
             {% if product.price %}
-            <div class="price">
+            <div class="price wiz-card-price">
                 {% if not product.special %}
                 <span>{{ product.price }} </span>
                 {% else %}
@@ -81,7 +80,9 @@
                 <span class="price-tax">{{ text_tax }} {{ product.tax }}</span>
                 {% endif %}
             </div><!-- .price -->
+            {% if wiz_base_prices[product.product_id] %}<small class="wiz-base-price">{{ wiz_base_prices[product.product_id]|e }}</small>{% endif %}
             {% endif %}
+            <div class="price-wrapper wiz-card-actions">
             <p class="description">{% if product.description %}{{ product.description }}{% endif %}</p>
             <a class="btn catalog_hide {% if basel_list_style == '6' %}btn-contrast{% else %}btn-outline{% endif %}" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');"><span class="global-cart"></span>{{ button_cart }}</a>
             </div><!-- .price-wrapper -->
